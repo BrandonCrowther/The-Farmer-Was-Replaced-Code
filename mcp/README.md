@@ -10,6 +10,18 @@ capture and keys; `ydotool` is required on top for clicks.** The driver is
 > unless an in-game code window is selected, and selecting one needs a click.
 > `ydotool` is a requirement, not an optional extra. See "Starting a run" below.
 
+**The full loop has since run end to end** — click, F5, run, read the result off
+the completion modal, dismiss it, main save intact. See
+`experiments/000-e2e-validation/result.md`.
+
+### ydotool coordinates are half the compositor's
+
+Measured, not assumed: `ydotool mousemove -a -x 300 -y 200` puts the cursor at
+logical `(600, 400)`, and `-x 1024 -y 576` hits the screen edge at `(2047, 1151)`.
+So `ydotool_arg = logical / 2`, and since the monitor is 2560x1440 at scale 1.25,
+`ydotool_arg = screenshot_px / 2.5`. `tools/tfwr.sh click` takes logical
+coordinates and does the conversion, and puts the pointer back where it found it.
+
 ## What was tested on this machine (Omarchy / Hyprland, TFWR under Proton)
 
 | Capability | Mechanism | Status |

@@ -64,6 +64,9 @@ counters. Use vision.
 | Mouse clicks without root | **no** — needs `ydotool`, so `tools/setup_input.sh` is a prerequisite, not an extra |
 | Capture while game is on another workspace | **broken and silent** — `grim` photographs the visible workspace instead; `tools/tfwr.sh` switches and restores |
 | File Watcher enabled | yes (`options.txt`: `file watcher = enabled`) |
+| Full loop, end to end | **works** — select, F5, run, read result, dismiss; `Fastest_Reset 15:23:55.099`, ~2 min wall clock. See `experiments/000-e2e-validation/` |
+| Does a leaderboard run disturb the main save | **no** — resource bar returned to its pre-run values afterwards |
+| "Did the run start?" signal | title-bar buttons flip green ▶/▷ → orange ■/⏸; `tools/tfwr.sh state` reads it |
 
 Recommended settle: poll at ~0.5 s intervals up to a 3 s cap rather than a fixed
 sleep, and confirm pickup by diffing a tight screenshot crop of the editor before
@@ -102,11 +105,14 @@ code survives a Proton prefix rebuild.
   timer re-invoking Claude per queue item.
 - **Stop condition.** Queue empty, wall-clock budget, or consecutive-failure
   threshold — needed so a bad variant cannot burn the night.
-- **Run verification.** F5 into an unselected window is a silent no-op, and the
-  screenshot of a farm that did not start looks much like one that did. Every run
-  needs a positive signal that execution actually began — the cleanest is a
-  `quick_print` marker emitted as the first statement of the harness script, so
-  its absence means the run never started.
+- **Completion detection.** `tools/tfwr.sh state` answers "did the run start"
+  (title-bar buttons), but it reported `running` while the completion modal was
+  up, because the modal covers the strip it samples. Detect completion from the
+  modal itself, and fix `state` to recognise it, before the loop relies on it.
+- **Result capture is modal-shaped.** `leaderboard_run` reports through a dialog
+  that must be dismissed with a click at logical (461, 938) before another run
+  can start — so an unattended loop needs that click in its cycle, and needs to
+  handle the dialog never appearing (crash, or a run that never started).
 - **Seed the queue.** Depends on what is left to optimize now that the save is at
   100% achievements — most likely leaderboard categories.
 
