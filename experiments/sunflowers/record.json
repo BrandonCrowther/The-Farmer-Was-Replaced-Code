@@ -1,0 +1,14 @@
+{
+  "leaderboard": "Sunflowers",
+  "slug": "sunflowers",
+  "target": "100_000 power",
+  "mode": "multi",
+  "entry": "main",
+  "speedup": 5000,
+  "seeded_from": "Power_Achievement.py",
+  "personal_best": null,
+  "global_rank": null,
+  "best_branch": null,
+  "status": "seeded",
+  "updated": null
+}

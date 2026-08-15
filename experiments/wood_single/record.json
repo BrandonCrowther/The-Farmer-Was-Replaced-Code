@@ -1,0 +1,14 @@
+{
+  "leaderboard": "Wood_Single",
+  "slug": "wood_single",
+  "target": "500_000_000 wood",
+  "mode": "single",
+  "entry": "main",
+  "speedup": 5000,
+  "seeded_from": null,
+  "personal_best": null,
+  "global_rank": null,
+  "best_branch": null,
+  "status": "empty",
+  "updated": null
+}

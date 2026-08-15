@@ -1,1 +1,0 @@
-leaderboard_run(Leaderboards.Fastest_Reset, "Full_Reset_Driver", 5000)

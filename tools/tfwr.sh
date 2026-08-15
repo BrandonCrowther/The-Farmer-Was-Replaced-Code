@@ -15,7 +15,9 @@
 #   tools/tfwr.sh select               # click the harness code window to select it
 #   tools/tfwr.sh run                  # select, then F5. F5 alone does nothing.
 #   tools/tfwr.sh stop                 # Shift+F5: stop execution
-#   tools/tfwr.sh state                # idle | running, from the title-bar buttons
+#   tools/tfwr.sh state                # idle | running | result
+#   tools/tfwr.sh wait-result [secs]   # block until the completion modal appears
+#   tools/tfwr.sh dismiss              # clear the completion modal (click OK)
 #   tools/tfwr.sh running              # is the game up? exit 0/1
 set -euo pipefail
 
@@ -86,17 +88,48 @@ click_at() {
   ydotool mousemove -a -x $((${before%%,*} / YDO_DIV)) -y $((${before##*,} / YDO_DIV))
 }
 
-# The harness window's title bar shows green play arrows when idle and orange
-# stop/pause buttons while executing. That colour flip is the only reliable
-# "the run actually started" signal: F5 into an unselected window is a silent
-# no-op, and an unstarted farm looks much like a running one.
+# Three states from one sample of the harness window's title bar:
+#
+#   idle    green play arrows on a bluish window chrome -> b > g > r
+#   running orange stop/pause buttons                   -> r > g
+#   result  the completion modal covers the strip in flat grey -> r ~= g ~= b
+#
+# The colour flip is the only reliable "the run actually started" signal, since
+# F5 into an unselected window is a silent no-op. The `result` case exists
+# because an earlier version reported `running` forever once the modal appeared.
 run_state() {
-  local shot rg
+  local shot rgb
   shot=$(mktemp /tmp/tfwr-state-XXXX.png)
   capture_to "$shot"
-  rg=$(magick "$shot" -crop "$BUTTON_CROP" +repage -resize 1x1 -format '%[fx:r] %[fx:g]' info:)
+  rgb=$(magick "$shot" -crop "$BUTTON_CROP" +repage -resize 1x1 \
+        -format '%[fx:r] %[fx:g] %[fx:b]' info:)
   rm -f "$shot"
-  awk -v r="${rg%% *}" -v g="${rg##* }" 'BEGIN { print (r > g) ? "running" : "idle" }'
+  awk -v v="$rgb" -v tol="${TFWR_GREY_TOL:-0.04}" 'BEGIN {
+    split(v, c, " "); r = c[1]; g = c[2]; b = c[3]
+    dr = (r > g) ? r - g : g - r
+    db = (g > b) ? g - b : b - g
+    if (dr < tol && db < tol) { print "result" }
+    else if (r > g)           { print "running" }
+    else                      { print "idle" }
+  }'
+}
+
+# Block until the run finishes, i.e. until the completion modal appears.
+wait_result() {
+  local timeout=${1:-600} start now st
+  start=$(date +%s)
+  while :; do
+    st=$(run_state)
+    case "$st" in
+      result) echo "result"; return 0 ;;
+      idle)   echo "run ended without a result modal (state=idle)" >&2; return 2 ;;
+    esac
+    now=$(date +%s)
+    if (( now - start > timeout )); then
+      echo "timed out after ${timeout}s still running" >&2; return 3
+    fi
+    sleep "${TFWR_POLL_INTERVAL:-15}"
+  done
 }
 
 cmd=${1:-help}; shift || true
@@ -144,6 +177,11 @@ case "$cmd" in
     ;;
   stop)  need_game; hyprctl dispatch sendshortcut "SHIFT,F5,class:$CLASS" >/dev/null ;;
   state) run_state ;;
+  wait-result) wait_result "${1:-600}" ;;
+  dismiss)
+    # The completion modal must be cleared before another run can start.
+    focus_game; click_at ${TFWR_OK_XY:-"461 938"}
+    ;;
   help|*)
     sed -n '2,20p' "${BASH_SOURCE[0]}" | sed 's/^# \?//'
     ;;

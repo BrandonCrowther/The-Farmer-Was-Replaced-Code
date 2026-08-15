@@ -1,0 +1,14 @@
+{
+  "leaderboard": "Cactus",
+  "slug": "cactus",
+  "target": "33_554_432 cacti",
+  "mode": "multi",
+  "entry": "main",
+  "speedup": 5000,
+  "seeded_from": "Cactus_Achievement.py",
+  "personal_best": null,
+  "global_rank": null,
+  "best_branch": null,
+  "status": "seeded",
+  "updated": null
+}

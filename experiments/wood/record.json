@@ -1,0 +1,14 @@
+{
+  "leaderboard": "Wood",
+  "slug": "wood",
+  "target": "10_000_000_000 wood",
+  "mode": "multi",
+  "entry": "main",
+  "speedup": 5000,
+  "seeded_from": "Tree_Achievement.py",
+  "personal_best": null,
+  "global_rank": null,
+  "best_branch": null,
+  "status": "seeded",
+  "updated": null
+}

@@ -1,0 +1,14 @@
+{
+  "leaderboard": "Pumpkins",
+  "slug": "pumpkins",
+  "target": "200_000_000 pumpkins",
+  "mode": "multi",
+  "entry": "main",
+  "speedup": 5000,
+  "seeded_from": "Pumpkin_Achievement.py",
+  "personal_best": null,
+  "global_rank": null,
+  "best_branch": null,
+  "status": "seeded",
+  "updated": null
+}

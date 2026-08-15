@@ -1,0 +1,15 @@
+{
+  "leaderboard": "Fastest_Reset",
+  "slug": "fastest_reset",
+  "target": "unlock Unlocks.Leaderboard",
+  "mode": "multi",
+  "entry": "main",
+  "speedup": 5000,
+  "seeded_from": "Full_Reset_Driver.py",
+  "personal_best": "15:11:42.399",
+  "global_rank": 833,
+  "best_branch": "autofarmer",
+  "status": "baseline",
+  "updated": "2026-08-15",
+  "note": "PB read from the in-game leaderboard modal; the validation run on this code scored 15:23:55.099 (exp-000)."
+}

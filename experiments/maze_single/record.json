@@ -1,0 +1,14 @@
+{
+  "leaderboard": "Maze_Single",
+  "slug": "maze_single",
+  "target": "616_448 gold",
+  "mode": "single",
+  "entry": "main",
+  "speedup": 5000,
+  "seeded_from": null,
+  "personal_best": null,
+  "global_rank": null,
+  "best_branch": null,
+  "status": "empty",
+  "updated": null
+}

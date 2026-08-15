@@ -1,0 +1,14 @@
+{
+  "leaderboard": "Carrots",
+  "slug": "carrots",
+  "target": "2_000_000_000 carrots",
+  "mode": "multi",
+  "entry": "main",
+  "speedup": 5000,
+  "seeded_from": "Carrot_Achievement.py",
+  "personal_best": null,
+  "global_rank": null,
+  "best_branch": null,
+  "status": "seeded",
+  "updated": null
+}

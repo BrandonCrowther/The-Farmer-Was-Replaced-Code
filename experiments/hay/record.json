@@ -1,0 +1,14 @@
+{
+  "leaderboard": "Hay",
+  "slug": "hay",
+  "target": "2_000_000_000 hay",
+  "mode": "multi",
+  "entry": "main",
+  "speedup": 5000,
+  "seeded_from": "Hay_Achievement.py",
+  "personal_best": null,
+  "global_rank": null,
+  "best_branch": null,
+  "status": "seeded",
+  "updated": null
+}

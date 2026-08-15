@@ -1,0 +1,14 @@
+{
+  "leaderboard": "Maze",
+  "slug": "maze",
+  "target": "9_863_168 gold",
+  "mode": "multi",
+  "entry": "main",
+  "speedup": 5000,
+  "seeded_from": "Mazes_Achievement.py",
+  "personal_best": null,
+  "global_rank": null,
+  "best_branch": null,
+  "status": "seeded",
+  "updated": null
+}

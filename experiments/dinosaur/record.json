@@ -1,0 +1,14 @@
+{
+  "leaderboard": "Dinosaur",
+  "slug": "dinosaur",
+  "target": "33_488_928 bones",
+  "mode": "multi",
+  "entry": "main",
+  "speedup": 5000,
+  "seeded_from": "Dino_Achievement.py",
+  "personal_best": null,
+  "global_rank": null,
+  "best_branch": null,
+  "status": "seeded",
+  "updated": null
+}
