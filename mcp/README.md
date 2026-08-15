@@ -1,8 +1,14 @@
 # Phase 2 — automation stack: what was evaluated, what we run
 
-**Decision: no third-party MCP server. Hyprland's own IPC plus `grim` covers the
-whole loop, with no root, no `/dev/uinput`, and no extra daemon.** The driver is
+**Decision: no third-party MCP server. Hyprland's own IPC plus `grim` covers
+capture and keys; `ydotool` is required on top for clicks.** The driver is
 `tools/tfwr.sh`, called through Claude Code's native Bash.
+
+> **Corrected after end-to-end testing.** An earlier draft of this file claimed
+> the loop needed no root at all. That was generalised from a single Escape
+> keypress and is wrong: keys reach the game, but **F5 does not start execution**
+> unless an in-game code window is selected, and selecting one needs a click.
+> `ydotool` is a requirement, not an optional extra. See "Starting a run" below.
 
 ## What was tested on this machine (Omarchy / Hyprland, TFWR under Proton)
 
@@ -10,7 +16,8 @@ whole loop, with no root, no `/dev/uinput`, and no extra daemon.** The driver is
 | --- | --- | --- |
 | Locate game window | `hyprctl clients -j`, class `steam_app_2060160` | works — XWayland, 2048x1152 logical |
 | Screen capture | `grim -g "<geometry>"` | works — emits native 2560x1440 px (1.25 scale) |
-| Key injection | `hyprctl dispatch sendshortcut ",escape,class:steam_app_2060160"` | **works** — verified by opening and closing the in-game menu |
+| Key injection (global keys) | `hyprctl dispatch sendshortcut ",escape,class:steam_app_2060160"` | works — verified opening/closing the menu, and panning the camera with `W`/`S` |
+| Key injection (F5 = start execution) | same, as `,F5` and as `,code:71` | **does not fire** — farm unchanged after both, while the same mechanism pans the camera |
 | Mouse click | — | **gap**, see below |
 | Read numbers off screen | Claude vision on the PNG | works |
 | Read numbers via `tesseract` | `tesseract hud.png -` | unreliable — read `11.1B` as `1B`, merged adjacent counters. Do not use. |
@@ -24,25 +31,34 @@ terminal, not the game, with no error. `tools/tfwr.sh` therefore switches to the
 game's workspace, captures, and switches back. Key injection does *not* need this
 (keys reach the window on an inactive workspace), but any capture does.
 
-### The one gap: mouse clicks
+### Starting a run needs the mouse
 
-`sendshortcut` sends keys only. Anything that needs a pointer — clicking a
-different in-game code window to focus it, hitting the ▶ button, navigating shop
-or menu buttons — has no root-free path. `hyprctl dispatch movecursor` positions
-the cursor but cannot press a button.
+`sendshortcut` sends keys only, and `hyprctl dispatch movecursor` moves the
+cursor without being able to press a button. That is a hard gap, and it lands
+squarely on the critical path.
 
-Consequences for the overnight loop:
+What the F5 test showed, in order:
 
-- Fine without clicks: edit files, F5 to run the *already focused* code window,
-  Shift+F5 to stop, capture, read.
-- Needs clicks: switching which code window is focused, buying upgrades by hand,
-  menu navigation.
+1. F5 to the window: nothing. Farm unchanged after 20 s.
+2. Compositor-focus the window first, then F5: still nothing.
+3. Same mechanism, `W`/`S`: camera pans. So keys **are** being delivered.
+4. F5 as raw keycode (`,code:71`): still nothing.
 
-Keep the intended code window (`Leaderboard_run`) focused when you leave the
-machine, and the keyboard-only path is enough. To close the gap, run
-`tools/setup_input.sh` — it installs `ydotool` plus the udev rule and user
-service. That is the only step here that needs sudo, and it must be done
-interactively before an unattended run.
+The remaining explanation is that the game starts execution only when one of its
+own code windows is selected, and selection comes from a click. Consistent with
+the evidence: the first screenshot of the session showed a text cursor in the
+`Leaderboard_run` title, i.e. it was selected — and the Escape keypress used to
+prove key delivery is most likely what deselected it.
+
+So `tools/setup_input.sh` (installs `ydotool` plus a udev rule and user service)
+is a **prerequisite**, not an optional extra. It needs sudo, so it must be run
+interactively before any unattended session.
+
+Even with a window selected by hand, a keyboard-only loop would be one stray
+Escape away from silently pressing F5 into nothing — and, as measured, a
+no-op run is not obviously distinguishable from a real one in a screenshot
+without reading the farm state. The loop needs to be able to re-select the
+window itself.
 
 ## Servers considered and rejected
 

@@ -67,9 +67,11 @@ tools/tfwr.sh run              # F5 — run the focused in-game code window
 tools/tfwr.sh stop             # Shift+F5
 
 python3 tools/fetch_wiki.py    # refresh docs/wiki (needs pandoc)
-tools/setup_input.sh           # optional: ydotool, only needed for mouse clicks
+tools/setup_input.sh           # required once: ydotool, for clicks (needs sudo)
 ```
 
-Keys go to the game with `hyprctl dispatch sendshortcut` — no root, no daemon.
+Keys go to the game with `hyprctl dispatch sendshortcut`, which needs no root —
+but **F5 alone cannot start a run**: the game only executes when one of its code
+windows is selected, and selecting one takes a click, which needs `ydotool`.
 Capture requires the game's workspace to be visible, so `tfwr.sh` switches to it
-and back; see `mcp/README.md` for why that matters and what else was ruled out.
+and back; see `mcp/README.md` for the test that established both.

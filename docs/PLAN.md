@@ -38,8 +38,9 @@ The measurement loop:
 
 1. Write the variant into `save/Save0/<Name>.py`.
 2. Wait for File Watcher pickup (see the measured latency below).
-3. Press F5 with `tools/tfwr.sh run` — this runs the **focused** code window.
-   `Leaderboard_run` is the designated harness window; leave it focused.
+3. Click the `Leaderboard_run` window to select it (needs `ydotool` — F5 alone
+   does not start a run; see `mcp/README.md`), then press F5 with
+   `tools/tfwr.sh run`.
 4. `tools/tfwr.sh capture` and read the numbers with vision.
 5. Record in `experiments/<NNN-slug>/result.md`, commit.
 
@@ -58,8 +59,9 @@ counters. Use vision.
 | --- | --- |
 | File Watcher pickup latency for an external write | **between 0.66 s and 1.32 s** — unchanged at 0.66 s, changed at 1.32 s, over a 16-frame probe |
 | Does File Watcher work through the save symlink | **yes** — probe wrote through `save/Save0/`, the game rendered the change |
-| Key injection without root | **yes** — `hyprctl dispatch sendshortcut`, verified opening and closing the menu |
-| Mouse clicks without root | **no** — needs `ydotool`, see `tools/setup_input.sh` |
+| Key injection without root | **partly** — `sendshortcut` delivers keys (menu opens/closes, `W`/`S` pan the camera) |
+| Starting a run with F5 alone | **no** — F5 does nothing as keysym or as `code:71`, focused or not; execution starts only with a code window selected, and selection needs a click |
+| Mouse clicks without root | **no** — needs `ydotool`, so `tools/setup_input.sh` is a prerequisite, not an extra |
 | Capture while game is on another workspace | **broken and silent** — `grim` photographs the visible workspace instead; `tools/tfwr.sh` switches and restores |
 | File Watcher enabled | yes (`options.txt`: `file watcher = enabled`) |
 
@@ -100,9 +102,11 @@ code survives a Proton prefix rebuild.
   timer re-invoking Claude per queue item.
 - **Stop condition.** Queue empty, wall-clock budget, or consecutive-failure
   threshold — needed so a bad variant cannot burn the night.
-- **Focus safety.** The keyboard-only path assumes the `Leaderboard_run` window
-  keeps focus for the whole run. Either verify focus from the screenshot before
-  every F5, or install `ydotool` so the loop can re-focus the window itself.
+- **Run verification.** F5 into an unselected window is a silent no-op, and the
+  screenshot of a farm that did not start looks much like one that did. Every run
+  needs a positive signal that execution actually began — the cleanest is a
+  `quick_print` marker emitted as the first statement of the harness script, so
+  its absence means the run never started.
 - **Seed the queue.** Depends on what is left to optimize now that the save is at
   100% achievements — most likely leaderboard categories.
 
