@@ -8,39 +8,13 @@ TARGET = 2000000000
 entity = Entities.Grass
 instructions = Common.get_planting_instructions(entity)
 
-# A plant's companion is always a *different* species, so grass rolls over Bush,
-# Tree and Carrot. get_cost says Bush and Tree are free and only Carrot costs
-# anything (512 hay + 512 wood) — yet Common.p_planting_table maps Entities.Tree
-# to a callback that plants **Grass**. A Tree request is therefore satisfied with
-# the wrong plant: no warning, no error, and no polyculture multiplier on roughly
-# a third of every drone's companion visits. Plant the tree it asked for.
-p_tree = Common.p_make_callback(Entities.Tree, Grounds.Grassland)
-
-def companion_instructions(t):
-	if t == Entities.Tree:
-		return p_tree
-	return Common.get_planting_instructions(t)
-
-def polyculture():
-	# Otherwise identical to Common.polyculture(): walk to the companion tile,
-	# harvest it, plant the companion, walk back. Only the Tree case differs.
-	x, y = get_pos_x(), get_pos_y()
-	companion = get_companion()
-	if companion == None:
-		return
-	plant_type, (px, py) = companion
-	Common.move_to(px, py)
-	harvest()
-	companion_instructions(plant_type)()
-	Common.move_to(x, y)
-
 def driver(x, y):
 	Common.move_to(x,y)
 	instructions()
 	while num_items(Items.Hay) < TARGET:
 		while get_water() < 0.75:
 			use_item(Items.Water)
-		polyculture()
+		Common.polyculture()
 		# Not Common.await_harvest(): that spins forever on a plant that will
 		# never ripen, and once the target is hit nothing else is going to move.
 		# Checking the target here too is what stops a straggler from hanging

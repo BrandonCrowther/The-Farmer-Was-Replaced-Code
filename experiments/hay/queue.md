@@ -7,14 +7,7 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
-- [ ] 004b confirm-champion — one more run of 004 to pin the new champion's
-      number precisely, since every later delta is measured against it.
-- [ ] 004c use-shared-helper — hay/main.py carries a local polyculture() from
-      004; Common.plant_companion() now does the same thing for every category.
-      Drop the override and call Common.polyculture(). Behaviour should be
-      identical, so this is a confirming run, not an improvement: it must come
-      back at 03:40.9 +/- the floor.
-- [ ] 005 reroll-companion — a plant's companion preference is rerolled when it
+- [ ] 006 reroll-companion — a plant's companion preference is rerolled when it
       is replanted, and grass is free. When the roll is Carrot (the only costly
       face: 512 hay + 512 wood) replant rather than paying or wasting the trip.
       Only ever reroll at the moment we replant anyway, never mid-growth, and
@@ -23,16 +16,22 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       changes which faces are worth keeping. **Reference implementation exists:**
       the seeded `saves/wood/main.py` driver already rerolls, replanting until
       `get_companion()` returns a Grass companion at the distance it wants.
-- [ ] 006 carrot-when-rich — 003 showed carrot becomes affordable partway
+- [ ] 007 carrot-when-rich — 003 showed carrot becomes affordable partway
       through a run (failures fell 760 -> 66 with no logic change), so wood is
       arriving from Bush companions. If the multiplier justifies 512 hay + 512
       wood, take the carrot face late even though it is unaffordable early.
       Depends on 004 and 005 landing first.
-- [ ] 007 water-when-available — `while get_water() < 0.75` reached for water
+- [ ] 008 water-when-available — `while get_water() < 0.75` reached for water
       that was not there 711 times in 001. Condition it on
       `num_items(Items.Water)`. Metric: mean over 3 runs vs the 002 baseline.
 
 ## Done
+
+- [x] 005 use-shared-helper — **adopted**, 03:40.911, delta 0.000 s. Confirms
+      `Common.plant_companion()` matches 004's local override exactly; hay's
+      private polyculture() is gone. Also serves as 004's confirming run.
+      Tripwire noted: an identical time to the millisecond twice would mean the
+      score has stopped tracking the code. `experiments/hay/005/result.md`
 
 - [x] 004 true-companion — **adopted, new champion.** 03:40.911, −74.4 s
       (−25.2%) vs baseline; rank #422 -> #278. `p_planting_table` mapped Tree to
