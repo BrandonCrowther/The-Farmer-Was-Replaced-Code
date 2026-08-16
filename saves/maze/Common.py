@@ -99,7 +99,7 @@ def move_to_wrapped(x, y):
 		else:
 			move(South)
 
-def polyculture_mapped(planted):
+def polyculture_mapped(planted, report):
 	# polyculture(), but the caller carries a memory of what it planted where, so
 	# a companion tile that is already correct costs a dictionary lookup rather
 	# than a round trip. A move is 200 ticks; the lookup is a handful.
@@ -119,9 +119,30 @@ def polyculture_mapped(planted):
 	key = (px, py)
 	if key in planted:
 		if planted[key] == plant_type:
+			# Skipped without walking, on the strength of our own record.
+			if report:
+				quick_print("ARRIVE", "skip_own_record", plant_type)
 			return
 	move_to(px, py)
-	if get_entity_type() != plant_type:
+	actual = get_entity_type()
+	if report:
+		# The measurement 021 needed and did not get. Arriving to find the
+		# requested plant already standing, with no record of planting it
+		# ourselves, means a *neighbour* stocked that tile — which is the whole
+		# "contention is cooperation" claim. Arriving to find it wrong means we
+		# pay the 400-tick harvest-and-replant.
+		mine = key in planted
+		if actual == plant_type:
+			if mine:
+				quick_print("ARRIVE", "match_stale_own", plant_type)
+			else:
+				quick_print("ARRIVE", "match_neighbour", plant_type)
+		else:
+			if mine:
+				quick_print("ARRIVE", "mismatch_own", plant_type)
+			else:
+				quick_print("ARRIVE", "mismatch_new", plant_type)
+	if actual != plant_type:
 		harvest()
 		plant_companion(plant_type)
 	planted[key] = plant_type

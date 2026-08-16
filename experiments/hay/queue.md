@@ -43,10 +43,6 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       mattering — the cooperation becomes deliberate infrastructure instead of a
       lucky side effect.
 
-- [ ] 023 measure-preplanted — count arrivals where the companion tile already
-      holds the requested plant, with `quick_print`, under the spacing-5 grid.
-      021 claims overlap is cooperation; this is the measurement that would
-      confirm or kill that claim instead of arguing it.
 - [ ] 024 tighter-spacing — if overlap really is cooperation, 014 pushed the
       wrong way. Try *more* overlap: a denser grid than spacing 5.
 
@@ -87,6 +83,13 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       `num_items(Items.Water)`. Metric: mean over 3 runs vs the 002 baseline.
 
 ## Done
+
+- [x] 023 measure-preplanted — **kills the 021 explanation.** Neighbours
+      pre-stock a requested tile on 0.13% of arrivals, so there was no
+      cooperation to lose. The map serves 45% of requests with no walk. The
+      likely real cause of 021/022 is that their layouts put drones on x=0/y=0,
+      whose companions cross the wrap, and `move_to` is not wrap-aware — 31 moves
+      instead of 1. `experiments/hay/023/result.md`
 
 - [x] 021 diamond-lattice — **rejected, +27.4 s (+15.9%).** Disjoint territories
       work exactly as designed and make the farm 16% slower: **contention was

@@ -14,7 +14,7 @@ REROLL_LIMIT = 2
 entity = Entities.Grass
 instructions = Common.get_planting_instructions(entity)
 
-def driver(x, y):
+def driver(x, y, report):
 	Common.move_to(x,y)
 	instructions()
 	# What this drone believes it has planted, keyed by position.
@@ -47,7 +47,7 @@ def driver(x, y):
 		# actually become false.
 		while num_items(Items.Water) > 0 and get_water() < 0.75:
 			use_item(Items.Water)
-		Common.polyculture_mapped(planted)
+		Common.polyculture_mapped(planted, report)
 		# Not Common.await_harvest(): that spins forever on a plant that will
 		# never ripen, and once the target is hit nothing else is going to move.
 		# Checking the target here too is what stops a straggler from hanging
@@ -107,14 +107,14 @@ for i in range(6):
 	for j in range(6):
 		if i + j != 0:
 			if (i, j) not in HOLES:
-				d = spawn_drone(driver, 3 + i*5, 3 + j*5)
+				d = spawn_drone(driver, 3 + i*5, 3 + j*5, False)
 				# None would mean the cap was hit anyway, and there is no handle
 				# to wait on. Requesting 32 against a cap of 32 it should not
 				# happen — the count below is how we find out if it does.
 				if d:
 					drones.append(d)
 quick_print("SPAWNED", len(drones) + 1, "of", max_drones())
-driver(3, 3)
+driver(3, 3, True)
 # The run is not over until the program is, and the program is not over while a
 # spawned drone is still farming. Reap them before falling off the end.
 for d in drones:
