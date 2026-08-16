@@ -7,15 +7,36 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
-- [ ] 003 no-polyculture — the Hay start has no carrot seeds, so
-      `Common.polyculture()` failed to plant a companion 760 times in 001.
-      Drop it, or only run it when the companion is plantable. Metric: mean
-      over 3 runs vs the 002 baseline.
-- [ ] 004 water-when-available — `while get_water() < 0.75` reached for water
+- [ ] 004 true-companion — `Common.p_planting_table` maps `Entities.Tree` to a
+      callback that plants **Grass**, so a Tree companion request is satisfied
+      with the wrong plant: no warning, no multiplier, on ~1/3 of companion
+      visits. `get_cost` says Bush and Tree are both free. Plant the entity the
+      companion actually asked for. Metric: one run vs the 04:55.320 baseline;
+      expect a large win, not a tick-shave.
+- [ ] 005 reroll-companion — a plant's companion preference is rerolled when it
+      is replanted, and grass is free. When the roll is Carrot (the only costly
+      face: 512 hay + 512 wood) replant rather than paying or wasting the trip.
+      Only ever reroll at the moment we replant anyway, never mid-growth, and
+      cap the attempts — each costs a plant plus a get_companion. Metric: one
+      run vs whatever 004 leaves as the champion. Do this after 004, since 004
+      changes which faces are worth keeping.
+- [ ] 006 carrot-when-rich — 003 showed carrot becomes affordable partway
+      through a run (failures fell 760 -> 66 with no logic change), so wood is
+      arriving from Bush companions. If the multiplier justifies 512 hay + 512
+      wood, take the carrot face late even though it is unaffordable early.
+      Depends on 004 and 005 landing first.
+- [ ] 007 water-when-available — `while get_water() < 0.75` reached for water
       that was not there 711 times in 001. Condition it on
       `num_items(Items.Water)`. Metric: mean over 3 runs vs the 002 baseline.
 
 ## Done
+
+- [x] 003 guarded-polyculture — **rejected**, 04:56.552 (+1.23 s). Planting
+      grass on an unaffordable companion tile is not the repair: `till()` will
+      not convert ground a plant stands on, so it traded 760 rare failures for
+      259 common ones. Taught two things that reshaped the queue — carrot
+      becomes affordable mid-run, and the Tree mapping is a silent miss.
+      `experiments/hay/003/result.md`
 
 - [x] 002 baseline — **04:55.320** (mean of 3), noise floor ±0.15 s. The score
       the game reports is already averaged over 2 h of repeats, so Hay barely
