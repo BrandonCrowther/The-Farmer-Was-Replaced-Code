@@ -19,6 +19,7 @@
 #   tools/tfwr.sh state                # idle | running | result
 #   tools/tfwr.sh wait-result [secs]   # block until the completion modal appears
 #   tools/tfwr.sh dismiss              # clear the completion modal (click OK)
+#   tools/tfwr.sh reload               # Escape -> Load -> Save0 -> Escape
 #   tools/tfwr.sh running              # is the game up? exit 0/1
 set -euo pipefail
 
@@ -43,6 +44,11 @@ HUD_CROP="1120x150+0+0"
 HARNESS_XY=${TFWR_HARNESS_XY:-"1520 624"}
 # OK button on the run-completion modal.
 OK_XY=${TFWR_OK_XY:-"461 938"}
+# Pause-menu "Load", then "Save0" in the save list. Both in logical coords, and
+# both well clear of the rename and delete icons that sit to the right of each
+# save row.
+LOAD_XY=${TFWR_LOAD_XY:-"444 390"}
+SAVE0_XY=${TFWR_SAVE0_XY:-"506 479"}
 
 # ydotool's absolute coordinates are exactly half the compositor's logical
 # coordinates on this setup — measured, not guessed: sending (300,200) landed the
@@ -174,7 +180,10 @@ case "$cmd" in
     rm -f "$full"; echo "$out"
     ;;
   key)
-    need_game
+    # focus_game, not just need_game: sendshortcut reaches an unfocused window
+    # for some keys but Escape is silently dropped, which reads as "the menu
+    # never opened" with no error anywhere.
+    focus_game
     [[ $# -ge 1 ]] || die "key needs a spec, e.g. ',F5' or 'SHIFT,F5'"
     hyprctl dispatch sendshortcut "$1,class:$CLASS" >/dev/null
     ;;
@@ -222,7 +231,29 @@ case "$cmd" in
     # The completion modal must be cleared before another run can start.
     focus_game; click_at $OK_XY
     ;;
+  reload)
+    # Escape -> Load -> Save0 -> Escape.
+    #
+    # Two jobs. It is how the game notices an added or deleted file, which is
+    # what deploy.sh's exit 10 is asking for. It is also the only way to get the
+    # window stacking back to its canonical state: a run leaves the file it
+    # executed on top of the pile, so a second `run` would click whatever is
+    # sitting at HARNESS_XY by then — `main`, not the harness — and F5 would
+    # execute the wrong file. A reload puts them back in filename order with
+    # zzRunner.py on top, which is the whole premise of the fixed coordinate.
+    focus_game
+    hyprctl dispatch sendshortcut ",Escape,class:$CLASS" >/dev/null
+    sleep "${TFWR_MENU_SETTLE:-1.2}"
+    click_at $LOAD_XY;  sleep "${TFWR_MENU_SETTLE:-1.2}"
+    click_at $SAVE0_XY; sleep "${TFWR_RELOAD_SETTLE:-3}"
+    focus_game
+    hyprctl dispatch sendshortcut ",Escape,class:$CLASS" >/dev/null
+    sleep "${TFWR_MENU_SETTLE:-1.2}"
+    st=$(run_state)
+    [[ "$st" == "idle" ]] || die "after reload the game is not idle (state=$st)"
+    echo "reloaded"
+    ;;
   help|*)
-    sed -n '2,20p' "${BASH_SOURCE[0]}" | sed 's/^# \?//'
+    sed -n '2,23p' "${BASH_SOURCE[0]}" | sed 's/^# \?//'
     ;;
 esac
