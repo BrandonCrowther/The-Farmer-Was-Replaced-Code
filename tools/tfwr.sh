@@ -60,6 +60,9 @@ DONT_SAVE_XY=${TFWR_DONT_SAVE_XY:-"1141 601"}
 # thing at this spot — behind it is either grey UI or blue-grey sky, both of
 # which have far more blue.
 DIALOG_PROBE=${TFWR_DIALOG_PROBE:-"1426 751"}
+# Centre of the pause menu's "Start" button, in captured pixels — the probe for
+# whether the pause menu is open.
+MENU_PROBE=${TFWR_MENU_PROBE:-"555 333"}
 
 # ydotool's absolute coordinates are exactly half the compositor's logical
 # coordinates on this setup — measured, not guessed: sending (300,200) landed the
@@ -150,12 +153,15 @@ run_state() {
   }'
 }
 
-# Is the "Do you wish to save before loading?" confirmation showing?
-save_prompt_up() {
+# Is there a green UI button at this captured-pixel coordinate? The game's
+# buttons are the only strongly green-dominant thing on screen — behind them is
+# either grey UI or blue-grey sky, both with far more blue — so one probe
+# answers "is this piece of UI showing" for menus and dialogs alike.
+green_at() {
   local shot v
-  shot=$(mktemp /tmp/tfwr-dlg-XXXX.png)
+  shot=$(mktemp /tmp/tfwr-probe-XXXX.png)
   capture_to "$shot"
-  v=$(magick "$shot" -crop "1x1+${DIALOG_PROBE% *}+${DIALOG_PROBE#* }" +repage \
+  v=$(magick "$shot" -crop "1x1+$1+$2" +repage \
         -format '%[fx:mean.r] %[fx:mean.g] %[fx:mean.b]' info:)
   rm -f "$shot"
   awk -v v="$v" 'BEGIN {
@@ -163,6 +169,16 @@ save_prompt_up() {
     exit (c[3] < 0.15 && c[2] > c[1]) ? 0 : 1
   }'
 }
+
+# Is the "Do you wish to save before loading?" confirmation showing?
+save_prompt_up() { green_at $DIALOG_PROBE; }
+
+# Is the pause menu showing? Escape *toggles* it, so anything that sends Escape
+# blind will invert the state it meant to set: one failed cycle that leaves the
+# menu open turns every subsequent reload into open-close-open, the Load click
+# lands on empty sky, and the loop fails identically forever. Probe, don't
+# assume.
+menu_up() { green_at $MENU_PROBE; }
 
 # Block until the run finishes, i.e. until the completion modal appears.
 wait_result() {
@@ -254,7 +270,17 @@ case "$cmd" in
   wait-result) wait_result "${1:-600}" ;;
   dismiss)
     # The completion modal must be cleared before another run can start.
-    focus_game; click_at $OK_XY
+    #
+    # Close the pause menu first if it is up. OK_XY sits about 20 logical pixels
+    # below the menu's Quit button, and dismiss is called from recovery paths
+    # precisely when the screen is in an unexpected state — which is the worst
+    # possible moment to be clicking blind next to Quit.
+    focus_game
+    if menu_up; then
+      hyprctl dispatch sendshortcut ",Escape,class:$CLASS" >/dev/null
+      sleep "${TFWR_MENU_SETTLE:-1.2}"
+    fi
+    click_at $OK_XY
     ;;
   reload)
     # Escape -> Load -> Save0 -> Escape.
@@ -267,15 +293,27 @@ case "$cmd" in
     # execute the wrong file. A reload puts them back in filename order with
     # zzRunner.py on top, which is the whole premise of the fixed coordinate.
     focus_game
-    hyprctl dispatch sendshortcut ",Escape,class:$CLASS" >/dev/null
-    sleep "${TFWR_MENU_SETTLE:-1.2}"
+    # Open the menu only if it is not already open — see menu_up().
+    if ! menu_up; then
+      hyprctl dispatch sendshortcut ",Escape,class:$CLASS" >/dev/null
+      sleep "${TFWR_MENU_SETTLE:-1.2}"
+    fi
+    menu_up || die "pause menu did not open"
+
     click_at $LOAD_XY;  sleep "${TFWR_MENU_SETTLE:-1.2}"
     click_at $SAVE0_XY; sleep "${TFWR_MENU_SETTLE:-1.2}"
     if save_prompt_up; then click_at $DONT_SAVE_XY; fi
     sleep "${TFWR_RELOAD_SETTLE:-3}"
-    focus_game
-    hyprctl dispatch sendshortcut ",Escape,class:$CLASS" >/dev/null
-    sleep "${TFWR_MENU_SETTLE:-1.2}"
+
+    # A load drops back to the pause menu, so it is normally open here — but
+    # only close it if it actually is.
+    if menu_up; then
+      focus_game
+      hyprctl dispatch sendshortcut ",Escape,class:$CLASS" >/dev/null
+      sleep "${TFWR_MENU_SETTLE:-1.2}"
+    fi
+    ! menu_up || die "pause menu still open after reload"
+
     st=$(run_state)
     [[ "$st" == "idle" ]] || die "after reload the game is not idle (state=$st)"
     echo "reloaded"
