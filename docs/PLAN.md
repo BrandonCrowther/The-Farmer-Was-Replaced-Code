@@ -65,6 +65,8 @@ counters. Use vision.
 | File Watcher enabled | yes (`options.txt`: `file watcher = enabled`) |
 | Full loop, end to end | **works** — select, F5, run, read result, dismiss; `Fastest_Reset 15:23:55.099`, ~2 min wall clock. See `experiments/000-e2e-validation/` |
 | Does a leaderboard run disturb the main save | **no** — resource bar returned to its pre-run values afterwards |
+| Harness window targeting | **solved** — windows stack at one default spot and the alphabetically-last filename is on top, so the harness is `zzRunner.py` everywhere and always sits at a fixed, clickable coordinate |
+| Do dragged window positions persist | **no** — positions live in `save.json`, which the game only writes on an explicit save (autosave is off) |
 | "Did the run start?" signal | the top banner's timer **ticks**; `tools/tfwr.sh state` samples it twice and compares |
 | Restructured layout, end to end | **works** — deploy, reload, run, read: `Fastest_Reset 15:13:15.781`, `experiments/fastest_reset/000/` |
 | Noise floor | **~10 min** — identical code scored 15:23:55 and 15:13:15 on two runs |
@@ -110,12 +112,6 @@ Per queue item, driven from `autofarmer`:
 - **Loop shape.** Long-running Claude Code session with a bash loop, or a systemd
   timer re-invoking Claude per queue item.
 - **Stop condition.** Queue empty, wall-clock budget, or consecutive failures.
-- **Window targeting.** `tfwr.sh run` clicks a fixed coordinate to select the
-  harness window, but the game re-lays-out its windows on every save reload, so
-  that coordinate goes stale exactly when categories switch. Either establish a
-  canonical layout per category (drag once, record the position) or locate the
-  window visually before each run. **This is the last thing blocking an
-  unattended night.**
 - **Termination.** Every seeded category is an endless `while True` achievement
   farmer. A leaderboard run only scores if the program ends — item 001 in each
   queue.

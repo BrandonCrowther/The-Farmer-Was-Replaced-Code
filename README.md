@@ -10,6 +10,7 @@ leaderboard categories.
 | Path | What |
 | --- | --- |
 | `saves/<category>/` | source of truth per leaderboard category, one folder each |
+| `saves/*/zzRunner.py` | the harness — named to sort last so it is always the top window |
 | `live/` | what the game actually reads; deployed copies, gitignored |
 | `docs/leaderboards.md` | the 16 categories — **generated**, see below |
 | `docs/wiki/` | offline mirror of thefarmerwasreplaced.wiki.gg, 59 pages |
@@ -73,6 +74,12 @@ Keys go in via `hyprctl dispatch sendshortcut` (no root). Clicks need `ydotool` 
 run `tools/setup_input.sh` once — because **F5 does nothing unless a code window
 is selected**, and selecting one takes a click. Capture requires the game's
 workspace to be visible, so `tfwr.sh` switches to it and back.
+
+The harness is called `zzRunner.py` in every category for a reason: code windows
+all stack at one default position, and the file whose name sorts last is the one
+on top. That makes the harness clickable at a fixed coordinate no matter which
+category is deployed. Dragging windows does not help — positions live in
+`save.json` and only persist across a reload if you explicitly save.
 
 `state` works by sampling the top banner twice and looking for *motion*: a run's
 timer ticks, the completion modal does not. See `mcp/README.md` for the two

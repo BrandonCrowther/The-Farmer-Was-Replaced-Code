@@ -30,11 +30,17 @@ SHOTS="$REPO/logs/captures"
 # logical at 1.25 scale = 2560x1440 captured pixels; this crop is in captured px.
 HUD_CROP="1120x150+0+0"
 
-# Where to click to select the harness code window, in logical compositor coords,
-# and where its title-bar run/stop buttons are, in captured px. Both depend on
-# where you dragged the window inside the game, so override if you move it.
-HARNESS_XY=${TFWR_HARNESS_XY:-"1178 748"}
-BUTTON_CROP=${TFWR_BUTTON_CROP:-"120x50+1065+805"}
+# Where to click to select the harness code window, in logical compositor coords.
+#
+# This is a fixed point and stays correct because of two measured facts: every
+# code window without a saved position opens at the same default spot, and the
+# one on top is the file whose name sorts last, case-insensitively. The harness
+# is therefore called zzRunner.py in every category — it wins that ordering, so
+# it is always the window sitting at this coordinate, whatever else is deployed.
+#
+# Dragging a window somewhere nicer does NOT survive a reload: positions live in
+# save.json, and with autosave off the game only writes them on an explicit save.
+HARNESS_XY=${TFWR_HARNESS_XY:-"1520 624"}
 # OK button on the run-completion modal.
 OK_XY=${TFWR_OK_XY:-"461 938"}
 
@@ -91,17 +97,16 @@ click_at() {
   ydotool mousemove -a -x $((${before%%,*} / YDO_DIV)) -y $((${before##*,} / YDO_DIV))
 }
 
-# Three states, read from the top-centre banner rather than any code window.
+# Three states, read from the top-centre banner rather than any code window:
 #
-#   running  the run timer and "N Runs Completed" are drawn there -> white text on
-#            sky, so the crop has high contrast
-#   result   the completion modal covers it in flat grey          -> low contrast, neutral
-#   idle     plain sky                                            -> low contrast, blue
+#   running  the run timer is ticking, so the region changes between two samples
+#   result   the completion modal covers it with static text
+#   idle     plain sky, static and blue
 #
-# Deliberately not sampling a code window's title bar: an earlier version did, and
-# the crop silently went stale the moment the game re-laid-out its windows after a
-# save reload, reporting `result` for a run that was plainly executing. The banner
-# is drawn at a fixed place regardless of window layout.
+# Two earlier versions of this got it wrong. Sampling the harness title bar went
+# stale the moment the game re-laid-out its windows on a save reload. Replacing
+# that with a contrast test on this banner then read the modal's own text as a
+# running timer. Motion is what actually separates them.
 run_state() {
   local a b crop va vb
   crop="${TFWR_BANNER_CROP:-500x120+1060+140}"
@@ -184,10 +189,18 @@ case "$cmd" in
     command -v ydotool >/dev/null || die "ydotool not installed"
     focus_game
     before=$(hyprctl cursorpos | tr -d ' ')
-    ydotool mousemove -a -x $(($1 / YDO_DIV)) -y $(($2 / YDO_DIV)); sleep 0.2
-    ydotool click 0x40; sleep 0.2
-    ydotool mousemove -a -x $(($3 / YDO_DIV)) -y $(($4 / YDO_DIV)); sleep 0.3
-    ydotool click 0x80; sleep 0.2
+    ydotool mousemove -a -x $(($1 / YDO_DIV)) -y $(($2 / YDO_DIV)); sleep 0.3
+    ydotool click 0x40; sleep 0.3
+    # Step the pointer there rather than teleporting: a single jump between press
+    # and release is not seen as a drag, it just lands as a click on the title bar.
+    steps=${TFWR_DRAG_STEPS:-12}
+    for i in $(seq 1 "$steps"); do
+      ydotool mousemove -a \
+        -x $((($1 + ($3 - $1) * i / steps) / YDO_DIV)) \
+        -y $((($2 + ($4 - $2) * i / steps) / YDO_DIV))
+      sleep 0.03
+    done
+    sleep 0.2; ydotool click 0x80; sleep 0.2
     ydotool mousemove -a -x $((${before%%,*} / YDO_DIV)) -y $((${before##*,} / YDO_DIV))
     ;;
   select)
