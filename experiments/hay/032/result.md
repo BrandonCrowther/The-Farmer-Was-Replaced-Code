@@ -39,18 +39,3 @@ Which means:
 before and after each attempt, plus the entity, and count how many attempts ever
 change the preference. If the answer is zero, 020's result file needs correcting
 and the reroll should be replaced by the plain replant it actually is.
-
-
----
-
-**CORRECTED BY 033.** The claim above — that the loop "spins to its cap and
-rerolls nothing", and that 020's win is therefore mis-attributed — is **false**.
-
-033 measured 5,485 reroll attempts: the preference changed on 66.4% of them,
-exactly the 2/3 expected from a fresh uniform roll. It changes even though the
-tile is untouched (`mid_entity` is Grass throughout, the harvest fails on the
-unripe plant and `instructions()` plants nothing), because **`get_companion()` is
-non-deterministic per call**.
-
-020 stands as written. 032 lost because it demanded a match on type *and*
-position, which is far rarer than "not Carrot" — not because rerolling is broken.
