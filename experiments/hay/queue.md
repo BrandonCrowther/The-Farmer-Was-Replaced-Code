@@ -12,13 +12,11 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       carrot companion fails on an occupied tile (9 -> 183 such warnings in
       006). Harvest first in the companion callback. Cheap, and it applies to
       every category. Metric: one run vs champion.
-- [ ] 011 plot-rotation — **the fork.** 94% of passes find the plant unripe:
-      drones busy-wait while ~96% of the 32x32 field lies empty. Give each drone
-      a plot and walk it in rotation so a tile has the whole circuit to grow.
-      Drop polyculture for this run to isolate the idle-time hypothesis.
-      Metric: one run vs 03:40.911; expect a large win.
-- [ ] 012 rotation-with-polyculture — restore the companion multiplier on top of
-      whatever 011 shows. Only meaningful if 011 wins.
+- [ ] 013 measure-idle-ticks — settle what 007 only guessed at. Wrap the
+      champion's busy-wait in `get_tick_count()` (0 ticks) and report the share
+      of ticks actually spent waiting, not the share of passes that begin
+      waiting. That number decides whether idle time is worth attacking at all.
+      Diagnostic, not an optimisation.
 - [ ] 007 carrot-when-rich — 003 showed carrot becomes affordable partway
       through a run (failures fell 760 -> 66 with no logic change), so wood is
       arriving from Bush companions. If the multiplier justifies 512 hay + 512
@@ -29,6 +27,13 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       `num_items(Items.Water)`. Metric: mean over 3 runs vs the 002 baseline.
 
 ## Done
+
+- [x] 008 plot-rotation — **rejected, ~59x slower** (3:38:11 vs 03:40.911). The
+      premise was a misreading of 007: 94% of passes *beginning* unripe is a
+      frequency, not a duration. Dropping polyculture "to isolate the variable"
+      threw away the 5x multiplier that was most of the yield, and a 25-tile
+      circuit cost more movement than the waiting it removed.
+      `experiments/hay/008/result.md`
 
 - [x] 007 farm-state-diagnostic — **the bottleneck is growth, not ticks.** 825
       samples: the tile always holds grass (so 004/006 stand), companion faces
