@@ -11,7 +11,7 @@ Cleaned 2026-08-16 13:05: the merge-conflict resolution in 020 resurrected
 entries that were already finished (017, 018, 019, 023, 013, 008). Those are in
 Done. What follows is genuinely open.
 
-- [ ] 031 why-carrot-fails — **the largest measurable prize.** 019 measured Bush
+- [x] 031 why-carrot-fails — **the largest measurable prize.** 019 measured Bush
       5/5 and Tree 7/7 satisfied against Carrot 1/8, and a satisfied companion is
       worth **160x**. A third of requests are Carrot, so a third of passes collect
       512 instead of 81,920 — satisfying them all would be ~2.8x, against a 2.9x
@@ -21,11 +21,15 @@ Done. What follows is genuinely open.
       `get_entity_type()` and `can_harvest()` at the moment a carrot planting
       fails settles whether the blocker is the ground, the occupancy, or both —
       and therefore whether it is fixable at all.
-- [ ] 032 empty-companion-tiles — if occupancy is the blocker, the fix is to leave
-      companion tiles *empty* rather than stocked: an empty tile can be tilled
-      either way, so every request type succeeds. That trades away 010's 45% skip
-      path (worth a measured 16 s) for a full multiplier on every pass. Depends on
-      031.
+- [ ] 032 reroll-for-map-hit — **replaces empty-companion-tiles, which 031
+      voided.** The farm is already ~97% multiplied, so the gap is ticks per
+      harvest: 967 against the ~330 the leader implies. The dominant term is the
+      companion round trip on the 52% of passes that need one, and the skip path
+      costs 462 ticks against 1,459.
+      020 already rerolls on an empty tile for 200 ticks a throw. Reroll instead
+      until the request names a tile the map says is *already correct*: at a 45%
+      hit rate that is ~1.2 throws, ~240 ticks, to turn a 1,459-tick pass into a
+      462-tick one. Cap it, and measure the resulting skip rate.
 - [ ] 022 reroll-limit — 020 caps rerolls at 2, leaving ~4% of passes still on a
       carrot request. Each reroll is one 200-tick plant. Try 3 and 4. Small, and
       only worth running if 031/032 do not make carrot succeed outright.
