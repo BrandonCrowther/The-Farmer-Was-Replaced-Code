@@ -7,12 +7,19 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
-- [ ] 035 query-until-hit — **the unlock.** 033 found `get_companion()` rerolls
+- [x] 035 query-until-hit — **the unlock.** 033 found `get_companion()` rerolls
       on every call, and a call costs **1 tick**; every reroll so far has
       replanted at 200 ticks to get a fresh request. Call it repeatedly until it
       names a tile the map already satisfies, cap the attempts, and the pass
       becomes a 26-tick skip instead of a 1,455-tick walk. 034 shows the skip rate
       must reach ~66% (from 45%) before a second plot can pay.
+- [ ] 037 preference-stability — **the crux, and it bears on a merged result.**
+      Does the companion in force at `harvest()` match the one we satisfied? 033
+      showed `get_companion()` rerolls per call, so a skip decided from an earlier
+      query may forfeit the 160x multiplier. Record the companion at the skip
+      decision, query again immediately before harvesting, compare. If they
+      disagree often, 013's 18.5 s map win rests on something narrower than its
+      write-up claims.
 - [ ] 036 skip-then-two-plots — once 035 lands, retry two plots. 034's arithmetic:
       a second tile pays only when work per harvest is under ~509 ticks, and the
       leader implies 2.2 tiles per drone at 466 ticks. 029 failed because it added

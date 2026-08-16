@@ -99,6 +99,27 @@ def move_to_wrapped(x, y):
 		else:
 			move(South)
 
+# How many times to re-ask get_companion() for a request the map already
+# satisfies. Each ask is 1 tick (033), against 200 for the replant this replaces,
+# so a generous cap is still cheap: 12 asks cost 12 ticks against the 1,455 a
+# walk-and-replant costs.
+QUERY_LIMIT = 12
+
+def already_satisfied(planted, companion):
+	# Would this request be served without moving? True when the map records the
+	# requested plant already standing at the requested position — exactly the
+	# condition polyculture_mapped() uses to skip the round trip.
+	#
+	# Carrot is excluded: it plants fine (031) but a carrot tile is one we
+	# harvested for wood, so it is not a stable companion to rely on.
+	plant_type, (px, py) = companion
+	if plant_type == Entities.Carrot:
+		return False
+	key = (px, py)
+	if key in planted:
+		return planted[key] == plant_type
+	return False
+
 def polyculture_mapped(planted):
 	# polyculture(), but the caller carries a memory of what it planted where, so
 	# a companion tile that is already correct costs a dictionary lookup rather
@@ -110,7 +131,22 @@ def polyculture_mapped(planted):
 	# written only straight after this drone plants, and the tile is still
 	# verified with get_entity_type() on any pass where we do walk.
 	x, y = get_pos_x(), get_pos_y()
+	# Ask again rather than replant.
+	#
+	# 033 measured that get_companion() rerolls on every call — the preference
+	# changed on 66.4% of attempts while the tile was provably untouched. A call
+	# costs 1 tick; replanting to force a fresh request costs 200. Every reroll in
+	# this project so far has paid the expensive one.
+	#
+	# So query until the request names a tile the map already satisfies, which
+	# turns a 1,455-tick walk-and-replant into a 26-tick skip. 034 puts the skip
+	# rate at 45% today, so this should clear in ~2 calls, and shows the rate must
+	# reach ~66% before a second plot per drone can pay.
 	companion = get_companion()
+	asks = 0
+	while companion != None and asks < QUERY_LIMIT and not already_satisfied(planted, companion):
+		companion = get_companion()
+		asks = asks + 1
 	if companion == None:
 		return
 	plant_type, (px, py) = companion
