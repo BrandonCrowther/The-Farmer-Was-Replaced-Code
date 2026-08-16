@@ -8,7 +8,7 @@
   "seeded_from": "Hay_Achievement.py",
   "personal_best": "03:40.911",
   "global_rank": 278,
-  "best_branch": "auto_experiment/hay/004",
+  "best_branch": "auto_experiment/hay/005",
   "baseline": "03:40.911",
   "noise_floor": "0.15s (1 sd over 3 runs)",
   "status": "scoring",
