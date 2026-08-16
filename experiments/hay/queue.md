@@ -7,11 +7,10 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
-- [ ] 016 no-carrot — carrot is the only companion that can fail. It needs Soil,
-      and `till()` will not convert ground a plant stands on, so an unripe plant
-      on the tile blocks it — ~230 "cannot plant on Grassland" per run. Test
-      never attempting carrot at all: skip the walk outright, accept 1x on those
-      passes, and save every wasted round trip. Metric: one run vs 03:05.323.
+- [ ] 017 water-threshold — `while get_water() < 0.75` targets a level the farm
+      cannot supply: 32 tiles at 0.75 drain ~0.24 water/s against a supply of
+      ~0.025/s, so the loop spins on failed `use_item` calls, ~200 ticks a pass.
+      Water only when a tank is actually in hand. Metric: one run vs 03:05.323.
 
 - [ ] 009 harvest-before-till — `p_make_callback` tills before planting, but
       `till()` will not convert ground a plant stands on, so an affordable
@@ -33,6 +32,13 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       `num_items(Items.Water)`. Metric: mean over 3 runs vs the 002 baseline.
 
 ## Done
+
+- [x] 016 no-carrot — **rejected**, 03:16.787 (+11.5 s). Skipping a doomed
+      planting should have been free and was not: **the companion walk is how
+      grass growth time gets hidden.** Walk time ~= growth time, which is why
+      008, 011 and 016 all failed. The remaining gap needs faster growth, not
+      shorter walks — and growth is water-limited.
+      `experiments/hay/016/result.md`
 
 - [x] 015 self-correcting-map — **rejected**, 03:09.234 (+3.9 s). Marking
       contested tiles permanently untrusted degrades the map to "always walk".

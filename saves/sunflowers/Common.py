@@ -114,6 +114,20 @@ def polyculture_mapped(planted):
 	if companion == None:
 		return
 	plant_type, (px, py) = companion
+	# Never attempt carrot.
+	#
+	# It is the only companion that can fail after the walk is already paid for.
+	# Bush, Tree and Grass are free and sit on Grassland, which is what the farm
+	# already is. Carrot needs Soil, and till() will not convert ground a plant is
+	# standing on — so whenever the tile holds a plant too unripe to harvest away,
+	# the till fails, the planting fails, and the whole round trip bought nothing.
+	# That is the ~230 "cannot plant on Grassland" warnings a run.
+	#
+	# It also costs 512 hay and 512 wood when it does work, and races other drones
+	# for that wood. Skipping forfeits the multiplier on those passes and keeps the
+	# ~800 ticks. Whether that trade is good is what this run measures.
+	if plant_type == Entities.Carrot:
+		return
 	if not affordable(plant_type):
 		return
 	key = (px, py)
