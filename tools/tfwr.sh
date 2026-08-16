@@ -75,9 +75,28 @@ YDO_DIV=2
 
 die() { echo "tfwr: $*" >&2; exit 1; }
 
-client() { hyprctl clients -j | jq -e --arg c "$CLASS" '.[] | select(.class==$c)'; }
+# The game's own window is the one titled TheFarmerWasReplaced. Selecting on
+# class alone is not enough: when the game dies under Proton it puts up a crash
+# dialog with the *same* class, so `client` starts returning two objects,
+# `geometry` emits two lines, and grim fails with "invalid geometry" — which
+# tells you nothing about what actually happened.
+client() {
+  hyprctl clients -j | jq -e --arg c "$CLASS" \
+    'map(select(.class==$c and .title=="TheFarmerWasReplaced")) | .[0] // empty'
+}
+
+# Any window of the game's class that is not the game itself is a Wine/Proton
+# dialog, and in practice that means a crash box ("Fatal error in GC",
+# "SuspendThread loop failed"). Report it as the crash it is.
+crash_dialog() {
+  hyprctl clients -j | jq -r --arg c "$CLASS" \
+    'map(select(.class==$c and .title!="TheFarmerWasReplaced")) | .[0].title // empty'
+}
 
 need_game() {
+  local crash
+  crash=$(crash_dialog)
+  [[ -z "$crash" ]] || die "the game has crashed — Proton dialog: \"$crash\". It must be restarted through Steam."
   client >/dev/null 2>&1 || die "game window ($CLASS) not found — is TFWR running?"
 }
 
