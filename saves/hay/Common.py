@@ -44,12 +44,39 @@ p_planting_table = {
 def get_planting_instructions(entity):
 	return p_planting_table[entity]
 
+# p_planting_table answers "what do I put on a tile while farming X". A companion
+# request asks a different question: "what actually satisfies a plant that wants
+# an X next to it". The Tree entry is where the two diverge and why they must not
+# share a lookup — a tree farm deliberately puts *grass* on the tile between its
+# trees (see the wood driver, which depends on that), but a plant asking for a
+# Tree companion is satisfied by nothing except a real tree.
+#
+# Answering the companion question from the farming table planted grass for every
+# Tree request: legal, silent, no warning in output.txt, and no multiplier. It
+# cost roughly a third of all companion visits. Fixing it took 25% off the Hay
+# leaderboard time in one run — see experiments/hay/004/result.md.
+#
+# Companion preference is only ever Grass, Bush, Tree or Carrot, and never the
+# plant's own species.
+p_companion_table = {
+	Entities.Grass: p_make_callback(Entities.Grass, Grounds.Grassland),
+	Entities.Bush: p_make_callback(Entities.Bush, Grounds.Grassland),
+	Entities.Tree: p_make_callback(Entities.Tree, Grounds.Grassland),
+	Entities.Carrot: p_make_callback(Entities.Carrot, Grounds.Soil)
+}
+
+def plant_companion(entity):
+	p_companion_table[entity]()
+
 def polyculture():
 	x, y = get_pos_x(), get_pos_y()
-	plant_type, (px, py) = get_companion()
-	instructions = get_planting_instructions(plant_type)
+	companion = get_companion()
+	# get_companion() returns None when the plant underfoot has no preference.
+	if companion == None:
+		return
+	plant_type, (px, py) = companion
 	move_to(px, py)
 	harvest()
-	instructions()
+	plant_companion(plant_type)
 	move_to(x, y)
 
