@@ -77,6 +77,28 @@ def affordable(entity):
 			return False
 	return True
 
+def move_to_wrapped(x, y):
+	# The farm wraps, so the short way to a distant tile is often across the
+	# seam: from x=2 to x=30 is 28 moves east, or 4 west. move_to() always takes
+	# the direct path and will happily walk most of the way around the world.
+	#
+	# At 200 ticks a move that matters wherever distances are large. It is
+	# deliberately *not* on the Hay hot path: companion requests land within 3
+	# moves and, with drones at 3..28 on a 32-wide farm, never cross the seam, so
+	# move_to() is already optimal there and this would only add arithmetic.
+	# Use it for placement, and for any category whose drones cross the map.
+	size = get_world_size()
+	while get_pos_x() != x:
+		if (x - get_pos_x()) % size <= size // 2:
+			move(East)
+		else:
+			move(West)
+	while get_pos_y() != y:
+		if (y - get_pos_y()) % size <= size // 2:
+			move(North)
+		else:
+			move(South)
+
 def polyculture_mapped(planted):
 	# polyculture(), but the caller carries a memory of what it planted where, so
 	# a companion tile that is already correct costs a dictionary lookup rather
