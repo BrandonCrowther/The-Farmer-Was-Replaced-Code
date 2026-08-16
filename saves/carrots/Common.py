@@ -76,7 +76,17 @@ def polyculture():
 		return
 	plant_type, (px, py) = companion
 	move_to(px, py)
-	harvest()
-	plant_companion(plant_type)
+	# Only disturb the companion tile if it is not already what it needs to be.
+	#
+	# A successful operating function costs 200 ticks and a failed one costs 1
+	# (see docs/wiki/Operation-Costs.md), so the harvest-and-replant pair here is
+	# 400 ticks of a ~1400 tick pass. It buys a companion that was already
+	# standing there, and its yield is wood or fruit rather than the crop being
+	# farmed — nothing that counts towards a resource leaderboard's target.
+	#
+	# get_entity_type() costs 1 tick, so checking is close to free.
+	if get_entity_type() != plant_type:
+		harvest()
+		plant_companion(plant_type)
 	move_to(x, y)
 
