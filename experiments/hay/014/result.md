@@ -23,12 +23,21 @@ The gain is small because position barely affects a drone's own yield; it only
 changes how much neighbouring companion ranges overlap. Moving the four holes
 inward trims a little contention and nothing else.
 
-**Contention cannot be fixed by geometry.** Eliminating overlap needs drones 7
-apart (companion range 3, twice). Thirty-two drones on a 32x32 farm have 32 tiles
-each, so the best achievable spacing is sqrt(32) ~= 5.66 — under 7 whatever the
-arrangement, and the farm wraps, so no clever edge packing helps either. Overlap
-is a property of the drone count, not the layout.
+**~~Contention cannot be fixed by geometry.~~ CORRECTED — see exp-018.** This
+section originally argued that eliminating overlap needs drones 7 apart, that 32
+drones over 1024 tiles gives 32 tiles each, and that the best achievable spacing
+is therefore sqrt(32) ~= 5.66, under 7 whatever the arrangement.
 
-That points the next experiment at the map rather than the placement: make it
-self-correcting, so a tile found to disagree with its record is marked contested
-and always walked thereafter.
+**That is wrong.** It reasons about circles in a world with no diagonal movement.
+Distance here is Manhattan, so "within 3 moves" is a *diamond* of 2r^2+2r+1 = 25
+tiles, not a 7x7 square of 49. Thirty-two diamonds need 800 tiles against the
+farm's 1024, so disjoint territories fit — and a staggered lattice (rows 4 apart,
+centres 8 apart along a row, odd rows offset by 4) places exactly 32 centres at a
+minimum L1 separation of 8, wrap included.
+
+The area-per-drone argument was sound; using the Euclidean intuition for what
+that area buys was not.
+
+This pointed the next experiment at the map rather than the placement (015,
+rejected). With the correction above, the placement route is open after all and
+is exp-018.
