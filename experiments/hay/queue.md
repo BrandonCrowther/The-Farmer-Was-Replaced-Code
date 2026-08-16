@@ -7,6 +7,18 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
+- [ ] 022 reroll-limit — 020 caps rerolls at 2, leaving ~4% of passes still on a
+      carrot request. Each reroll is one 200-tick plant. Try 3 and 4.
+
+- [ ] 019 mechanics-probe — **method fix.** Measure what has only been inferred:
+      the polyculture multiplier (hay delta across one harvest, satisfied vs not,
+      single drone so `num_items` is uncontaminated), growth ticks with no walk
+      in the way, companion distance distribution, and real water levels and tank
+      counts. Will not score; the telemetry is the point.
+- [ ] 018 diamond-lattice — 32 drones at minimum L1 separation 8 (rows 4 apart,
+      centres 8 apart, odd rows offset 4) give every drone a private 25-tile
+      diamond, so no planting is overwritten and no map entry can go stale.
+      Depends on 019 confirming the companion range is really 3.
 - [ ] 017 water-threshold — `while get_water() < 0.75` targets a level the farm
       cannot supply: 32 tiles at 0.75 drain ~0.24 water/s against a supply of
       ~0.025/s, so the loop spins on failed `use_item` calls, ~200 ticks a pass.
@@ -33,6 +45,14 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Done
 
+- [x] 020 reroll-after-harvest — **adopted, new champion.** 02:52.271, −12.4 s
+      (−6.7%), rank #177 -> #149. 006's idea with its placement fixed: reroll
+      after the multiplied harvest, not before it. `experiments/hay/020/result.md`
+
+- [x] 017 water-threshold — **adopted**, 03:04.715, −0.608 s. Gate the watering
+      loop on `num_items(Items.Water) > 0` so it stops spinning on an unreachable
+      level; water warnings 1042 -> 120. Smaller than predicted, and this run
+      cannot say why. `experiments/hay/017/result.md`
 - [x] 019 mechanics-probe — **the multiplier is 160x, not 67x**, and carrot is
       satisfied only 1 time in 8 while Bush and Tree never fail. A third of
       passes therefore yield 512 instead of 81,920; satisfying all of them would

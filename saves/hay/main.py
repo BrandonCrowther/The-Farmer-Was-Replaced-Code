@@ -5,6 +5,12 @@ import Common
 # has to notice the target and return, and the main drone has to outlive them all.
 TARGET = 2000000000
 
+# How many times to replant looking for a companion we can actually satisfy.
+# Each reroll costs a plant (200 ticks) and restarts the growth clock, so this is
+# not free; 019 puts P(carrot) at about a third, so most passes reroll zero times
+# and few reroll more than once.
+REROLL_LIMIT = 2
+
 entity = Entities.Grass
 instructions = Common.get_planting_instructions(entity)
 
@@ -50,6 +56,35 @@ def driver(x, y):
 		while not h and num_items(Items.Hay) < TARGET:
 			h = can_harvest()
 		harvest()
+
+		# Reroll a Carrot companion — but only now, after the harvest.
+		#
+		# 019 measured what 011 only inferred: a satisfied companion yields 81920
+		# hay against a bare 512, a **160x** multiplier. It also measured which
+		# companions actually get satisfied — Bush 5/5, Tree 7/7, Carrot 1/8.
+		# Carrot needs Soil and `till()` will not convert ground a plant stands
+		# on, so it fails whenever the tile holds anything unharvestable. Carrot
+		# is a third of requests, so roughly a third of passes take 512 instead of
+		# 81920.
+		#
+		# Replanting rerolls the preference, and grass is free. 006 tried this and
+		# lost — because it rerolled at the *top* of the pass, harvesting the
+		# mature grass while its companion was still unsatisfied and collecting
+		# 512 for it. It paid for the reroll by destroying the thing it was
+		# buying.
+		#
+		# Here the harvest has already happened at full multiplier and the tile is
+		# empty, so a reroll costs one plant (200 ticks) rather than a harvest plus
+		# a plant, and throws away nothing. Capped, because each reroll also resets
+		# the growth clock.
+		rerolls = 0
+		instructions()
+		companion = get_companion()
+		while rerolls < REROLL_LIMIT and companion != None and companion[0] == Entities.Carrot:
+			harvest()
+			instructions()
+			companion = get_companion()
+			rerolls = rerolls + 1
 
 clear()
 # max_drones() is 32 (measured in 013) and this grid has 36 positions, so four
