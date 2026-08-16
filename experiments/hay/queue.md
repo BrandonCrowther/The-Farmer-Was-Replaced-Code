@@ -7,7 +7,7 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
-- [ ] 001 terminate — the seeded driver is an endless `while True` achievement
+- [x] 001 terminate — the seeded driver is an endless `while True` achievement
       farmer; a leaderboard run only scores if the program ends. Add a
       termination check on the target and stop the drones. Metric: the run
       completes and reports a time at all.
