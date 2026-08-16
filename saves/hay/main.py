@@ -14,77 +14,60 @@ REROLL_LIMIT = 2
 entity = Entities.Grass
 instructions = Common.get_planting_instructions(entity)
 
-def driver(x, y):
-	Common.move_to(x,y)
-	instructions()
-	# What this drone believes it has planted, keyed by position.
-	#
-	# 010 already skips the harvest-and-replant when the companion tile is
-	# already correct — but it only learns that *after* walking there, and a move
-	# costs 200 ticks. Remembering it turns a ~800 tick round trip into a couple
-	# of ticks of dictionary lookup on the passes where the tile has not changed.
-	#
-	# Only this drone's own plantings go in, and the map is never trusted for
-	# anything except skipping a trip. The asymmetry matters: believing a
-	# companion is present when it is not costs the 67x multiplier on that
-	# harvest, while a needless walk costs 800 ticks. Wrong-and-skip is far worse
-	# than wrong-and-walk, so nothing speculative belongs in here.
-	planted = {}
-	while num_items(Items.Hay) < TARGET:
-		# Water while there is water to use, not until an unreachable level.
-		#
-		# `while get_water() < 0.75` targets a level the farm cannot supply. The
-		# ground loses 1% of its water per second, so holding 32 tiles at 0.75
-		# drains roughly 0.24/s, against a supply of one 0.25 tank per 10 seconds
-		# — about 0.025/s. Ten times short. The condition therefore stays true
-		# essentially forever and the loop spins on failed use_item calls at a
-		# tick each, which is the ~1000 warnings a run and roughly 200 ticks a
-		# pass by 009's accounting.
-		#
-		# Watering is still worth doing — growth scales linearly from 1x at water
-		# 0 to 5x at 1 — so pour in whatever tanks exist and move on. num_items
-		# costs 1 tick and, unlike the water level, it is a condition that can
-		# actually become false.
-		while num_items(Items.Water) > 0 and get_water() < 0.75:
-			use_item(Items.Water)
-		Common.polyculture_mapped(planted)
-		# Not Common.await_harvest(): that spins forever on a plant that will
-		# never ripen, and once the target is hit nothing else is going to move.
-		# Checking the target here too is what stops a straggler from hanging
-		# the whole run.
-		h = can_harvest()
-		while not h and num_items(Items.Hay) < TARGET:
-			h = can_harvest()
-		harvest()
+# Each drone tends a 2x2 block of grass instead of standing over one tile.
+#
+# 026 measured where the time goes, split by what the pass did:
+#
+#   walk + replant a companion   52% of passes   1455 ticks work,   3 ticks wait
+#   map says tile is already ok  45% of passes     26 ticks work, 437 ticks wait
+#
+# The map-skip passes do almost no work and then sit still for 437 ticks, because
+# skipping the walk means the grass has not finished growing. That is ~21% of all
+# drone time spent waiting. The walk was never overhead — it was covering growth —
+# so removing it just converts walking into waiting.
+#
+# A second plot fixes that: while one tile ripens the drone harvests the other.
+#
+# 027 tried four plots and lost by 47 s. A lap of a 2x2 block is four moves — 800
+# ticks — and only some plots are ripe on any lap, so the drone often paid a full
+# circuit for a single harvest. Two adjacent plots make the lap one move: 200
+# ticks against the 437 ticks of idling it replaces. That is the version of this
+# idea whose arithmetic works.
+#
+# Deliberately *not* combined with anything else. 021 and 022 were unreadable
+# because layout moved together with other things; this changes the plot count and
+# nothing else, on the champion's spacing-5 grid.
+PLOTS = [(0, 0), (1, 0)]
 
-		# Reroll a Carrot companion — but only now, after the harvest.
-		#
-		# 019 measured what 011 only inferred: a satisfied companion yields 81920
-		# hay against a bare 512, a **160x** multiplier. It also measured which
-		# companions actually get satisfied — Bush 5/5, Tree 7/7, Carrot 1/8.
-		# Carrot needs Soil and `till()` will not convert ground a plant stands
-		# on, so it fails whenever the tile holds anything unharvestable. Carrot
-		# is a third of requests, so roughly a third of passes take 512 instead of
-		# 81920.
-		#
-		# Replanting rerolls the preference, and grass is free. 006 tried this and
-		# lost — because it rerolled at the *top* of the pass, harvesting the
-		# mature grass while its companion was still unsatisfied and collecting
-		# 512 for it. It paid for the reroll by destroying the thing it was
-		# buying.
-		#
-		# Here the harvest has already happened at full multiplier and the tile is
-		# empty, so a reroll costs one plant (200 ticks) rather than a harvest plus
-		# a plant, and throws away nothing. Capped, because each reroll also resets
-		# the growth clock.
-		rerolls = 0
+def driver(hx, hy):
+	planted = {}
+	# Establish all four plots first.
+	for offset in PLOTS:
+		Common.move_to(hx + offset[0], hy + offset[1])
 		instructions()
-		companion = get_companion()
-		while rerolls < REROLL_LIMIT and companion != None and companion[0] == Entities.Carrot:
-			harvest()
-			instructions()
-			companion = get_companion()
-			rerolls = rerolls + 1
+
+	while num_items(Items.Hay) < TARGET:
+		for offset in PLOTS:
+			if num_items(Items.Hay) >= TARGET:
+				return
+			Common.move_to(hx + offset[0], hy + offset[1])
+			# No waiting. An unripe plot is skipped and picked up next circuit —
+			# by which time three other plots have been visited.
+			if can_harvest():
+				while num_items(Items.Water) > 0 and get_water() < 0.75:
+					use_item(Items.Water)
+				Common.polyculture_mapped(planted)
+				harvest()
+				# Reroll a Carrot request now, on the empty tile, exactly as 020
+				# established: after the multiplied harvest, never before it.
+				rerolls = 0
+				instructions()
+				companion = get_companion()
+				while rerolls < REROLL_LIMIT and companion != None and companion[0] == Entities.Carrot:
+					harvest()
+					instructions()
+					companion = get_companion()
+					rerolls = rerolls + 1
 
 clear()
 # max_drones() is 32 (measured in 013) and this grid has 36 positions, so four
