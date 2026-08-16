@@ -7,6 +7,13 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
+- [ ] 023 measure-preplanted — count arrivals where the companion tile already
+      holds the requested plant, with `quick_print`, under the spacing-5 grid.
+      021 claims overlap is cooperation; this is the measurement that would
+      confirm or kill that claim instead of arguing it.
+- [ ] 024 tighter-spacing — if overlap really is cooperation, 014 pushed the
+      wrong way. Try *more* overlap: a denser grid than spacing 5.
+
 - [ ] 022 reroll-limit — 020 caps rerolls at 2, leaving ~4% of passes still on a
       carrot request. Each reroll is one 200-tick plant. Try 3 and 4.
 
@@ -44,6 +51,12 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       `num_items(Items.Water)`. Metric: mean over 3 runs vs the 002 baseline.
 
 ## Done
+
+- [x] 021 diamond-lattice — **rejected, +27.4 s (+15.9%).** Disjoint territories
+      work exactly as designed and make the farm 16% slower: **contention was
+      cooperation.** Neighbours pre-plant each other's companion tiles, so 010's
+      skip fires far more often when territories overlap. Casts doubt on 014 and
+      re-explains 015. `experiments/hay/021/result.md`
 
 - [x] 020 reroll-after-harvest — **adopted, new champion.** 02:52.271, −12.4 s
       (−6.7%), rank #177 -> #149. 006's idea with its placement fixed: reroll
