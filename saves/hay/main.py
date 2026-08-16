@@ -39,8 +39,9 @@ instructions = Common.get_planting_instructions(entity)
 # nothing else, on the champion's spacing-5 grid.
 PLOTS = [(0, 0), (1, 0)]
 
-def driver(hx, hy):
+def driver(hx, hy, report):
 	planted = {}
+	passes = 0
 	# Establish all four plots first.
 	for offset in PLOTS:
 		Common.move_to(hx + offset[0], hy + offset[1])
@@ -53,11 +54,23 @@ def driver(hx, hy):
 			Common.move_to(hx + offset[0], hy + offset[1])
 			# No waiting. An unripe plot is skipped and picked up next circuit —
 			# by which time three other plots have been visited.
-			if can_harvest():
+			t0 = get_tick_count()
+			ripe = can_harvest()
+			if not ripe:
+				if report:
+					if passes < 400:
+						quick_print("PASS", passes, "work", get_tick_count() - t0, "wait", 0, "ripe", 0)
+					passes = passes + 1
+			if ripe:
 				while num_items(Items.Water) > 0 and get_water() < 0.75:
 					use_item(Items.Water)
-				Common.polyculture_mapped(planted)
+				Common.polyculture_mapped(planted, report)
+				t1 = get_tick_count()
 				harvest()
+				if report:
+					if passes < 400:
+						quick_print("PASS", passes, "work", t1 - t0, "wait", 0, "ripe", 1)
+					passes = passes + 1
 				# Reroll a Carrot request now, on the empty tile, exactly as 020
 				# established: after the multiplied harvest, never before it.
 				rerolls = 0
@@ -90,14 +103,14 @@ for i in range(6):
 	for j in range(6):
 		if i + j != 0:
 			if (i, j) not in HOLES:
-				d = spawn_drone(driver, 3 + i*5, 3 + j*5)
+				d = spawn_drone(driver, 3 + i*5, 3 + j*5, False)
 				# None would mean the cap was hit anyway, and there is no handle
 				# to wait on. Requesting 32 against a cap of 32 it should not
 				# happen — the count below is how we find out if it does.
 				if d:
 					drones.append(d)
 quick_print("SPAWNED", len(drones) + 1, "of", max_drones())
-driver(3, 3)
+driver(3, 3, True)
 # The run is not over until the program is, and the program is not over while a
 # spawned drone is still farming. Reap them before falling off the end.
 for d in drones:
