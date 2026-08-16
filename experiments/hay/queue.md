@@ -7,47 +7,43 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
+Cleaned 2026-08-16 13:05: the merge-conflict resolution in 020 resurrected
+entries that were already finished (017, 018, 019, 023, 013, 008). Those are in
+Done. What follows is genuinely open.
 
-- [ ] 023 measure-preplanted — count arrivals where the companion tile already
-      holds the requested plant, with `quick_print`, under the spacing-5 grid.
-      021 claims overlap is cooperation; this is the measurement that would
-      confirm or kill that claim instead of arguing it.
-
+- [ ] 031 why-carrot-fails — **the largest measurable prize.** 019 measured Bush
+      5/5 and Tree 7/7 satisfied against Carrot 1/8, and a satisfied companion is
+      worth **160x**. A third of requests are Carrot, so a third of passes collect
+      512 instead of 81,920 — satisfying them all would be ~2.8x, against a 2.9x
+      gap to the leader.
+      The cause is assumed to be `till()` refusing ground a plant stands on, but
+      that has never been checked. A probe that prints `get_ground_type()`,
+      `get_entity_type()` and `can_harvest()` at the moment a carrot planting
+      fails settles whether the blocker is the ground, the occupancy, or both —
+      and therefore whether it is fixable at all.
+- [ ] 032 empty-companion-tiles — if occupancy is the blocker, the fix is to leave
+      companion tiles *empty* rather than stocked: an empty tile can be tilled
+      either way, so every request type succeeds. That trades away 010's 45% skip
+      path (worth a measured 16 s) for a full multiplier on every pass. Depends on
+      031.
 - [ ] 022 reroll-limit — 020 caps rerolls at 2, leaving ~4% of passes still on a
-      carrot request. Each reroll is one 200-tick plant. Try 3 and 4.
+      carrot request. Each reroll is one 200-tick plant. Try 3 and 4. Small, and
+      only worth running if 031/032 do not make carrot succeed outright.
+- [ ] 033 monocrop-checkerboard — the user's design: permanent Bush/Tree stock on
+      alternating tiles so a companion stops being work at all. Deprioritised
+      against 031 because a permanent stock makes carrot requests *harder* to
+      satisfy, not easier, and carrot is where the gap is.
 
-- [ ] 019 mechanics-probe — **method fix.** Measure what has only been inferred:
-      the polyculture multiplier (hay delta across one harvest, satisfied vs not,
-      single drone so `num_items` is uncontaminated), growth ticks with no walk
-      in the way, companion distance distribution, and real water levels and tank
-      counts. Will not score; the telemetry is the point.
-- [ ] 018 diamond-lattice — 32 drones at minimum L1 separation 8 (rows 4 apart,
-      centres 8 apart, odd rows offset 4) give every drone a private 25-tile
-      diamond, so no planting is overwritten and no map entry can go stale.
-      Depends on 019 confirming the companion range is really 3.
-- [ ] 017 water-threshold — `while get_water() < 0.75` targets a level the farm
-      cannot supply: 32 tiles at 0.75 drain ~0.24 water/s against a supply of
-      ~0.025/s, so the loop spins on failed `use_item` calls, ~200 ticks a pass.
-      Water only when a tank is actually in hand. Metric: one run vs 03:05.323.
+### Closed lines — do not reopen without new information
 
-- [ ] 009 harvest-before-till — `p_make_callback` tills before planting, but
-      `till()` will not convert ground a plant stands on, so an affordable
-      carrot companion fails on an occupied tile (9 -> 183 such warnings in
-      006). Harvest first in the companion callback. Cheap, and it applies to
-      every category. Metric: one run vs champion.
-- [ ] 013 measure-idle-ticks — settle what 007 only guessed at. Wrap the
-      champion's busy-wait in `get_tick_count()` (0 ticks) and report the share
-      of ticks actually spent waiting, not the share of passes that begin
-      waiting. That number decides whether idle time is worth attacking at all.
-      Diagnostic, not an optimisation.
-- [ ] 007 carrot-when-rich — 003 showed carrot becomes affordable partway
-      through a run (failures fell 760 -> 66 with no logic change), so wood is
-      arriving from Bush companions. If the multiplier justifies 512 hay + 512
-      wood, take the carrot face late even though it is unaffordable early.
-      Depends on 004 and 005 landing first.
-- [ ] 008 water-when-available — `while get_water() < 0.75` reached for water
-      that was not there 711 times in 001. Condition it on
-      `num_items(Items.Water)`. Metric: mean over 3 runs vs the 002 baseline.
+- **Layout/spacing.** Disjoint diamonds +15.9% (021, 024), dense packing +36.6%
+  (022). Per-pass profiles are identical to within 1% (025 vs 026), so layout is
+  not a lever.
+- **Multi-plot.** Four plots +47 s (027), two plots +28 s (029). 030 found why:
+  29% of visits reach an unripe plot and pay a 200-tick move for nothing.
+  **Waiting in place beats walking to check** while growth is the constraint.
+- **Trading companion yield for ticks.** Polyculture is worth 160x (019); no
+  variant that gives up the multiplier can win (011 at 67x apparent, 016 +11.5 s).
 
 ## Done
 
