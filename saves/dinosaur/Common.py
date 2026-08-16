@@ -77,6 +77,28 @@ def affordable(entity):
 			return False
 	return True
 
+def move_to_wrapped(x, y):
+	# The farm wraps, so the short way to a distant tile is often across the
+	# seam: from x=2 to x=30 is 28 moves east, or 4 west. move_to() always takes
+	# the direct path and will happily walk most of the way around the world.
+	#
+	# At 200 ticks a move that matters wherever distances are large. It is
+	# deliberately *not* on the Hay hot path: companion requests land within 3
+	# moves and, with drones at 3..28 on a 32-wide farm, never cross the seam, so
+	# move_to() is already optimal there and this would only add arithmetic.
+	# Use it for placement, and for any category whose drones cross the map.
+	size = get_world_size()
+	while get_pos_x() != x:
+		if (x - get_pos_x()) % size <= size // 2:
+			move(East)
+		else:
+			move(West)
+	while get_pos_y() != y:
+		if (y - get_pos_y()) % size <= size // 2:
+			move(North)
+		else:
+			move(South)
+
 def polyculture_mapped(planted):
 	# polyculture(), but the caller carries a memory of what it planted where, so
 	# a companion tile that is already correct costs a dictionary lookup rather
@@ -99,10 +121,33 @@ def polyculture_mapped(planted):
 		if planted[key] == plant_type:
 			return
 	move_to(px, py)
-	if get_entity_type() != plant_type:
+	# Self-correction. Contention is unavoidable — disjoint companion ranges need
+	# drones 7 apart, and 32 drones on a 32x32 farm can only be ~5.66 apart — so
+	# tiles are shared and another drone will overwrite what we planted.
+	#
+	# We cannot watch that happen, but we can see its evidence: arriving at a tile
+	# we hold a record for and finding something else there. That tile is
+	# contested, and trusting it again risks skipping a trip and forfeiting the
+	# 67x multiplier. Mark it with None — which no entity equals, so the fast-path
+	# check above can never match it — and every later pass will walk and look.
+	#
+	# Contested is permanent. A tile shared once will be shared again, and the
+	# cost of being wrong is far higher than the walk it would save.
+	actual = get_entity_type()
+	contested = False
+	if key in planted:
+		if planted[key] == None:
+			contested = True
+		else:
+			if actual != planted[key]:
+				contested = True
+	if actual != plant_type:
 		harvest()
 		plant_companion(plant_type)
-	planted[key] = plant_type
+	if contested:
+		planted[key] = None
+	else:
+		planted[key] = plant_type
 	move_to(x, y)
 
 def polyculture():

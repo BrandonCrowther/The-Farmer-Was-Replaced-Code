@@ -9,7 +9,7 @@ entity = Entities.Grass
 instructions = Common.get_planting_instructions(entity)
 
 def driver(x, y):
-	Common.move_to(x,y)
+	Common.move_to_wrapped(x, y)
 	instructions()
 	# What this drone believes it has planted, keyed by position.
 	#

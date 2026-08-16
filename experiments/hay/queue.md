@@ -7,16 +7,11 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
-- [ ] 015 self-correcting-map — contention cannot be designed away: 32 drones on
-      a 32x32 farm can be at most ~5.66 apart and disjoint companion ranges need
-      7. So handle it in the map instead. When a drone walks to a tile and finds
-      something other than what it recorded, that tile is contested — mark it
-      permanently untrusted and always walk for it. Metric: one run vs 03:05.323.
-- [ ] 016 wrap-aware-move_to — the farm wraps, and `Common.move_to` always takes
-      the direct path. Inert for Hay (companions are within 3 moves and never
-      cross the seam at this layout; placement moves are one-time and ~0.0007% of
-      a drone's ticks) but correct, reusable, and the Maze categories will need
-      it. Land it in Common without putting it on the hot path.
+- [ ] 016 no-carrot — carrot is the only companion that can fail. It needs Soil,
+      and `till()` will not convert ground a plant stands on, so an unripe plant
+      on the tile blocks it — ~230 "cannot plant on Grassland" per run. Test
+      never attempting carrot at all: skip the walk outright, accept 1x on those
+      passes, and save every wasted round trip. Metric: one run vs 03:05.323.
 
 - [ ] 009 harvest-before-till — `p_make_callback` tills before planting, but
       `till()` will not convert ground a plant stands on, so an affordable
@@ -38,6 +33,12 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       `num_items(Items.Water)`. Metric: mean over 3 runs vs the 002 baseline.
 
 ## Done
+
+- [x] 015 self-correcting-map — **rejected**, 03:09.234 (+3.9 s). Marking
+      contested tiles permanently untrusted degrades the map to "always walk".
+      **Optimism pays**: the asymmetry argument was right about single events and
+      wrong about their frequency. `move_to_wrapped` kept in Common regardless.
+      `experiments/hay/015/result.md`
 
 - [x] 014 thirty-two-drones — **adopted**, 03:05.323, −0.466 s, rank #177.
       Confirms `SPAWNED 32 of 32`: thirteen experiments ran with four positions
