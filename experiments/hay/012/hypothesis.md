@@ -1,17 +1,10 @@
 # exp-012 — skip-unaffordable
 
-**Hypothesis.** <one sentence, falsifiable>
+**Hypothesis.** A Carrot companion costs 512 hay + 512 wood and wood sits at 0,
+so the trip plants nothing and earns no multiplier — while costing the full round
+trip at 200 ticks a move. Checking affordability first costs about a tick.
 
-**Variable.** <the single thing being changed>
+**Variable.** `Common.polyculture()` returns before moving when the companion is
+unaffordable.
 
-**Metric.** <the number that decides it, and where it is read from — e.g.
-`simulate()` return value via `quick_print`, read from the output page>
-
-**Baseline.** <commit ref of the code being varied, and its measured value>
-
-**Procedure.**
-1. Write `script.py` into `save/Save0/<Name>.py`.
-2. Wait for File Watcher pickup (confirm with a crop diff, ~1 s).
-3. `tools/tfwr.sh run`, wait for completion.
-4. `tools/tfwr.sh capture` and read the marked output lines.
-5. Repeat N times; record every run, not just the best.
+**Metric.** Time vs 03:24.552; floor 0.15 s, so a sub-0.3 s win needs confirming.

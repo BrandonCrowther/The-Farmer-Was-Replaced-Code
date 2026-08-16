@@ -28,6 +28,12 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Done
 
+- [x] 012 skip-unaffordable — **adopted**, 03:24.347 (mean of 2), −0.205 s.
+      Do not walk to a companion we cannot plant. Confirmed with a second run
+      because the first cleared the floor by only 1.5x. Carrot is still never
+      *successfully* planted, so a third of requests earn no multiplier — the
+      biggest remaining prize. `experiments/hay/012/result.md`
+
 - [x] 011 no-polyculture — **rejected decisively.** Polyculture is worth **67x**,
       not the ~5x it needs to break even against its ~800 ticks of movement per
       pass. Aborted at 1.26e9 hay / 2:24:43 in-game (145k hay/s vs the champion's
