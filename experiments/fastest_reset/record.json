@@ -11,5 +11,13 @@
   "best_branch": "autofarmer",
   "status": "baseline",
   "updated": "2026-08-15",
-  "note": "PB read from the in-game leaderboard modal; the validation run on this code scored 15:23:55.099 (exp-000)."
+  "note": "PB read from the in-game leaderboard modal; the validation run on this code scored 15:23:55.099 (exp-000).",
+  "last_run": {
+    "time": "15:13:15.781",
+    "rank": 834,
+    "date": "2026-08-15",
+    "experiment": "000",
+    "note": "restructure verification"
+  },
+  "noise_floor": "~10 min observed between two runs of identical code"
 }

@@ -11,7 +11,7 @@ measured on this machine, and what Phase 3 still has to decide.
 
 ## Hard constraint: `save.json` is off limits
 
-The game owns `save/Save0/save.json`. We do not read it as a telemetry source and
+The game owns `live/save.json`. We do not read it as a telemetry source and
 we never write it. It is gitignored precisely so that a checkout, stash, or reset
 can never put a stale save under a running game.
 
@@ -36,11 +36,10 @@ screenshot-guesswork:
 
 The measurement loop:
 
-1. Write the variant into `save/Save0/<Name>.py`.
+1. Write the variant into `saves/<category>/` and `tools/deploy.sh <category>`.
 2. Wait for File Watcher pickup (see the measured latency below).
-3. Click the `Leaderboard_run` window to select it (needs `ydotool` — F5 alone
-   does not start a run; see `mcp/README.md`), then press F5 with
-   `tools/tfwr.sh run`.
+3. `tools/tfwr.sh run` — it clicks the harness window to select it (needs
+   `ydotool`; F5 alone does not start a run) and verifies the run began.
 4. `tools/tfwr.sh capture` and read the numbers with vision.
 5. Record in `experiments/<NNN-slug>/result.md`, commit.
 
@@ -58,7 +57,7 @@ counters. Use vision.
 | Question | Answer |
 | --- | --- |
 | File Watcher pickup latency for an external write | **between 0.66 s and 1.32 s** — unchanged at 0.66 s, changed at 1.32 s, over a 16-frame probe |
-| Does File Watcher work through the save symlink | **yes** — probe wrote through `save/Save0/`, the game rendered the change |
+| Does File Watcher work through the save symlink | **yes** — probe wrote through the symlinked save dir, the game rendered the change |
 | Key injection without root | **partly** — `sendshortcut` delivers keys (menu opens/closes, `W`/`S` pan the camera) |
 | Starting a run with F5 alone | **no** — F5 does nothing as keysym or as `code:71`, focused or not; execution starts only with a code window selected, and selection needs a click |
 | Mouse clicks without root | **no** — needs `ydotool`, so `tools/setup_input.sh` is a prerequisite, not an extra |
@@ -66,7 +65,9 @@ counters. Use vision.
 | File Watcher enabled | yes (`options.txt`: `file watcher = enabled`) |
 | Full loop, end to end | **works** — select, F5, run, read result, dismiss; `Fastest_Reset 15:23:55.099`, ~2 min wall clock. See `experiments/000-e2e-validation/` |
 | Does a leaderboard run disturb the main save | **no** — resource bar returned to its pre-run values afterwards |
-| "Did the run start?" signal | title-bar buttons flip green ▶/▷ → orange ■/⏸; `tools/tfwr.sh state` reads it |
+| "Did the run start?" signal | the top banner's timer **ticks**; `tools/tfwr.sh state` samples it twice and compares |
+| Restructured layout, end to end | **works** — deploy, reload, run, read: `Fastest_Reset 15:13:15.781`, `experiments/fastest_reset/000/` |
+| Noise floor | **~10 min** — identical code scored 15:23:55 and 15:13:15 on two runs |
 
 Recommended settle: poll at ~0.5 s intervals up to a 3 s cap rather than a fixed
 sleep, and confirm pickup by diffing a tight screenshot crop of the editor before
@@ -75,46 +76,49 @@ pressing F5. There is no explicit "reload done" signal from the game.
 ## Repo layout
 
 ```
-docs/          wiki mirror (59 pages) + authoritative __builtins__.py snapshot
-save/Save0/    the actual game scripts — the Proton save folder symlinks here
-experiments/   queue.md backlog + one directory per experiment
-mcp/           automation stack evaluation and decision
-tools/         tfwr.sh driver, fetch_wiki.py, setup_input.sh
-logs/          screenshots and run artifacts (gitignored)
-backups/       zip snapshots (gitignored)
+saves/<category>/   source of truth per leaderboard category (16 of them)
+live/               what the game reads; deployed copies + the game-owned files
+docs/               wiki mirror, API snapshot, generated leaderboards.md
+experiments/<cat>/  queue.md, record.json, one directory per experiment
+tools/              deploy.sh, tfwr.sh, new_experiment.sh, render_leaderboards.py
+mcp/                automation stack evaluation and decision
+logs/               screenshots and run artifacts (gitignored)
 ```
 
-The symlink runs **repo → game**, not the other way around: the real files live
-in `save/Save0/` and
-`…/TheFarmerWasReplaced/Saves/Save0` is a symlink pointing at them. The plan
-originally had it reversed, but git does not follow a symlinked directory — it
-would have stored the link and tracked nothing. This direction is also why the
-code survives a Proton prefix rebuild.
+`Saves/Save0` symlinks at `live/`, and that symlink never moves. `tools/deploy.sh`
+copies one category's files in. The live directory is deliberately a real
+directory rather than a symlink that swings between category folders: the
+game-owned `save.json` lives there, and an atomic rewrite by the game would
+replace a swinging symlink with a real file and fork the save.
 
-## Phase 3 — experiment workflow (not yet built)
+## Phase 3 — experiment workflow
 
-1. `experiments/queue.md` holds the backlog: one entry per idea, each with a
-   hypothesis and a target metric.
-2. Per item: write the variant, wait for pickup, run, capture, read, write
-   `result.md`, commit as `exp-NNN: <slug>, <outcome>`.
-3. The commit log is the journal.
+Per queue item, driven from `autofarmer`:
+
+1. `tools/new_experiment.sh <category>` → worktree + `auto_experiment/<cat>/<NNN>`.
+2. Edit `saves/<cat>/`, then `tools/deploy.sh <cat> --from <worktree>`.
+   Exit 10 means the file set changed and the save needs a reload first.
+3. `tools/tfwr.sh run` — selects the harness window, F5, and **fails loudly** if
+   the run did not start.
+4. `tools/tfwr.sh wait-result`, read the modal, `tools/tfwr.sh dismiss`.
+5. Write `result.md`, update `record.json`, commit, push the branch.
+6. Beat the PB? Re-run to confirm against the ~10 min noise floor, then merge into
+   `autofarmer` and re-render `docs/leaderboards.md`.
 
 ### Still to decide
 
 - **Loop shape.** Long-running Claude Code session with a bash loop, or a systemd
   timer re-invoking Claude per queue item.
-- **Stop condition.** Queue empty, wall-clock budget, or consecutive-failure
-  threshold — needed so a bad variant cannot burn the night.
-- **Completion detection.** `tools/tfwr.sh state` answers "did the run start"
-  (title-bar buttons), but it reported `running` while the completion modal was
-  up, because the modal covers the strip it samples. Detect completion from the
-  modal itself, and fix `state` to recognise it, before the loop relies on it.
-- **Result capture is modal-shaped.** `leaderboard_run` reports through a dialog
-  that must be dismissed with a click at logical (461, 938) before another run
-  can start — so an unattended loop needs that click in its cycle, and needs to
-  handle the dialog never appearing (crash, or a run that never started).
-- **Seed the queue.** Depends on what is left to optimize now that the save is at
-  100% achievements — most likely leaderboard categories.
+- **Stop condition.** Queue empty, wall-clock budget, or consecutive failures.
+- **Window targeting.** `tfwr.sh run` clicks a fixed coordinate to select the
+  harness window, but the game re-lays-out its windows on every save reload, so
+  that coordinate goes stale exactly when categories switch. Either establish a
+  canonical layout per category (drag once, record the position) or locate the
+  window visually before each run. **This is the last thing blocking an
+  unattended night.**
+- **Termination.** Every seeded category is an endless `while True` achievement
+  farmer. A leaderboard run only scores if the program ends — item 001 in each
+  queue.
 
 ## Open risks
 

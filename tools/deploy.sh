@@ -40,6 +40,18 @@ src="$from/saves/$cat_name"
 [[ -d "$src" ]] || die "no such category: $src"
 mkdir -p "$LIVE"
 
+# Every `import X` must resolve to a file in the same category, because the game
+# resolves module names against the files in the one save folder it can see.
+# A missing one is not a startup error: the run begins, burns wall-clock, and only
+# then shows an ERROR tooltip on the offending line. Catch it here instead.
+missing=""
+for path in "$src"/*.py; do
+  while read -r mod; do
+    [[ -f "$src/$mod.py" ]] || missing+=" $mod"
+  done < <(grep -ho '^import [A-Za-z_][A-Za-z0-9_]*' "$path" 2>/dev/null | awk '{print $2}' | sort -u)
+done
+[[ -z "$missing" ]] || die "category $cat_name imports modules it does not contain:$missing"
+
 is_game_owned() {
   local f
   for f in "${GAME_OWNED[@]}"; do [[ "$1" == "$f" ]] && return 0; done

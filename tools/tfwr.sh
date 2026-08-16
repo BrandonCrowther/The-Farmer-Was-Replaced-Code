@@ -12,6 +12,7 @@
 #   tools/tfwr.sh hud [label]          # just the resource bar, for reading counts
 #   tools/tfwr.sh key <keyspec>        # e.g. ",F5"  or  "SHIFT,F5"
 #   tools/tfwr.sh click <x> <y>        # click at logical compositor coords
+#   tools/tfwr.sh drag <x1> <y1> <x2> <y2>   # drag a code window by its title bar
 #   tools/tfwr.sh select               # click the harness code window to select it
 #   tools/tfwr.sh run                  # select, then F5. F5 alone does nothing.
 #   tools/tfwr.sh stop                 # Shift+F5: stop execution
@@ -34,6 +35,8 @@ HUD_CROP="1120x150+0+0"
 # where you dragged the window inside the game, so override if you move it.
 HARNESS_XY=${TFWR_HARNESS_XY:-"1178 748"}
 BUTTON_CROP=${TFWR_BUTTON_CROP:-"120x50+1065+805"}
+# OK button on the run-completion modal.
+OK_XY=${TFWR_OK_XY:-"461 938"}
 
 # ydotool's absolute coordinates are exactly half the compositor's logical
 # coordinates on this setup — measured, not guessed: sending (300,200) landed the
@@ -88,29 +91,40 @@ click_at() {
   ydotool mousemove -a -x $((${before%%,*} / YDO_DIV)) -y $((${before##*,} / YDO_DIV))
 }
 
-# Three states from one sample of the harness window's title bar:
+# Three states, read from the top-centre banner rather than any code window.
 #
-#   idle    green play arrows on a bluish window chrome -> b > g > r
-#   running orange stop/pause buttons                   -> r > g
-#   result  the completion modal covers the strip in flat grey -> r ~= g ~= b
+#   running  the run timer and "N Runs Completed" are drawn there -> white text on
+#            sky, so the crop has high contrast
+#   result   the completion modal covers it in flat grey          -> low contrast, neutral
+#   idle     plain sky                                            -> low contrast, blue
 #
-# The colour flip is the only reliable "the run actually started" signal, since
-# F5 into an unselected window is a silent no-op. The `result` case exists
-# because an earlier version reported `running` forever once the modal appeared.
+# Deliberately not sampling a code window's title bar: an earlier version did, and
+# the crop silently went stale the moment the game re-laid-out its windows after a
+# save reload, reporting `result` for a run that was plainly executing. The banner
+# is drawn at a fixed place regardless of window layout.
 run_state() {
-  local shot rgb
-  shot=$(mktemp /tmp/tfwr-state-XXXX.png)
-  capture_to "$shot"
-  rgb=$(magick "$shot" -crop "$BUTTON_CROP" +repage -resize 1x1 \
-        -format '%[fx:r] %[fx:g] %[fx:b]' info:)
-  rm -f "$shot"
-  awk -v v="$rgb" -v tol="${TFWR_GREY_TOL:-0.04}" 'BEGIN {
-    split(v, c, " "); r = c[1]; g = c[2]; b = c[3]
-    dr = (r > g) ? r - g : g - r
-    db = (g > b) ? g - b : b - g
-    if (dr < tol && db < tol) { print "result" }
-    else if (r > g)           { print "running" }
-    else                      { print "idle" }
+  local a b crop va vb
+  crop="${TFWR_BANNER_CROP:-500x120+1060+140}"
+  a=$(mktemp /tmp/tfwr-a-XXXX.png); b=$(mktemp /tmp/tfwr-b-XXXX.png)
+  capture_to "$a"; sleep "${TFWR_TICK_GAP:-1.5}"; capture_to "$b"
+
+  # A run is *ticking*: the timer digits change between two samples. That is the
+  # discriminator, not contrast — the completion modal also puts bright text in
+  # this region, which is what fooled the previous two attempts (a title-bar crop
+  # that went stale on relayout, then a contrast test that read the modal as a
+  # running timer). Motion separates them cleanly.
+  if ! magick compare -metric AE -fuzz 5% \
+        \( "$a" -crop "$crop" +repage \) \( "$b" -crop "$crop" +repage \) \
+        null: 2>&1 | awk '{ exit ($1 < 500) ? 0 : 1 }'; then
+    rm -f "$a" "$b"; echo "running"; return
+  fi
+
+  # Static: plain sky means idle, anything else there means the modal is up.
+  va=$(magick "$b" -crop "$crop" +repage -format '%[fx:mean.r] %[fx:mean.b]' info:)
+  rm -f "$a" "$b"
+  awk -v v="$va" 'BEGIN {
+    split(v, c, " ")
+    print (c[2] > c[1] + 0.05) ? "idle" : "result"
   }'
 }
 
@@ -163,6 +177,19 @@ case "$cmd" in
     [[ $# -ge 2 ]] || die "click needs <x> <y> in logical coords"
     focus_game; click_at "$1" "$2"
     ;;
+  drag)
+    # Drag an in-game code window by its title bar, so the layout can be made
+    # canonical once per category and clicked blindly thereafter.
+    [[ $# -ge 4 ]] || die "drag needs <x1> <y1> <x2> <y2> in logical coords"
+    command -v ydotool >/dev/null || die "ydotool not installed"
+    focus_game
+    before=$(hyprctl cursorpos | tr -d ' ')
+    ydotool mousemove -a -x $(($1 / YDO_DIV)) -y $(($2 / YDO_DIV)); sleep 0.2
+    ydotool click 0x40; sleep 0.2
+    ydotool mousemove -a -x $(($3 / YDO_DIV)) -y $(($4 / YDO_DIV)); sleep 0.3
+    ydotool click 0x80; sleep 0.2
+    ydotool mousemove -a -x $((${before%%,*} / YDO_DIV)) -y $((${before##*,} / YDO_DIV))
+    ;;
   select)
     focus_game; click_at $HARNESS_XY
     ;;
@@ -173,14 +200,14 @@ case "$cmd" in
     hyprctl dispatch sendshortcut ",F5,class:$CLASS" >/dev/null
     sleep 2
     st=$(run_state); echo "$st"
-    [[ "$st" == "running" ]] || die "F5 did not start a run (still idle)"
+    [[ "$st" == "running" ]] || die "F5 did not start a run (state=$st)"
     ;;
   stop)  need_game; hyprctl dispatch sendshortcut "SHIFT,F5,class:$CLASS" >/dev/null ;;
   state) run_state ;;
   wait-result) wait_result "${1:-600}" ;;
   dismiss)
     # The completion modal must be cleared before another run can start.
-    focus_game; click_at ${TFWR_OK_XY:-"461 938"}
+    focus_game; click_at $OK_XY
     ;;
   help|*)
     sed -n '2,20p' "${BASH_SOURCE[0]}" | sed 's/^# \?//'
