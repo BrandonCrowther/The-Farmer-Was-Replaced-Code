@@ -25,7 +25,21 @@ def driver(x, y):
 	# than wrong-and-walk, so nothing speculative belongs in here.
 	planted = {}
 	while num_items(Items.Hay) < TARGET:
-		while get_water() < 0.75:
+		# Water while there is water to use, not until an unreachable level.
+		#
+		# `while get_water() < 0.75` targets a level the farm cannot supply. The
+		# ground loses 1% of its water per second, so holding 32 tiles at 0.75
+		# drains roughly 0.24/s, against a supply of one 0.25 tank per 10 seconds
+		# — about 0.025/s. Ten times short. The condition therefore stays true
+		# essentially forever and the loop spins on failed use_item calls at a
+		# tick each, which is the ~1000 warnings a run and roughly 200 ticks a
+		# pass by 009's accounting.
+		#
+		# Watering is still worth doing — growth scales linearly from 1x at water
+		# 0 to 5x at 1 — so pour in whatever tanks exist and move on. num_items
+		# costs 1 tick and, unlike the water level, it is a condition that can
+		# actually become false.
+		while num_items(Items.Water) > 0 and get_water() < 0.75:
 			use_item(Items.Water)
 		Common.polyculture_mapped(planted)
 		# Not Common.await_harvest(): that spins forever on a plant that will
