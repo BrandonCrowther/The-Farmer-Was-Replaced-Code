@@ -119,6 +119,35 @@ function — see `p_companion_table` and `plant_companion()`.
 | `the game has crashed — Proton dialog: "..."` | the game died and left a Wine dialog carrying the same window class | `tools/tfwr.sh relaunch`, then re-run the cycle. See *Recovering from a crash* |
 | a modal with an orange "Run Failed" line | the run was stopped, never terminated, or ended short of its target | `cycle.sh` already exits 2 on this. **Never record the duration** — it looks exactly like a score |
 
+## Measure the mechanic before designing around it
+
+`quick_print` costs **0 ticks** and `get_tick_count()` costs 0. There is no
+budget reason to infer a game mechanic from a run time when it can simply be
+read. Several experiments here were designed around numbers that were never
+measured:
+
+| claim | where it came from | status |
+| --- | --- | --- |
+| polyculture is worth 67x | a whole-run rate ratio in 011, which conflates the multiplier with everything else that changed | inferred |
+| walk time ~= growth time | a story fitted to 016's regression | inferred |
+| companion range is 3 moves | the wiki | unverified in-game |
+| the farm is ~10x water-starved | arithmetic on wiki constants | never sampled |
+| contention is unavoidable | Euclidean area reasoning in a Manhattan world | **wrong**, corrected in 014 |
+| movement has no diagonals | assumed, then used to justify a layout | **verifiable for free** — the API defines exactly four `Direction` constants |
+
+Three rejections rest on the first two rows. The rule that follows:
+
+1. **Before designing around a mechanic, measure it**, with a single-purpose
+   probe run if needed. A probe that does not score is still a good cycle.
+2. **Isolate the measurement.** `num_items` is global, so a per-drone yield
+   measurement needs a single-drone run — with 32 drones the delta across your
+   own harvest is contaminated by everyone else's.
+3. **Check the API and the wiki first.** They are free. The no-diagonals question
+   was answerable by grepping the API surface at any point.
+4. **Write inferences as inferences.** A result that says "X is worth 67x" reads
+   as measured and later experiments will build on it. Say what was measured and
+   what was concluded from it, separately.
+
 ## Recovering from a crash
 
 `tools/tfwr.sh relaunch` kills the game, restarts it through Steam, waits for the
