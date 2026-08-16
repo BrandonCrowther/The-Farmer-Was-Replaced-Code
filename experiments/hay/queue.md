@@ -7,10 +7,6 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
-- [ ] 030 instrument-two-plots — 029 lost 16% where the tick model predicted a
-      wash, so ~150 ticks a harvest are unaccounted for. Run the two-plot driver
-      with 025/026's instrumentation (work, wait, arrival class per pass) and
-      find them. Do not guess: two invented mechanisms have already been wrong.
 
 - [ ] 023 measure-preplanted — count arrivals where the companion tile already
       holds the requested plant, with `quick_print`, under the spacing-5 grid.
@@ -54,6 +50,13 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       `num_items(Items.Water)`. Metric: mean over 3 runs vs the 002 baseline.
 
 ## Done
+
+- [x] 030 instrument-two-plots — **found the missing ticks.** 29% of visits reach
+      an unripe plot and pay a 200-tick move for nothing; with movement in the
+      accounting it is 1,160 ticks a harvest against the champion's 967, matching
+      the measured +16%. A two-plot cycle revisits every ~2,320 ticks against
+      ~2,819 of growth. **Waiting in place beats walking to check** — multi-plot
+      is closed. `experiments/hay/030/result.md`
 
 - [x] 029 two-plots — **rejected**, 03:20.637 (+28.3 s). Multi-plot loses at two
       plots as well as four, and the tick model predicted a wash, so ~150 ticks a
