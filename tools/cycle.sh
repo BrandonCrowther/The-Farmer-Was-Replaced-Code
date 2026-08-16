@@ -44,6 +44,22 @@ src="$from/saves/$cat_name"
 [[ -d "$src" ]] || die "no such category: $src"
 mkdir -p "$SHOTS"
 
+# --- 0. Is there memory left to run in? ---------------------------------------
+#
+# The game leaks badly across leaderboard runs. On 2026-08-16 the Steam scope
+# reached a 56 GB peak after ~14 hours of continuous cycling and was OOM-killed
+# by systemd, taking the game with it — and the earlier "Fatal error in GC" crash
+# that day was almost certainly the same pressure showing up inside Mono first.
+#
+# So watch it. A cycle started with little memory left will not finish, and it
+# will take the game down on its way out; better to say so and let the caller
+# relaunch, which is what actually reclaims the leak.
+avail_mb=$(awk '/MemAvailable/ {print int($2/1024)}' /proc/meminfo)
+echo "MEM_AVAIL_MB=$avail_mb"
+if (( avail_mb < ${TFWR_MIN_AVAIL_MB:-4096} )); then
+  die "only ${avail_mb}MB available — relaunch the game (tfwr.sh relaunch) to reclaim it before running"
+fi
+
 # --- 1. Is the game running the code we think it is? --------------------------
 #
 # Steam Cloud restored the original save over a deployed category once already,

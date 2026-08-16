@@ -148,6 +148,24 @@ Three rejections rest on the first two rows. The rule that follows:
    as measured and later experiments will build on it. Say what was measured and
    what was concluded from it, separately.
 
+## The game leaks memory — relaunch on a schedule
+
+Measured on 2026-08-16: after ~14 hours of continuous cycling the Steam scope hit
+a **56 GB memory peak** and systemd OOM-killed it, taking the game with it. The
+`Fatal error in GC` crash earlier the same day was almost certainly the same
+pressure surfacing inside Mono first, rather than the run-abort it was blamed on.
+
+The leak is not recoverable from inside the game. Only a relaunch reclaims it.
+
+- `cycle.sh` prints `MEM_AVAIL_MB=` every run and refuses to start below 4 GB
+  available, because a cycle begun under pressure will not finish and will take
+  the game down with it.
+- **Relaunch proactively every ~8 cycles**, not only after a crash. A relaunch
+  costs about a minute; an OOM costs the cycle, the game, and possibly Steam.
+- If Steam itself is gone — `tfwr.sh relaunch` reports "Steam is not running" —
+  it was probably OOM-killed too. Start it with `setsid steam &`, wait for the
+  process, then relaunch.
+
 ## Recovering from a crash
 
 `tools/tfwr.sh relaunch` kills the game, restarts it through Steam, waits for the
