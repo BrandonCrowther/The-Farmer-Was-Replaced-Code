@@ -170,6 +170,26 @@ The leak is not recoverable from inside the game. Only a relaunch reclaims it.
   it was probably OOM-killed too. Start it with `setsid steam &`, wait for the
   process, then relaunch.
 
+
+## The score depends on run conditions, not only on code
+
+Four clean champion runs measure sd **0.069 s** — the game is extremely
+repeatable when conditions match. But identical code run ~20 cycles into the
+memory leak scored 67 and 15 standard deviations *faster* (exp-023 at 02:47.682,
+exp-026 at 02:51.263, against a clean mean of 02:52.323). Instrumentation cannot
+explain it: 026 carries more of it than 023 and is slower.
+
+Whatever the cause, the consequence for method is firm:
+
+- **Only compare runs made under similar game conditions** — similar time since
+  the last relaunch, similar cycle count. A variant measured on a fresh game
+  against a champion measured on a leaked one is not a comparison.
+- **Re-baseline after every relaunch** if the comparison matters. A relaunch is
+  cheap; a false result costs a whole line of experiments, as 021 and 022 did.
+- **A floor is only valid for the conditions it was measured in.** The 0.15 s
+  floor from 002 happened to survive, but it was applied for 25 experiments
+  without anyone checking whether it still held.
+
 ## Recovering from a crash
 
 `tools/tfwr.sh relaunch` kills the game, restarts it through Steam, waits for the
