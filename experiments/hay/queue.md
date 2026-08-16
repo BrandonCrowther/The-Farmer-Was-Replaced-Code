@@ -7,14 +7,10 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
-- [ ] 028 renoise — pin the champion noise floor properly with three clean runs
-      of unmodified champion code. The 2.41 s figure comes from three runs that
-      were not identical (two carried instrumentation). Everything downstream
-      depends on this number, and using a stale one has already cost three false
-      results.
-- [ ] 029 two-plots — 027 lost at four plots because a lap costs four moves. Two
-      adjacent plots cost one move (200 ticks) against 437 ticks of waiting, so
-      the trade may go the other way.
+- [ ] 030 instrument-two-plots — 029 lost 16% where the tick model predicted a
+      wash, so ~150 ticks a harvest are unaccounted for. Run the two-plot driver
+      with 025/026's instrumentation (work, wait, arrival class per pass) and
+      find them. Do not guess: two invented mechanisms have already been wrong.
 
 - [ ] 023 measure-preplanted — count arrivals where the companion tile already
       holds the requested plant, with `quick_print`, under the spacing-5 grid.
@@ -58,6 +54,15 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       `num_items(Items.Water)`. Metric: mean over 3 runs vs the 002 baseline.
 
 ## Done
+
+- [x] 029 two-plots — **rejected**, 03:20.637 (+28.3 s). Multi-plot loses at two
+      plots as well as four, and the tick model predicted a wash, so ~150 ticks a
+      harvest are unexplained. Recorded as an open question rather than a third
+      invented mechanism. `experiments/hay/029/result.md`
+- [x] 028 renoise — **the floor is 0.069 s (4 clean runs)**, so the original
+      0.15 s stands and the 2.41 s correction was withdrawn. The real finding:
+      identical code scores 67 sd faster when run deep into the memory leak, so
+      comparisons are only valid under matching game conditions.
 
 - [x] 027 multi-plot — **rejected**, 03:37.380 (+47 s, 19 sd). Four plots cost
       more in movement than the idling they remove. Surfaced the real finding of
