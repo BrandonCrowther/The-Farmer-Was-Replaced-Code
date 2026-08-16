@@ -21,7 +21,7 @@ Done. What follows is genuinely open.
       `get_entity_type()` and `can_harvest()` at the moment a carrot planting
       fails settles whether the blocker is the ground, the occupancy, or both —
       and therefore whether it is fixable at all.
-- [ ] 032 reroll-for-map-hit — **replaces empty-companion-tiles, which 031
+- [x] 032 reroll-for-map-hit — **replaces empty-companion-tiles, which 031
       voided.** The farm is already ~97% multiplied, so the gap is ticks per
       harvest: 967 against the ~330 the leader implies. The dominant term is the
       companion round trip on the 52% of passes that need one, and the skip path
@@ -30,6 +30,12 @@ Done. What follows is genuinely open.
       until the request names a tile the map says is *already correct*: at a 45%
       hit rate that is ~1.2 throws, ~240 ticks, to turn a 1,459-tick pass into a
       462-tick one. Cap it, and measure the resulting skip rate.
+- [ ] 033 probe-the-reroll — **prerequisite for trusting 020.** 032 found that
+      `harvest()` fails on an unripe plant, so the reroll loop replants nothing
+      and `get_companion()` returns the same preference every iteration. If that
+      is right the reroll has never rerolled, and 020's 12.4 s win came from the
+      single post-harvest replant rather than from rerolling. Print the companion
+      before and after each attempt and count how many ever change.
 - [ ] 022 reroll-limit — 020 caps rerolls at 2, leaving ~4% of passes still on a
       carrot request. Each reroll is one 200-tick plant. Try 3 and 4. Small, and
       only worth running if 031/032 do not make carrot succeed outright.
