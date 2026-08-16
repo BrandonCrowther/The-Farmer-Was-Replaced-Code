@@ -30,7 +30,7 @@ Done. What follows is genuinely open.
       until the request names a tile the map says is *already correct*: at a 45%
       hit rate that is ~1.2 throws, ~240 ticks, to turn a 1,459-tick pass into a
       462-tick one. Cap it, and measure the resulting skip rate.
-- [ ] 033 probe-the-reroll — **prerequisite for trusting 020.** 032 found that
+- [x] 033 probe-the-reroll — **prerequisite for trusting 020.** 032 found that
       `harvest()` fails on an unripe plant, so the reroll loop replants nothing
       and `get_companion()` returns the same preference every iteration. If that
       is right the reroll has never rerolled, and 020's 12.4 s win came from the
