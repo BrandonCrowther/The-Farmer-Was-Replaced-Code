@@ -49,6 +49,17 @@ OK_XY=${TFWR_OK_XY:-"461 938"}
 # save row.
 LOAD_XY=${TFWR_LOAD_XY:-"444 390"}
 SAVE0_XY=${TFWR_SAVE0_XY:-"506 479"}
+# "Don't Save" on the "Do you wish to save before loading?" confirmation. That
+# dialog only appears when the session is dirty, which a finished run makes it,
+# so a reload has to cope with it being there and with it not being there.
+# Don't Save is the right answer twice over: the canonical window layout is the
+# one on disk, and writing save.json is the game's business, not ours.
+DONT_SAVE_XY=${TFWR_DONT_SAVE_XY:-"1141 601"}
+# Where to sample to see if that dialog is up: the centre of the Don't Save
+# button, in captured pixels. The button is the only strongly green-dominant
+# thing at this spot — behind it is either grey UI or blue-grey sky, both of
+# which have far more blue.
+DIALOG_PROBE=${TFWR_DIALOG_PROBE:-"1426 751"}
 
 # ydotool's absolute coordinates are exactly half the compositor's logical
 # coordinates on this setup — measured, not guessed: sending (300,200) landed the
@@ -136,6 +147,20 @@ run_state() {
   awk -v v="$va" 'BEGIN {
     split(v, c, " ")
     print (c[2] > c[1] + 0.05) ? "idle" : "result"
+  }'
+}
+
+# Is the "Do you wish to save before loading?" confirmation showing?
+save_prompt_up() {
+  local shot v
+  shot=$(mktemp /tmp/tfwr-dlg-XXXX.png)
+  capture_to "$shot"
+  v=$(magick "$shot" -crop "1x1+${DIALOG_PROBE% *}+${DIALOG_PROBE#* }" +repage \
+        -format '%[fx:mean.r] %[fx:mean.g] %[fx:mean.b]' info:)
+  rm -f "$shot"
+  awk -v v="$v" 'BEGIN {
+    split(v, c, " ")
+    exit (c[3] < 0.15 && c[2] > c[1]) ? 0 : 1
   }'
 }
 
@@ -245,7 +270,9 @@ case "$cmd" in
     hyprctl dispatch sendshortcut ",Escape,class:$CLASS" >/dev/null
     sleep "${TFWR_MENU_SETTLE:-1.2}"
     click_at $LOAD_XY;  sleep "${TFWR_MENU_SETTLE:-1.2}"
-    click_at $SAVE0_XY; sleep "${TFWR_RELOAD_SETTLE:-3}"
+    click_at $SAVE0_XY; sleep "${TFWR_MENU_SETTLE:-1.2}"
+    if save_prompt_up; then click_at $DONT_SAVE_XY; fi
+    sleep "${TFWR_RELOAD_SETTLE:-3}"
     focus_game
     hyprctl dispatch sendshortcut ",Escape,class:$CLASS" >/dev/null
     sleep "${TFWR_MENU_SETTLE:-1.2}"
