@@ -17,6 +17,7 @@
 #   tools/tfwr.sh run                  # select, then F5. F5 alone does nothing.
 #   tools/tfwr.sh stop                 # Shift+F5: stop execution
 #   tools/tfwr.sh state                # idle | running | result
+#   tools/tfwr.sh verdict              # scored | failed (exit 1) — read the modal
 #   tools/tfwr.sh wait-result [secs]   # block until the completion modal appears
 #   tools/tfwr.sh dismiss              # clear the completion modal (click OK)
 #   tools/tfwr.sh reload               # Escape -> Load -> Save0 -> Escape
@@ -63,6 +64,9 @@ DIALOG_PROBE=${TFWR_DIALOG_PROBE:-"1426 751"}
 # Centre of the pause menu's "Start" button, in captured pixels — the probe for
 # whether the pause menu is open.
 MENU_PROBE=${TFWR_MENU_PROBE:-"555 333"}
+# The band of the completion modal holding the orange "Run Failed" line, as an
+# ImageMagick crop geometry in captured pixels.
+FAIL_PROBE=${TFWR_FAIL_PROBE:-"200x1+480+470"}
 
 # ydotool's absolute coordinates are exactly half the compositor's logical
 # coordinates on this setup — measured, not guessed: sending (300,200) landed the
@@ -180,6 +184,29 @@ save_prompt_up() { green_at $DIALOG_PROBE; }
 # assume.
 menu_up() { green_at $MENU_PROBE; }
 
+# Did the completion modal say "Run Failed"?
+#
+# The modal looks the same whether a run scored or failed — same layout, same
+# big time, same personal best — except for an orange "Run Failed" line above the
+# time. Without this check a failed run's duration reads exactly like a result,
+# and the loop will happily journal it as one. A run fails if it is stopped, if
+# the program never terminates, or if it ends without meeting the target.
+#
+# Scored: the band is flat modal grey (0.337 everywhere). Failed: orange text,
+# so red saturates while blue stays low.
+run_failed() {
+  local shot v
+  shot=$(mktemp /tmp/tfwr-fail-XXXX.png)
+  capture_to "$shot"
+  v=$(magick "$shot" -crop "${FAIL_PROBE}" +repage \
+        -format '%[fx:maxima.r] %[fx:mean.b]' info:)
+  rm -f "$shot"
+  awk -v v="$v" 'BEGIN {
+    split(v, c, " ")
+    exit (c[1] - c[2] > 0.4) ? 0 : 1
+  }'
+}
+
 # Block until the run finishes, i.e. until the completion modal appears.
 wait_result() {
   local timeout=${1:-600} start now st
@@ -265,8 +292,23 @@ case "$cmd" in
     st=$(run_state); echo "$st"
     [[ "$st" == "running" ]] || die "F5 did not start a run (state=$st)"
     ;;
-  stop)  need_game; hyprctl dispatch sendshortcut "SHIFT,F5,class:$CLASS" >/dev/null ;;
+  stop)
+    # focus_game, not need_game — an unfocused window drops the shortcut, and a
+    # stop that silently does nothing is worse than no stop at all: the caller
+    # believes the run is over and starts reading a screen that is still moving.
+    # Same bug the `key` subcommand had.
+    focus_game
+    hyprctl dispatch sendshortcut "SHIFT,F5,class:$CLASS" >/dev/null
+    sleep 1
+    st=$(run_state)
+    [[ "$st" != "running" ]] || die "run still going after Shift+F5 (state=$st)"
+    echo "stopped ($st)"
+    ;;
   state) run_state ;;
+  verdict)
+    # Only meaningful once the completion modal is up.
+    if run_failed; then echo "failed"; exit 1; else echo "scored"; fi
+    ;;
   wait-result) wait_result "${1:-600}" ;;
   dismiss)
     # The completion modal must be cleared before another run can start.
@@ -319,6 +361,6 @@ case "$cmd" in
     echo "reloaded"
     ;;
   help|*)
-    sed -n '2,23p' "${BASH_SOURCE[0]}" | sed 's/^# \?//'
+    sed -n '2,24p' "${BASH_SOURCE[0]}" | sed 's/^# \?//'
     ;;
 esac

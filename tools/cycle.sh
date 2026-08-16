@@ -92,6 +92,15 @@ done
 shot=$("$REPO/tools/tfwr.sh" capture "$label")
 echo "SHOT=$shot"
 
+# A modal is not the same thing as a score. The game shows the same panel, with
+# the same big duration and the same personal best, whether the run succeeded or
+# failed — the only difference is an orange "Run Failed" line. A run fails if it
+# is stopped, if the program never terminates, or if it ends without meeting the
+# target, and its duration reads exactly like a result. Without this check the
+# loop journals that duration as a score.
+verdict=$("$REPO/tools/tfwr.sh" verdict || true)
+echo "VERDICT=$verdict"
+
 out="$SHOTS/$label-output.txt"
 if cp "$GAME_ROOT/output.txt" "$out" 2>/dev/null; then
   echo "OUTPUT=$out"
@@ -102,4 +111,10 @@ if cp "$GAME_ROOT/output.txt" "$out" 2>/dev/null; then
 fi
 
 "$REPO/tools/tfwr.sh" dismiss >/dev/null
+
+if [[ "$verdict" != "scored" ]]; then
+  echo "cycle: the modal says the run failed — its time is not a score" >&2
+  echo "STATUS=failed"
+  exit 2
+fi
 echo "STATUS=ok"
