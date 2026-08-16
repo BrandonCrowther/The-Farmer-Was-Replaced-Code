@@ -404,6 +404,14 @@ case "$cmd" in
     # execute the wrong file. A reload puts them back in filename order with
     # zzRunner.py on top, which is the whole premise of the fixed coordinate.
     focus_game
+    # Clear a completion modal first. It blocks the pause menu, so Escape
+    # dismisses the modal instead of opening the menu and the reload then fails
+    # with "pause menu did not open" — which is what happened when a probe run
+    # left its modal up for the next cycle.
+    if [[ "$(run_state)" == "result" ]]; then
+      "${BASH_SOURCE[0]}" dismiss >/dev/null
+      sleep "${TFWR_MENU_SETTLE:-1.2}"
+    fi
     # Open the menu only if it is not already open — see menu_up().
     if ! menu_up; then
       hyprctl dispatch sendshortcut ",Escape,class:$CLASS" >/dev/null
