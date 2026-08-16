@@ -7,9 +7,16 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
-- [ ] 014 thirty-two-drones — `max_drones()` is **32** and the seeded grid tries
-      to spawn 36, so four positions have never been farmed. Lay out exactly 32
-      drones over the 32x32 farm. Metric: one run vs 03:05.789.
+- [ ] 015 self-correcting-map — contention cannot be designed away: 32 drones on
+      a 32x32 farm can be at most ~5.66 apart and disjoint companion ranges need
+      7. So handle it in the map instead. When a drone walks to a tile and finds
+      something other than what it recorded, that tile is contested — mark it
+      permanently untrusted and always walk for it. Metric: one run vs 03:05.323.
+- [ ] 016 wrap-aware-move_to — the farm wraps, and `Common.move_to` always takes
+      the direct path. Inert for Hay (companions are within 3 moves and never
+      cross the seam at this layout; placement moves are one-time and ~0.0007% of
+      a drone's ticks) but correct, reusable, and the Maze categories will need
+      it. Land it in Common without putting it on the hot path.
 
 - [ ] 009 harvest-before-till — `p_make_callback` tills before planting, but
       `till()` will not convert ground a plant stands on, so an affordable
@@ -31,6 +38,12 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       `num_items(Items.Water)`. Metric: mean over 3 runs vs the 002 baseline.
 
 ## Done
+
+- [x] 014 thirty-two-drones — **adopted**, 03:05.323, −0.466 s, rank #177.
+      Confirms `SPAWNED 32 of 32`: thirteen experiments ran with four positions
+      silently empty. Small win, because position only affects contention — and
+      contention cannot be fixed by geometry at this drone count.
+      `experiments/hay/014/result.md`
 
 - [x] 013 companion-map — **adopted, new champion.** 03:05.789, −18.5 s (−9.1%),
       rank #230 -> #178. Each drone remembers what it planted where and skips the
