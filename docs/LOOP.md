@@ -119,6 +119,47 @@ function — see `p_companion_table` and `plant_companion()`.
 | `the game has crashed — Proton dialog: "..."` | the game died and left a Wine dialog carrying the same window class | `tools/tfwr.sh relaunch`, then re-run the cycle. See *Recovering from a crash* |
 | a modal with an orange "Run Failed" line | the run was stopped, never terminated, or ended short of its target | `cycle.sh` already exits 2 on this. **Never record the duration** — it looks exactly like a score |
 
+
+## A conclusion needs a test that is not a full run
+
+A leaderboard run yields **one number**. That number can establish *whether* a
+change is faster. It can never establish *why*, and every wrong conclusion in this
+project came from using it that way — fitting a plausible mechanism to a single
+delta and writing it up as explanation.
+
+The record from one session:
+
+| claim, fitted to a run time | how it died |
+| --- | --- |
+| "contention is cooperation" (021) | 023 measured neighbour pre-stocking at **0.13%** |
+| "wrapped walks explain the lattice" (023) | 024 changed the walk and moved the time by **2 ms** |
+| "carrot fails 7 times in 8" (019) | 031 traced 1,114 plantings: **99.6% succeed** |
+| "the reroll rerolls nothing" (032) | 033 measured **66.4%** of attempts changing the preference |
+| "the noise floor is 2.41 s" (027) | 028 ran four clean runs: **sd 0.069 s** |
+
+Four of those were written into result files as fact and two were built on by
+later experiments before being caught.
+
+**The rule.** Any claim about mechanism must come with a test that observes the
+mechanism *directly*, and that test must not be a full run:
+
+- `quick_print` and `get_tick_count()` cost **0 ticks**. A probe can classify
+  every arrival, count every reroll, trace every planting, and time every growth
+  cycle without perturbing anything.
+- **A probe can be short.** 019 ran 20 seconds and settled four questions. A
+  probe that never scores is still a good cycle.
+- **Write the falsifier before the run.** If you cannot say what observation
+  would prove the explanation wrong, it is not an explanation yet.
+- **State inferences as inferences.** "X is worth 67x" reads as measured and gets
+  built upon. "The run is 67x slower without X, which we attribute to the
+  multiplier but have not measured" does not.
+
+**But keep the system intact while probing.** Isolation is not free: a
+single-drone probe is a *different farm*, because wood and water economics depend
+on the other drones — that is exactly how 019 produced a false carrot result, and
+how 008 lost 59x by dropping polyculture "to isolate the variable". Instrument the
+real configuration; do not shrink it.
+
 ## Measure the mechanic before designing around it
 
 `quick_print` costs **0 ticks** and `get_tick_count()` costs 0. There is no
