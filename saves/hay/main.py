@@ -8,12 +8,24 @@ TARGET = 2000000000
 entity = Entities.Grass
 instructions = Common.get_planting_instructions(entity)
 
+# Grass rolls its companion over Bush, Tree and Carrot. 004 made Bush and Tree
+# pay out, leaving Carrot as the one face that costs anything (512 hay + 512
+# wood) — so reroll that one. Two of the three faces are free, so a reroll clears
+# in about 1.5 tries and only ~1/3 of iterations need one at all.
+#
+# The cap matters: every reroll is a harvest plus a plant, and an uncapped loop
+# would keep paying that through a run of bad luck chasing a multiplier worth
+# less than the ticks spent on it.
+REROLL_LIMIT = 3
+
 def driver(x, y):
 	Common.move_to(x,y)
 	instructions()
 	while num_items(Items.Hay) < TARGET:
 		while get_water() < 0.75:
 			use_item(Items.Water)
+		# Reroll before the walk, while this plant is still worthless to discard.
+		Common.reroll_companion(entity, REROLL_LIMIT)
 		Common.polyculture()
 		# Not Common.await_harvest(): that spins forever on a plant that will
 		# never ripen, and once the target is hit nothing else is going to move.

@@ -7,15 +7,17 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
-- [ ] 006 reroll-companion — a plant's companion preference is rerolled when it
-      is replanted, and grass is free. When the roll is Carrot (the only costly
-      face: 512 hay + 512 wood) replant rather than paying or wasting the trip.
-      Only ever reroll at the moment we replant anyway, never mid-growth, and
-      cap the attempts — each costs a plant plus a get_companion. Metric: one
-      run vs whatever 004 leaves as the champion. Do this after 004, since 004
-      changes which faces are worth keeping. **Reference implementation exists:**
-      the seeded `saves/wood/main.py` driver already rerolls, replanting until
-      `get_companion()` returns a Grass companion at the distance it wants.
+- [ ] 009 harvest-before-till — `p_make_callback` tills before planting, but
+      `till()` will not convert ground a plant stands on, so an affordable
+      carrot companion fails on an occupied tile (9 -> 183 such warnings in
+      006). Harvest first in the companion callback. Cheap, and it applies to
+      every category. Metric: one run vs champion.
+- [ ] 010 farm-state-diagnostic — verify what the farm actually looks like
+      between iterations: is our own tile replanted after the end-of-loop
+      harvest, or empty? If empty, `get_companion()` returns None at the top of
+      each iteration and several conclusions need revisiting. Use `quick_print`,
+      which costs 0 ticks, and read `output.txt`. Not an optimisation — a
+      measurement, and it gates how much of 006 was even exercised.
 - [ ] 007 carrot-when-rich — 003 showed carrot becomes affordable partway
       through a run (failures fell 760 -> 66 with no logic change), so wood is
       arriving from Bush companions. If the multiplier justifies 512 hay + 512
@@ -26,6 +28,12 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       `num_items(Items.Water)`. Metric: mean over 3 runs vs the 002 baseline.
 
 ## Done
+
+- [x] 006 reroll-companion — **rejected**, 03:41.013 (+0.102 s, inside the
+      floor, so: no effect). The mechanic works — unaffordable carrot requests
+      fell 73% — but a harvest plus a plant per reroll costs exactly what the
+      multiplier wins. Prices the mechanic, and cleared the 005 tripwire.
+      `experiments/hay/006/result.md`
 
 - [x] 005 use-shared-helper — **adopted**, 03:40.911, delta 0.000 s. Confirms
       `Common.plant_companion()` matches 004's local override exactly; hay's

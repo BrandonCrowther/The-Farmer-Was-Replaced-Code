@@ -68,6 +68,37 @@ p_companion_table = {
 def plant_companion(entity):
 	p_companion_table[entity]()
 
+def affordable(entity):
+	# Whether we hold everything planting `entity` costs. Grass, Bush and Tree
+	# are free; Carrot is 512 hay + 512 wood, so on a leaderboard run starting
+	# with neither it is unaffordable early and affordable later.
+	cost = get_cost(entity)
+	for item in cost:
+		if num_items(item) < cost[item]:
+			return False
+	return True
+
+def reroll_companion(entity, limit):
+	# A plant's companion preference is fixed for that plant and cannot be
+	# argued with — but replanting rolls a fresh one, and grass, bushes and
+	# trees cost nothing to replace. So when the roll is one we cannot satisfy,
+	# throw the plant away and roll again rather than paying for it or spending
+	# the walk for no multiplier.
+	#
+	# Only call this straight after planting, while the plant has no growth to
+	# lose. The seeded wood driver uses the same trick to line its trees up with
+	# grass companions at the distance it wants.
+	#
+	# Returns how many rerolls it spent, so a caller can measure the cost.
+	tries = 0
+	companion = get_companion()
+	while companion != None and not affordable(companion[0]) and tries < limit:
+		harvest()
+		p_planting_table[entity]()
+		companion = get_companion()
+		tries = tries + 1
+	return tries
+
 def polyculture():
 	x, y = get_pos_x(), get_pos_y()
 	companion = get_companion()
