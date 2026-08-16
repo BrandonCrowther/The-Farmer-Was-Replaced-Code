@@ -7,10 +7,15 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
-- [ ] 017 water-threshold — `while get_water() < 0.75` targets a level the farm
-      cannot supply: 32 tiles at 0.75 drain ~0.24 water/s against a supply of
-      ~0.025/s, so the loop spins on failed `use_item` calls, ~200 ticks a pass.
-      Water only when a tank is actually in hand. Metric: one run vs 03:05.323.
+- [ ] 019 mechanics-probe — **method fix.** Measure what has only been inferred:
+      the polyculture multiplier (hay delta across one harvest, satisfied vs not,
+      single drone so `num_items` is uncontaminated), growth ticks with no walk
+      in the way, companion distance distribution, and real water levels and tank
+      counts. Will not score; the telemetry is the point.
+- [ ] 018 diamond-lattice — 32 drones at minimum L1 separation 8 (rows 4 apart,
+      centres 8 apart, odd rows offset 4) give every drone a private 25-tile
+      diamond, so no planting is overwritten and no map entry can go stale.
+      Depends on 019 confirming the companion range is really 3.
 
 - [ ] 009 harvest-before-till — `p_make_callback` tills before planting, but
       `till()` will not convert ground a plant stands on, so an affordable
@@ -32,6 +37,11 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       `num_items(Items.Water)`. Metric: mean over 3 runs vs the 002 baseline.
 
 ## Done
+
+- [x] 017 water-threshold — **adopted**, 03:04.715, −0.608 s. Gate the watering
+      loop on `num_items(Items.Water) > 0` so it stops spinning on an unreachable
+      level; water warnings 1042 -> 120. Smaller than predicted, and this run
+      cannot say why. `experiments/hay/017/result.md`
 
 - [x] 016 no-carrot — **rejected**, 03:16.787 (+11.5 s). Skipping a doomed
       planting should have been free and was not: **the companion walk is how
