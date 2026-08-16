@@ -29,14 +29,3 @@ spends it first.
 **Standing caveat.** The starvation figure motivating this change is arithmetic
 on wiki constants, not measurement — exp-019 samples `get_water()` and
 `num_items(Items.Water)` directly.
-
----
-
-**CORRECTION (exp-027, 2026-08-16).** This result was adopted against a noise
-floor of 0.15 s taken from exp-002 — measured on the 4:55 seed, 25 experiments
-earlier. The floor at champion speed is **2.41 s (1 sd)**, from three
-champion-equivalent runs scoring 02:47.682, 02:51.263 and 02:52.271.
-
-This delta is **0.25 of one standard deviation**. It is not a measured improvement.
-The change may still be right on its reasoning, and it is not harmful, but it
-should not be counted as evidence.

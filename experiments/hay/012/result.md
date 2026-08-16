@@ -36,14 +36,3 @@ So the walk is now skipped when carrot is unaffordable, but carrot is still neve
 successfully planted. A third of companion requests continue to earn no
 multiplier at all. **That, not tick-shaving, is the largest thing left on the
 table** — see the queue's carrot-when-rich line.
-
----
-
-**CORRECTION (exp-027, 2026-08-16).** This result was adopted against a noise
-floor of 0.15 s taken from exp-002 — measured on the 4:55 seed, 25 experiments
-earlier. The floor at champion speed is **2.41 s (1 sd)**, from three
-champion-equivalent runs scoring 02:47.682, 02:51.263 and 02:52.271.
-
-This delta is **0.09 of one standard deviation**. It is not a measured improvement.
-The change may still be right on its reasoning, and it is not harmful, but it
-should not be counted as evidence.
