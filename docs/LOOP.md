@@ -59,10 +59,21 @@ The category is whatever the invocation names. Everything below says `<cat>`.
 - **Wall clock.** Ask the user for the stop time at setup; never assume one.
   Stop cleanly — finish journalling the current experiment, do not abandon it
   mid-cycle.
-- **Five consecutive failures.** A failure is a cycle that produced no time.
-  Reset the count on any successful cycle. Five in a row means the game or the
-  harness is wedged in a way retrying will not fix; stop and report what the
-  last screenshot showed.
+- **Five consecutive failures — switch category, do not stop.** A failure is a
+  cycle that produced no time. Reset the count on any successful cycle. At five
+  in a row, move to **`fastest_reset`** and carry on there; it already scores
+  (15:11:42.399, rank #833), so it starts from a working baseline rather than
+  from nothing.
+
+  Read its queue before trusting it: item 001 is "terminate", written when every
+  category was assumed to be an endless farmer, but this one already completes
+  and posts a time, so 001 is probably moot and 002 (baseline) is the real
+  starting point. Note also that its noise floor is **~10.7 minutes**, so unlike
+  Hay a single run proves nothing — budget three runs per variant.
+
+  If five *more* consecutive failures follow on `fastest_reset`, the harness
+  itself is wedged rather than the category — switching again will not help.
+  Stop then, and report what the last screenshot showed.
 - **Empty queue.** Do not stop on an empty queue without first asking whether a
   *fundamental fork* exists — a different strategy rather than another tweak.
   For a farming category that means things like: a different plot geometry or
@@ -79,6 +90,23 @@ The category is whatever the invocation names. Everything below says `<cat>`.
 - **No `Co-Authored-By:` trailers.**
 - An experiment branch writes only `saves/<cat>/**` and `experiments/<cat>/**`.
   Tooling and docs changes belong on `autofarmer`.
+
+## Extending `Common.py`
+
+Adding a genuinely reusable function to `Common.py` needs no permission. All
+nine copies are byte-identical and must stay that way — edit one, then copy it
+to the rest and check with `md5sum saves/*/Common.py`.
+
+The bar is *reusable*, not merely *shared*: something a second category would
+plausibly call. Category-specific tuning stays in that category's `main.py`.
+
+Do not repurpose an existing helper to answer a new question — that is exactly
+how the polyculture bug happened. `p_planting_table` answered "what do I plant
+while farming X" and was reused for "what satisfies a companion request for X".
+Both answers were right for their own question and wrong for the other, and
+because planting the wrong plant is a legal action it produced no warning
+anywhere. When a new caller needs a different question answered, give it its own
+function — see `p_companion_table` and `plant_companion()`.
 
 ## Failure modes seen, and what they look like
 
