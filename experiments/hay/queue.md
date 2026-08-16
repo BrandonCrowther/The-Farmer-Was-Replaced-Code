@@ -7,6 +7,10 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
+- [ ] 014 thirty-two-drones — `max_drones()` is **32** and the seeded grid tries
+      to spawn 36, so four positions have never been farmed. Lay out exactly 32
+      drones over the 32x32 farm. Metric: one run vs 03:05.789.
+
 - [ ] 009 harvest-before-till — `p_make_callback` tills before planting, but
       `till()` will not convert ground a plant stands on, so an affordable
       carrot companion fails on an occupied tile (9 -> 183 such warnings in
@@ -27,6 +31,12 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       `num_items(Items.Water)`. Metric: mean over 3 runs vs the 002 baseline.
 
 ## Done
+
+- [x] 013 companion-map — **adopted, new champion.** 03:05.789, −18.5 s (−9.1%),
+      rank #230 -> #178. Each drone remembers what it planted where and skips the
+      ~800 tick round trip when the tile is unchanged. Also measured
+      `max_drones() = 32` against a spawn grid of 36 — we have been at the drone
+      cap all along. `experiments/hay/013/result.md`
 
 - [x] 012 skip-unaffordable — **adopted**, 03:24.347 (mean of 2), −0.205 s.
       Do not walk to a companion we cannot plant. Confirmed with a second run

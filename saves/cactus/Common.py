@@ -77,6 +77,34 @@ def affordable(entity):
 			return False
 	return True
 
+def polyculture_mapped(planted):
+	# polyculture(), but the caller carries a memory of what it planted where, so
+	# a companion tile that is already correct costs a dictionary lookup rather
+	# than a round trip. A move is 200 ticks; the lookup is a handful.
+	#
+	# `planted` must only ever hold this drone's own plantings. A stale entry
+	# causes a *skip*, and a wrong skip forfeits the 67x polyculture multiplier on
+	# that harvest — far more expensive than the walk it saved. So entries are
+	# written only straight after this drone plants, and the tile is still
+	# verified with get_entity_type() on any pass where we do walk.
+	x, y = get_pos_x(), get_pos_y()
+	companion = get_companion()
+	if companion == None:
+		return
+	plant_type, (px, py) = companion
+	if not affordable(plant_type):
+		return
+	key = (px, py)
+	if key in planted:
+		if planted[key] == plant_type:
+			return
+	move_to(px, py)
+	if get_entity_type() != plant_type:
+		harvest()
+		plant_companion(plant_type)
+	planted[key] = plant_type
+	move_to(x, y)
+
 def polyculture():
 	x, y = get_pos_x(), get_pos_y()
 	companion = get_companion()
