@@ -8,13 +8,43 @@ TARGET = 2000000000
 entity = Entities.Grass
 instructions = Common.get_planting_instructions(entity)
 
+def affordable(e):
+	cost = get_cost(e)
+	for item in cost:
+		if num_items(item) < cost[item]:
+			return False
+	return True
+
+def polyculture():
+	# Common.polyculture() walks to the companion tile, harvests it and plants
+	# the companion back. On this leaderboard the companion is usually Carrot
+	# and the run starts with no carrot seeds, so the planting callback tills
+	# the tile to Soil and *then* fails to plant — leaving bare soil that grows
+	# nothing, on a tile that was productive grassland a moment earlier.
+	#
+	# So keep the walk and the harvest, which are real yield, and only change
+	# what gets planted: the companion when we can afford it, grass when we
+	# cannot. The tile is never left empty either way.
+	x, y = get_pos_x(), get_pos_y()
+	companion = get_companion()
+	if companion == None:
+		return
+	plant_type, (px, py) = companion
+	Common.move_to(px, py)
+	harvest()
+	if affordable(plant_type):
+		Common.get_planting_instructions(plant_type)()
+	else:
+		instructions()
+	Common.move_to(x, y)
+
 def driver(x, y):
 	Common.move_to(x,y)
 	instructions()
 	while num_items(Items.Hay) < TARGET:
 		while get_water() < 0.75:
 			use_item(Items.Water)
-		Common.polyculture()
+		polyculture()
 		# Not Common.await_harvest(): that spins forever on a plant that will
 		# never ripen, and once the target is hit nothing else is going to move.
 		# Checking the target here too is what stops a straggler from hanging
