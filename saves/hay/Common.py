@@ -68,6 +68,15 @@ p_companion_table = {
 def plant_companion(entity):
 	p_companion_table[entity]()
 
+def affordable(entity):
+	# Whether we hold everything planting `entity` costs. Grass, Bush and Tree
+	# are free; Carrot is 512 hay + 512 wood.
+	cost = get_cost(entity)
+	for item in cost:
+		if num_items(item) < cost[item]:
+			return False
+	return True
+
 def polyculture():
 	x, y = get_pos_x(), get_pos_y()
 	companion = get_companion()
@@ -75,6 +84,19 @@ def polyculture():
 	if companion == None:
 		return
 	plant_type, (px, py) = companion
+	# Do not walk somewhere to fail. A companion we cannot afford — in practice
+	# Carrot, at 512 hay and 512 wood — will not be planted when we arrive, so
+	# the trip earns no multiplier and costs the full round trip: ~800 ticks of
+	# movement at 200 a move. Checking costs one tick for get_cost and one per
+	# item, and it is worth it on roughly a third of passes.
+	#
+	# The harvest back home still happens, unmultiplied. That is strictly better
+	# than paying for the walk and getting the same unmultiplied harvest, and it
+	# is *not* what 006 did: 006 rerolled by harvesting the mature grass while
+	# the companion was still unsatisfied, collecting the crop at 1x and throwing
+	# away the very multiplier it was trying to win.
+	if not affordable(plant_type):
+		return
 	move_to(px, py)
 	# Only disturb the companion tile if it is not already what it needs to be.
 	#
