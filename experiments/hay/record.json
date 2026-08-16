@@ -6,9 +6,11 @@
   "entry": "main",
   "speedup": 5000,
   "seeded_from": "Hay_Achievement.py",
-  "personal_best": "04:55.393",
+  "personal_best": "04:55.182",
   "global_rank": 422,
-  "best_branch": "auto_experiment/hay/001",
+  "best_branch": "auto_experiment/hay/002",
+  "baseline": "04:55.320",
+  "noise_floor": "0.15s (1 sd over 3 runs)",
   "status": "scoring",
   "updated": "2026-08-15"
 }

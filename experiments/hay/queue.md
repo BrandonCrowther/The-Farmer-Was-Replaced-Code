@@ -7,8 +7,6 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
-- [ ] 002 baseline — record the time the terminating seed produces, as the
-      number every later variant has to beat. Metric: mean over 3 runs.
 - [ ] 003 no-polyculture — the Hay start has no carrot seeds, so
       `Common.polyculture()` failed to plant a companion 760 times in 001.
       Drop it, or only run it when the companion is plantable. Metric: mean
@@ -19,6 +17,10 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Done
 
+- [x] 002 baseline — **04:55.320** (mean of 3), noise floor ±0.15 s. The score
+      the game reports is already averaged over 2 h of repeats, so Hay barely
+      varies and one run per variant is enough to rank candidates.
+      `experiments/hay/002/result.md`
 - [x] 001 terminate — bounded every drone's loop on `num_items(Items.Hay)` and
       reaped the spawns with `wait_for`. **04:55.393**, global rank #422 — the
       category scores at all for the first time. `experiments/hay/001/result.md`
