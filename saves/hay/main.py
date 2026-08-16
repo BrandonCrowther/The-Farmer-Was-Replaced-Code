@@ -14,7 +14,7 @@ REROLL_LIMIT = 2
 entity = Entities.Grass
 instructions = Common.get_planting_instructions(entity)
 
-def driver(x, y):
+def driver(x, y, report):
 	Common.move_to(x,y)
 	instructions()
 	# What this drone believes it has planted, keyed by position.
@@ -30,6 +30,7 @@ def driver(x, y):
 	# harvest, while a needless walk costs 800 ticks. Wrong-and-skip is far worse
 	# than wrong-and-walk, so nothing speculative belongs in here.
 	planted = {}
+	passes = 0
 	while num_items(Items.Hay) < TARGET:
 		# Water while there is water to use, not until an unreachable level.
 		#
@@ -47,7 +48,25 @@ def driver(x, y):
 		# actually become false.
 		while num_items(Items.Water) > 0 and get_water() < 0.75:
 			use_item(Items.Water)
+		# PROBE: does the companion in force at harvest match the one we acted on?
+		#
+		# 033 showed get_companion() rerolls on every call. If the preference also
+		# drifts between the moment polyculture_mapped() decides what to do and the
+		# moment we harvest, then every skip risks forfeiting the 160x multiplier —
+		# which would undermine 013, a merged 18.5 s win built on exactly that skip.
+		before = get_companion()
 		Common.polyculture_mapped(planted)
+		after = get_companion()
+		if report:
+			if passes < 400:
+				if before == None or after == None:
+					quick_print("PREF", passes, "none")
+				else:
+					quick_print("PREF", passes,
+						"before", before[0], "after", after[0],
+						"same_type", before[0] == after[0],
+						"same_pos", before[1] == after[1])
+			passes = passes + 1
 		# Not Common.await_harvest(): that spins forever on a plant that will
 		# never ripen, and once the target is hit nothing else is going to move.
 		# Checking the target here too is what stops a straggler from hanging
@@ -107,14 +126,14 @@ for i in range(6):
 	for j in range(6):
 		if i + j != 0:
 			if (i, j) not in HOLES:
-				d = spawn_drone(driver, 3 + i*5, 3 + j*5)
+				d = spawn_drone(driver, 3 + i*5, 3 + j*5, False)
 				# None would mean the cap was hit anyway, and there is no handle
 				# to wait on. Requesting 32 against a cap of 32 it should not
 				# happen — the count below is how we find out if it does.
 				if d:
 					drones.append(d)
 quick_print("SPAWNED", len(drones) + 1, "of", max_drones())
-driver(3, 3)
+driver(3, 3, True)
 # The run is not over until the program is, and the program is not over while a
 # spawned drone is still farming. Reap them before falling off the end.
 for d in drones:
