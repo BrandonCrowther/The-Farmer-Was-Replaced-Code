@@ -87,34 +87,42 @@ def driver(x, y):
 			rerolls = rerolls + 1
 
 clear()
-# max_drones() is 32 (measured in 013) and this grid has 36 positions, so four
-# spawns have always returned None. The loop runs column-major, so the four that
-# failed were never random: (5,2) through (5,5), a contiguous unfarmed strip down
-# one edge, silently absorbed by the `if d:` guard ever since 001.
+# max_drones() is 32 (measured in 013). The old spacing-5 grid of 6x6 minus four
+# holes left neighbouring territories overlapping: companion requests reach 3
+# moves, so drones 5 apart share a band of tiles, overwrite each other's
+# plantings, and invalidate each other's map entries.
 #
-# Position only matters for contention. A drone farms its own tile, so where it
-# stands changes nothing about its own yield — but neighbouring drones overlap in
-# the band their companion requests reach (spacing 5 against a range of 3), and
-# every overlap is a chance to invalidate another drone's map entry.
+# 014 claimed that was unavoidable — 32 drones over 1024 tiles is 32 tiles each,
+# so spacing ~sqrt(32) = 5.66, under the 7 that disjoint ranges need. **That was
+# wrong**: it reasoned about circles in a world with no diagonals. The API defines
+# exactly four Directions, so distance is Manhattan and "within 3 moves" is a
+# diamond of 2r^2+2r+1 = 25 tiles, not a 7x7 square of 49. Thirty-two diamonds
+# need 800 tiles against the farm's 1024.
 #
-# So spend the four missing drones deliberately: keep the spacing-5 grid and put
-# four holes through the middle instead of losing a whole edge. Same 32 drones,
-# spread more evenly, fewer neighbours each.
-HOLES = [(1, 1), (1, 4), (4, 1), (4, 4)]
+# 019 then confirmed the premise by measurement: every sampled companion request
+# was at L1 distance 1, 2 or 3, and none crossed the wrap.
+#
+# This lattice realises disjoint territories: rows 4 apart, centres 8 apart along
+# a row, odd rows offset by 4. Exactly 32 centres at minimum L1 separation 8 —
+# including across the wrap — against the 7 required. No drone can reach another's
+# tiles, so nothing is overwritten and no map entry can go stale.
+ROWS = 8
+COLS = 4
 quick_print("FARM", "world", get_world_size(), "max_drones", max_drones())
 drones = []
-for i in range(6):
-	for j in range(6):
-		if i + j != 0:
-			if (i, j) not in HOLES:
-				d = spawn_drone(driver, 3 + i*5, 3 + j*5)
-				# None would mean the cap was hit anyway, and there is no handle
-				# to wait on. Requesting 32 against a cap of 32 it should not
-				# happen — the count below is how we find out if it does.
-				if d:
-					drones.append(d)
+for j in range(ROWS):
+	for i in range(COLS):
+		x = 8 * i
+		if j % 2 == 1:
+			x = x + 4
+		y = 4 * j
+		if x + y != 0:
+			d = spawn_drone(driver, x, y)
+			# None would mean the cap was hit; there is no handle to wait on.
+			if d:
+				drones.append(d)
 quick_print("SPAWNED", len(drones) + 1, "of", max_drones())
-driver(3, 3)
+driver(0, 0)
 # The run is not over until the program is, and the program is not over while a
 # spawned drone is still farming. Reap them before falling off the end.
 for d in drones:
