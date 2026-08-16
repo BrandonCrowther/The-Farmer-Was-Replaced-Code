@@ -99,6 +99,22 @@ def move_to_wrapped(x, y):
 		else:
 			move(South)
 
+def already_satisfied(planted, companion):
+	# Would this request be served without moving? True when the map records the
+	# requested plant already standing at the requested position — exactly the
+	# condition polyculture_mapped() uses to skip the round trip.
+	#
+	# Carrot is excluded regardless: it is affordable and plants fine (031), but a
+	# tile stocked with carrot is one we harvested for wood, so treating it as a
+	# stable companion is not safe.
+	plant_type, (px, py) = companion
+	if plant_type == Entities.Carrot:
+		return False
+	key = (px, py)
+	if key in planted:
+		return planted[key] == plant_type
+	return False
+
 def polyculture_mapped(planted):
 	# polyculture(), but the caller carries a memory of what it planted where, so
 	# a companion tile that is already correct costs a dictionary lookup rather

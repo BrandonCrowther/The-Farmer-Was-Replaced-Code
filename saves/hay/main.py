@@ -9,7 +9,7 @@ TARGET = 2000000000
 # Each reroll costs a plant (200 ticks) and restarts the growth clock, so this is
 # not free; 019 puts P(carrot) at about a third, so most passes reroll zero times
 # and few reroll more than once.
-REROLL_LIMIT = 2
+REROLL_LIMIT = 3
 
 entity = Entities.Grass
 instructions = Common.get_planting_instructions(entity)
@@ -77,10 +77,25 @@ def driver(x, y):
 		# empty, so a reroll costs one plant (200 ticks) rather than a harvest plus
 		# a plant, and throws away nothing. Capped, because each reroll also resets
 		# the growth clock.
+		# Reroll for a *map hit*, not merely away from carrot.
+		#
+		# 031 killed the idea that carrot is the problem: it plants successfully
+		# 99.6% of the time, and with 026's census (52% walk-and-replant, 45%
+		# already-correct, both satisfied) the farm is already ~97% multiplied.
+		# The gap is ticks per harvest — 967 against the ~330 the leader implies.
+		#
+		# What separates a cheap pass from an expensive one is whether the walk
+		# happens at all: 462 ticks when the map says the companion tile is
+		# already right, 1,459 when it must be walked to and replanted. So reroll
+		# until the request names a tile we already know is correct.
+		#
+		# A reroll here is one plant on an already-empty tile — 200 ticks, the
+		# same throw 020 established — and at a 45% hit rate it takes about 1.2 of
+		# them. Capped, because each reroll also restarts the growth clock.
 		rerolls = 0
 		instructions()
 		companion = get_companion()
-		while rerolls < REROLL_LIMIT and companion != None and companion[0] == Entities.Carrot:
+		while rerolls < REROLL_LIMIT and companion != None and not Common.already_satisfied(planted, companion):
 			harvest()
 			instructions()
 			companion = get_companion()
