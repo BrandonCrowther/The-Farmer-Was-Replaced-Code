@@ -7,6 +7,42 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
+- [ ] 025 monocrop-checkerboard — **the next major design, and the most promising
+      thing on this list.** Give each drone ~4 grass plots and stock every other
+      tile it owns with a permanent monocrop of Tree (or Bush — not Carrot, which
+      needs Soil and fails 7/8).
+
+      The point is that a permanent companion stops being work. Bush and Tree are
+      free and persist, so once a tile is stocked it satisfies requests forever:
+      no harvest, no replant. Combined with 013's map, a request landing on a
+      known-stocked tile needs **no walk either** — the pass collapses to a
+      harvest plus a lookup, against today's ~920 ticks of walking.
+
+      **The parameter to get right is the reroll rule**, because request *type* is
+      uniform over three and *position* is uniform over the 24 tiles in range:
+
+      | stocking | P(type match AND stocked position) | expected reroll ticks |
+      | --- | --- | --- |
+      | half the tiles | 0.167 | ~1000 |
+      | 3 of 4 | 0.250 | ~600 |
+      | 4 of 5 | 0.267 | ~550 |
+
+      Rerolling for *both* type and position is therefore no cheaper than the walk
+      it replaces. The promising variant is to reroll on **type only** (~400 ticks
+      to reach Tree, the rule 020 already uses for Carrot) and stock nearly every
+      non-grass tile, so a type match almost always lands somewhere already
+      stocked.
+
+      **Measure before building.** Extend the 019 probe to report, per pass: the
+      request type, whether the position was stocked, and whether the tile already
+      held the right plant. That gives the real distributions instead of the
+      uniform assumption above.
+
+      Also removes the shared-work question entirely: with permanent stock there
+      is nothing to overwrite, so 021's "contention is cooperation" finding stops
+      mattering — the cooperation becomes deliberate infrastructure instead of a
+      lucky side effect.
+
 - [ ] 023 measure-preplanted — count arrivals where the companion tile already
       holds the requested plant, with `quick_print`, under the spacing-5 grid.
       021 claims overlap is cooperation; this is the measurement that would
