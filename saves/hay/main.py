@@ -87,34 +87,30 @@ def driver(x, y):
 			rerolls = rerolls + 1
 
 clear()
-# max_drones() is 32 (measured in 013) and this grid has 36 positions, so four
-# spawns have always returned None. The loop runs column-major, so the four that
-# failed were never random: (5,2) through (5,5), a contiguous unfarmed strip down
-# one edge, silently absorbed by the `if d:` guard ever since 001.
+# 021 tested the opposite of this and lost badly: giving every drone a private
+# 25-tile diamond made the farm 16% slower. The reading is that overlap is not
+# damage but cooperation — a Bush or Tree planted by a neighbour is already
+# standing there when another drone arrives with a matching request, so 010's
+# get_entity_type() check fires and the 400-tick harvest-and-replant is skipped.
 #
-# Position only matters for contention. A drone farms its own tile, so where it
-# stands changes nothing about its own yield — but neighbouring drones overlap in
-# the band their companion requests reach (spacing 5 against a range of 3), and
-# every overlap is a chance to invalidate another drone's map entry.
-#
-# So spend the four missing drones deliberately: keep the spacing-5 grid and put
-# four holes through the middle instead of losing a whole edge. Same 32 drones,
-# spread more evenly, fewer neighbours each.
-HOLES = [(1, 1), (1, 4), (4, 1), (4, 4)]
+# If that is right, 014 pushed the wrong way when it spread the drones out, and
+# the farm wants *more* sharing rather than less. This packs the same 32 drones
+# into an 8x4 grid at spacing 4 — minimum L1 separation 4 against the old 5 — so
+# every territory overlaps its neighbours far more heavily.
+COLS = 8
+ROWS = 4
 quick_print("FARM", "world", get_world_size(), "max_drones", max_drones())
 drones = []
-for i in range(6):
-	for j in range(6):
-		if i + j != 0:
-			if (i, j) not in HOLES:
-				d = spawn_drone(driver, 3 + i*5, 3 + j*5)
-				# None would mean the cap was hit anyway, and there is no handle
-				# to wait on. Requesting 32 against a cap of 32 it should not
-				# happen — the count below is how we find out if it does.
-				if d:
-					drones.append(d)
+for i in range(COLS):
+	for j in range(ROWS):
+		x = 4 * i
+		y = 4 * j
+		if x + y != 0:
+			d = spawn_drone(driver, x, y)
+			if d:
+				drones.append(d)
 quick_print("SPAWNED", len(drones) + 1, "of", max_drones())
-driver(3, 3)
+driver(0, 0)
 # The run is not over until the program is, and the program is not over while a
 # spawned drone is still farming. Reap them before falling off the end.
 for d in drones:

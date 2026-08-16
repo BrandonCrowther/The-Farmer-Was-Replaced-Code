@@ -11,8 +11,6 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       holds the requested plant, with `quick_print`, under the spacing-5 grid.
       021 claims overlap is cooperation; this is the measurement that would
       confirm or kill that claim instead of arguing it.
-- [ ] 024 tighter-spacing — if overlap really is cooperation, 014 pushed the
-      wrong way. Try *more* overlap: a denser grid than spacing 5.
 
 - [ ] 022 reroll-limit — 020 caps rerolls at 2, leaving ~4% of passes still on a
       carrot request. Each reroll is one 200-tick plant. Try 3 and 4.
@@ -51,6 +49,11 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       `num_items(Items.Water)`. Metric: mean over 3 runs vs the 002 baseline.
 
 ## Done
+
+- [x] 022 denser-spacing — **rejected, +63.1 s (+36.6%).** With 021 this brackets
+      an optimum: disjoint (L1 8) +15.9%, champion (L1 5) best, dense (L1 4)
+      +36.6%. Layout tuning is not where the remaining gap lives.
+      `experiments/hay/022/result.md`
 
 - [x] 021 diamond-lattice — **rejected, +27.4 s (+15.9%).** Disjoint territories
       work exactly as designed and make the farm 16% slower: **contention was
