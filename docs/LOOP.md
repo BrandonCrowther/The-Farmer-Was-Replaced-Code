@@ -162,6 +162,10 @@ The leak is not recoverable from inside the game. Only a relaunch reclaims it.
   the game down with it.
 - **Relaunch proactively every ~8 cycles**, not only after a crash. A relaunch
   costs about a minute; an OOM costs the cycle, the game, and possibly Steam.
+- **Crashes are not a stop condition.** They are a known, understood, recoverable
+  consequence of the leak. Recover and carry on, however many times it happens —
+  there is no crash budget. What *is* a stop condition is recovery itself
+  failing: see below.
 - If Steam itself is gone — `tfwr.sh relaunch` reports "Steam is not running" —
   it was probably OOM-killed too. Start it with `setsid steam &`, wait for the
   process, then relaunch.
@@ -180,9 +184,16 @@ A crash is **not** an ordinary cycle failure. Handle it like this:
    restored the original save over a deployed category before. `cycle.sh` hashes
    `live/*.py` against the category every run and will redeploy, so this is
    covered — but do not skip a cycle's hash check to save time.
-3. **Cap it at three relaunches per loop.** A game that dies three times is
-   telling you something the loop cannot fix; stop and hand off with the last
-   screenshot and the Proton dialog's title.
+3. **No cap on relaunches.** The original rule stopped after three, written when
+   crashes looked random and possibly unfixable. They are not: they are the
+   memory leak above, and a relaunch reclaims it completely. Recovering ten times
+   in a session is maintenance, not failure.
+
+   **Stop when recovery stops working**, which is a different signal: two
+   consecutive relaunch attempts that do not end with the game idle and
+   responding. That means something the loop genuinely cannot fix — a broken
+   install, a Steam that will not start, a full disk — and further attempts only
+   burn the window. Hand off with the last screenshot and the exact error.
 
 ## Speedup is not a lever
 
