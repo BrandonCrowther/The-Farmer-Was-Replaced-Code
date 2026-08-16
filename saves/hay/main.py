@@ -14,7 +14,22 @@ def driver(x, y):
 	while num_items(Items.Hay) < TARGET:
 		while get_water() < 0.75:
 			use_item(Items.Water)
-		Common.polyculture()
+		# Common.polyculture() deliberately not called.
+		#
+		# 010 established the trade this run exists to price. The companion
+		# preference rerolls every pass (007's samples for one drone: Carrot,
+		# Carrot, Tree, Carrot, Bush), so the walk cannot be amortised — it costs
+		# ~800 ticks of movement, bought fresh every pass. Against that, a pass
+		# with no companion trip is roughly 200 ticks: the harvest alone.
+		#
+		# So polyculture must be worth about 5x to break even. It may be worth far
+		# more — the multiplier starts at 5x and doubles per upgrade, and a
+		# resource leaderboard starts with everything unlocked — in which case
+		# this run loses badly, and that is the answer.
+		#
+		# 008 looked like this experiment but was not: it removed polyculture
+		# *and* added a 25-tile circuit, so its 59x regression cannot be
+		# attributed to either one. This changes exactly one thing.
 		# Not Common.await_harvest(): that spins forever on a plant that will
 		# never ripen, and once the target is hit nothing else is going to move.
 		# Checking the target here too is what stops a straggler from hanging
