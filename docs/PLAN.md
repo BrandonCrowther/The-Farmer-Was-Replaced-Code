@@ -47,6 +47,27 @@ Make the output easy to read: emit few values, one per line, with a fixed marker
 e.g. `quick_print("RESULT", seed, run_time)`. Machine-legible in a screenshot
 beats dense tables.
 
+### `output.txt` — the channel that beats screenshots
+
+The game writes every `quick_print` and every runtime warning to `output.txt` at
+the **game root** — beside `options.txt` and `Player.log`, *not* in the save
+directory, so reading it is nowhere near the `save.json` rule. It is rewritten
+per run.
+
+This is strictly better than reading numbers off a screenshot and Phase 3 should
+prefer it. It is also a diagnostic the plan did not anticipate: the first Hay
+run's 7385 lines said, without any guesswork, that the seeded strategy was
+asking for carrot seeds the leaderboard never grants (760 times) and reaching
+for water it did not have (711 times). Both were invisible on screen except as a
+small warning triangle. Grep it after every run:
+
+```sh
+grep -o "^Warning: .*" "$GAME/output.txt" | sort | uniq -c | sort -rn
+```
+
+The completion modal is still read with vision — the time, PB and rank only
+exist on screen.
+
 The resource bar along the top of the window is a useful cross-check but is
 rounded for display (`53B`, `11.1B`), so it confirms magnitudes, not deltas.
 **Do not OCR it with tesseract** — it misread `11.1B` as `1B` and merged adjacent
@@ -69,7 +90,11 @@ counters. Use vision.
 | Do dragged window positions persist | **no** — positions live in `save.json`, which the game only writes on an explicit save (autosave is off) |
 | "Did the run start?" signal | the top banner's timer **ticks**; `tools/tfwr.sh state` samples it twice and compares |
 | Restructured layout, end to end | **works** — deploy, reload, run, read: `Fastest_Reset 15:13:15.781`, `experiments/fastest_reset/000/` |
-| Noise floor | **~10 min** — identical code scored 15:23:55 and 15:13:15 on two runs |
+| Noise floor, `fastest_reset` | **~10 min** — identical code scored 15:23:55 and 15:13:15 on two runs |
+| Noise floor, `hay` | **±0.15 s (1 sd), 0.05% CV** — three identical runs scored 04:55.182 / .469 / .310. The floor is per-category, not a property of the harness: a leaderboard run repeats until 2 h of sim time accumulate and uploads the *average*, so short runs get many repeats and arrive pre-averaged, while one `fastest_reset` run nearly fills the budget by itself |
+| Machine-readable run output | **`output.txt`**, at the game root beside `options.txt` and `Player.log` — *not* in the save directory, so reading it stays clear of the `save.json` rule. One Hay run wrote 7385 lines, including every runtime warning with its call chain |
+| Window stacking after a run | **not canonical** — the executed file ends up on top, so a second `run` selects `main` at `HARNESS_XY` instead of the harness. `tfwr.sh reload` restores filename order |
+| Save-before-loading confirmation | **conditional** — appears only when the session is dirty, which a finished run makes it. `tfwr.sh reload` probes for it and answers Don't Save |
 
 Recommended settle: poll at ~0.5 s intervals up to a 3 s cap rather than a fixed
 sleep, and confirm pickup by diffing a tight screenshot crop of the editor before
@@ -114,7 +139,14 @@ Per queue item, driven from `autofarmer`:
 - **Stop condition.** Queue empty, wall-clock budget, or consecutive failures.
 - **Termination.** Every seeded category is an endless `while True` achievement
   farmer. A leaderboard run only scores if the program ends — item 001 in each
-  queue.
+  queue. **Solved for `hay`**, and the pattern generalises: bound every drone's
+  loop on `num_items(<the target item>)`, bound any busy-wait the same way so a
+  straggler cannot hang the run, and `wait_for` the spawn handles so the main
+  drone outlives its drones. No cross-drone signalling is needed because
+  inventory is shared state.
+- **Repeats per variant.** Was "3 runs". For `hay` that is waste — see the
+  per-category noise floor above. Measure the floor once per category, then let
+  it set the repeat count.
 
 ## Open risks
 
@@ -123,3 +155,9 @@ Per queue item, driven from `autofarmer`:
   the screenshot before trusting a number.
 - Workspace switching during capture is visible to anyone at the machine, and a
   user interacting at the same time can steal focus mid-run.
+- **Steam Cloud can revert the deployed category.** The live save was found
+  holding the original achievement scripts rather than the last deployed
+  category, which fits a cloud restore on game restart. A loop that trusts
+  `deploy.sh` ran an hour ago can measure code it is not looking at. Re-verify
+  what is deployed before recording a result — the harness window's text is
+  visible in the screenshot the loop already takes.
