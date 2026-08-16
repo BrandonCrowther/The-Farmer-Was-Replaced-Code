@@ -7,12 +7,11 @@ crashed.** Everything is committed and pushed; nothing is half-finished.
 
 1. **Re-enable idle locking:** `omarchy-toggle-idle`. It was turned off so the
    screen would not lock mid-run. Waybar shows the state.
-2. **Restart the game through Steam.** It is showing a Proton crash dialog
-   (`Fatal error in GC` / `SuspendThread loop failed`). Nothing in the harness
-   can recover that. When it comes back, run `tools/tfwr.sh state` — it should
-   say `idle` — and check the harness window still reads
-   `leaderboard_run(Leaderboards.Hay, "main", 5000)`, because Steam Cloud has
-   restored the original save over deployed code once before.
+2. ~~Restart the game through Steam.~~ **Done, and now automated.** The crash was
+   recovered at 01:15 and the protocol is `tools/tfwr.sh relaunch`: kill the
+   game, restart through Steam, wait for the window, reload to canonical state.
+   The save came back intact and Steam Cloud did *not* clobber the deployed
+   code, though `cycle.sh` hashes it every run regardless.
 
 ## Where Hay got to
 

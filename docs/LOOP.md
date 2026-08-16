@@ -116,8 +116,39 @@ function — see `p_companion_table` and `plant_companion()`.
 | a time that barely differs from the last one | you may have run the *previous* code | check `DEPLOYED=` and the harness window text in the screenshot |
 | `wait-result` times out | a drone is stuck in a busy-wait that the target check does not bound | `tfwr.sh stop`, then fix the wait, not the timeout |
 | resource bar shows real save values mid-run | the run never started | reload and retry |
-| `the game has crashed — Proton dialog: "..."` | the game died and left a Wine dialog carrying the same window class | it cannot be recovered from inside the harness; the game must be restarted through Steam. Stop and hand off |
+| `the game has crashed — Proton dialog: "..."` | the game died and left a Wine dialog carrying the same window class | `tools/tfwr.sh relaunch`, then re-run the cycle. See *Recovering from a crash* |
 | a modal with an orange "Run Failed" line | the run was stopped, never terminated, or ended short of its target | `cycle.sh` already exits 2 on this. **Never record the duration** — it looks exactly like a score |
+
+## Recovering from a crash
+
+`tools/tfwr.sh relaunch` kills the game, restarts it through Steam, waits for the
+window, and reloads to the canonical state. It is the hand-walked recovery from
+2026-08-16 written down, and it leaves the game exactly where a `reload` does.
+
+A crash is **not** an ordinary cycle failure. Handle it like this:
+
+1. Any `tfwr.sh` command failing with *"the game has crashed"* means relaunch,
+   then re-run the cycle that died. That cycle counts as one failure.
+2. **Verify the deployed code afterwards.** A restart is when Steam Cloud has
+   restored the original save over a deployed category before. `cycle.sh` hashes
+   `live/*.py` against the category every run and will redeploy, so this is
+   covered — but do not skip a cycle's hash check to save time.
+3. **Cap it at three relaunches per loop.** A game that dies three times is
+   telling you something the loop cannot fix; stop and hand off with the last
+   screenshot and the Proton dialog's title.
+
+## Speedup is not a lever
+
+`leaderboard_run(..., speedup)` sets a *starting* speedup and the docs are clear
+that it "does not affect the result of the simulation in any way" and that the
+sim "may not reach the stated value if it cannot properly speedup computation …
+common causes include use of multiple drones".
+
+Measured here: a score accumulates 2 hours (7200 s) of sim time, and cycles take
+210 s of wall clock, so the effective speedup is **~34x** against the 5000
+requested — with the no-polyculture variant down at ~6x. Raising the number is
+free and harmless and will do nothing. The only real lever on wall-clock cycle
+time is cheaper per-tick code, which is what the experiments are chasing anyway.
 
 ## Aborting a run is dangerous
 

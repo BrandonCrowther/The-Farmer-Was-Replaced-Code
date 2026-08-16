@@ -21,10 +21,12 @@
 #   tools/tfwr.sh wait-result [secs]   # block until the completion modal appears
 #   tools/tfwr.sh dismiss              # clear the completion modal (click OK)
 #   tools/tfwr.sh reload               # Escape -> Load -> Save0 -> Escape
+#   tools/tfwr.sh relaunch             # kill and restart through Steam, then reload
 #   tools/tfwr.sh running              # is the game up? exit 0/1
 set -euo pipefail
 
 CLASS="steam_app_2060160"
+APPID="2060160"
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SHOTS="$REPO/logs/captures"
 
@@ -343,6 +345,54 @@ case "$cmd" in
     fi
     click_at $OK_XY
     ;;
+  relaunch)
+    # Kill the game and start it again through Steam, leaving it in the same
+    # known state a reload gives: save loaded, zzRunner on top, idle.
+    #
+    # This exists because the game can die outright — a Proton Mono GC fault
+    # ("Fatal error in GC" / "SuspendThread loop failed") ended a run on
+    # 2026-08-16 — and nothing else in this script can recover from that. Every
+    # step below was walked by hand first; this is that sequence written down.
+    #
+    # Steam must already be running. It is: the game is launched through it.
+    pgrep -x steam >/dev/null || die "Steam is not running — cannot relaunch"
+
+    # Kill the exe, then the launch chain. The window disappears as soon as the
+    # exe dies; the reaper takes a moment longer.
+    pkill -f "TheFarmerWasReplaced.exe" 2>/dev/null || true
+    sleep 3
+    pkill -f "SteamLaunch AppId=$APPID" 2>/dev/null || true
+    sleep 2
+
+    # A crash dialog is a window of the game's class and outlives the exe, so it
+    # has to go too or need_game will keep reporting a crash that is over.
+    hyprctl clients -j \
+      | jq -r --arg c "$CLASS" 'map(select(.class==$c)) | .[].address' \
+      | while read -r addr; do
+          [[ -n "$addr" ]] && hyprctl dispatch closewindow "address:$addr" >/dev/null
+        done
+    sleep 1
+
+    setsid steam -applaunch "$APPID" >/dev/null 2>&1 &
+    echo "relaunching through Steam..."
+
+    # Proton's first frame takes a while; poll rather than guess.
+    deadline=$(( $(date +%s) + ${TFWR_LAUNCH_TIMEOUT:-180} ))
+    while :; do
+      if client >/dev/null 2>&1; then break; fi
+      (( $(date +%s) < deadline )) || die "game window did not appear within the launch timeout"
+      sleep 5
+    done
+    # Let it finish loading the save before touching anything.
+    sleep "${TFWR_LAUNCH_SETTLE:-15}"
+    need_game
+
+    # It comes up on the pause menu with the save loaded. A reload from here
+    # gives the canonical window stacking the fixed coordinates depend on, and
+    # asserts idle.
+    "${BASH_SOURCE[0]}" reload >/dev/null || die "relaunched, but the game did not reach a clean idle state"
+    echo "relaunched"
+    ;;
   reload)
     # Escape -> Load -> Save0 -> Escape.
     #
@@ -380,6 +430,6 @@ case "$cmd" in
     echo "reloaded"
     ;;
   help|*)
-    sed -n '2,24p' "${BASH_SOURCE[0]}" | sed 's/^# \?//'
+    sed -n '2,25p' "${BASH_SOURCE[0]}" | sed 's/^# \?//'
     ;;
 esac
