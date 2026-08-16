@@ -8,12 +8,32 @@ TARGET = 2000000000
 entity = Entities.Grass
 instructions = Common.get_planting_instructions(entity)
 
+# Diagnostic run, not an optimisation. Several conclusions rest on an unverified
+# assumption: that our own tile still holds a plant at the top of each iteration.
+# The driver plants grass once before the loop and harvests at the end of every
+# pass, and nothing obviously replants it. If it is empty then get_companion()
+# returns None, polyculture() returns immediately, and both 004 and 006 exercised
+# far less than they appear to.
+#
+# quick_print costs 0 ticks, so this does not perturb the thing being measured —
+# but it is bounded to the first few passes of one drone anyway, because the
+# sensor calls around it are not free.
+SAMPLES = 25
+
 def driver(x, y):
 	Common.move_to(x,y)
 	instructions()
+	passes = 0
 	while num_items(Items.Hay) < TARGET:
 		while get_water() < 0.75:
 			use_item(Items.Water)
+		if x == 3 and y == 3 and passes < SAMPLES:
+			companion = get_companion()
+			if companion == None:
+				quick_print("STATE", passes, get_entity_type(), get_ground_type(), can_harvest(), "companion=None")
+			else:
+				quick_print("STATE", passes, get_entity_type(), get_ground_type(), can_harvest(), companion[0])
+		passes = passes + 1
 		Common.polyculture()
 		# Not Common.await_harvest(): that spins forever on a plant that will
 		# never ripen, and once the target is hit nothing else is going to move.

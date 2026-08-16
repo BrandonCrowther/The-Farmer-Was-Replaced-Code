@@ -12,12 +12,13 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       carrot companion fails on an occupied tile (9 -> 183 such warnings in
       006). Harvest first in the companion callback. Cheap, and it applies to
       every category. Metric: one run vs champion.
-- [ ] 010 farm-state-diagnostic — verify what the farm actually looks like
-      between iterations: is our own tile replanted after the end-of-loop
-      harvest, or empty? If empty, `get_companion()` returns None at the top of
-      each iteration and several conclusions need revisiting. Use `quick_print`,
-      which costs 0 ticks, and read `output.txt`. Not an optimisation — a
-      measurement, and it gates how much of 006 was even exercised.
+- [ ] 011 plot-rotation — **the fork.** 94% of passes find the plant unripe:
+      drones busy-wait while ~96% of the 32x32 field lies empty. Give each drone
+      a plot and walk it in rotation so a tile has the whole circuit to grow.
+      Drop polyculture for this run to isolate the idle-time hypothesis.
+      Metric: one run vs 03:40.911; expect a large win.
+- [ ] 012 rotation-with-polyculture — restore the companion multiplier on top of
+      whatever 011 shows. Only meaningful if 011 wins.
 - [ ] 007 carrot-when-rich — 003 showed carrot becomes affordable partway
       through a run (failures fell 760 -> 66 with no logic change), so wood is
       arriving from Bush companions. If the multiplier justifies 512 hay + 512
@@ -28,6 +29,13 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       `num_items(Items.Water)`. Metric: mean over 3 runs vs the 002 baseline.
 
 ## Done
+
+- [x] 007 farm-state-diagnostic — **the bottleneck is growth, not ticks.** 825
+      samples: the tile always holds grass (so 004/006 stand), companion faces
+      are uniform thirds (confirming 004's premise), and `can_harvest()` is
+      False on 94.1% of passes. Drones idle-wait while 96% of the field is
+      unused. Invalidates the *rationale* for 006/008/009 and opens 011.
+      `experiments/hay/007/result.md`
 
 - [x] 006 reroll-companion — **rejected**, 03:41.013 (+0.102 s, inside the
       floor, so: no effect). The mechanic works — unaffordable carrot requests
