@@ -8,10 +8,24 @@ TARGET = 2000000000
 entity = Entities.Grass
 instructions = Common.get_planting_instructions(entity)
 
+# Diagnostic. exp-008 was built on reading 007's "can_harvest() False on 94.1% of
+# passes" as "the farm is growth-bound", and that misreading cost a 59x
+# regression. The statistic is a frequency of arriving early, not a duration
+# spent waiting.
+#
+# get_tick_count() costs 0 ticks, so the real number is free to take: ticks burnt
+# inside the busy-wait against ticks for the whole pass. That is the share of the
+# run actually spent idle, and it decides whether idle time is worth attacking.
+SAMPLES = 25
+
 def driver(x, y):
 	Common.move_to(x,y)
 	instructions()
+	passes = 0
+	waited = 0
+	total = 0
 	while num_items(Items.Hay) < TARGET:
+		t0 = get_tick_count()
 		while get_water() < 0.75:
 			use_item(Items.Water)
 		Common.polyculture()
@@ -19,10 +33,18 @@ def driver(x, y):
 		# never ripen, and once the target is hit nothing else is going to move.
 		# Checking the target here too is what stops a straggler from hanging
 		# the whole run.
+		t1 = get_tick_count()
 		h = can_harvest()
 		while not h and num_items(Items.Hay) < TARGET:
 			h = can_harvest()
+		t2 = get_tick_count()
 		harvest()
+
+		if x == 3 and y == 3 and passes < SAMPLES:
+			waited = waited + (t2 - t1)
+			total = total + (t2 - t0)
+			quick_print("TICKS", passes, "work", t1 - t0, "wait", t2 - t1, "cum_wait", waited, "cum_total", total)
+		passes = passes + 1
 
 clear()
 drones = []
