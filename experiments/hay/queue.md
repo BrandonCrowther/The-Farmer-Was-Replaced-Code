@@ -7,12 +7,8 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
-- [ ] 004 true-companion — `Common.p_planting_table` maps `Entities.Tree` to a
-      callback that plants **Grass**, so a Tree companion request is satisfied
-      with the wrong plant: no warning, no multiplier, on ~1/3 of companion
-      visits. `get_cost` says Bush and Tree are both free. Plant the entity the
-      companion actually asked for. Metric: one run vs the 04:55.320 baseline;
-      expect a large win, not a tick-shave.
+- [ ] 004b confirm-champion — one more run of 004 to pin the new champion's
+      number precisely, since every later delta is measured against it.
 - [ ] 005 reroll-companion — a plant's companion preference is rerolled when it
       is replanted, and grass is free. When the roll is Carrot (the only costly
       face: 512 hay + 512 wood) replant rather than paying or wasting the trip.
@@ -30,6 +26,11 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       `num_items(Items.Water)`. Metric: mean over 3 runs vs the 002 baseline.
 
 ## Done
+
+- [x] 004 true-companion — **adopted, new champion.** 03:40.911, −74.4 s
+      (−25.2%) vs baseline; rank #422 -> #278. `p_planting_table` mapped Tree to
+      a callback that plants Grass, silently forfeiting the polyculture
+      multiplier on ~1/3 of companion visits. `experiments/hay/004/result.md`
 
 - [x] 003 guarded-polyculture — **rejected**, 04:56.552 (+1.23 s). Planting
       grass on an unaffordable companion tile is not the repair: `till()` will
