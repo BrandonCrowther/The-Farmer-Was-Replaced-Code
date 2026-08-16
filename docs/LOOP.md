@@ -116,3 +116,18 @@ function — see `p_companion_table` and `plant_companion()`.
 | a time that barely differs from the last one | you may have run the *previous* code | check `DEPLOYED=` and the harness window text in the screenshot |
 | `wait-result` times out | a drone is stuck in a busy-wait that the target check does not bound | `tfwr.sh stop`, then fix the wait, not the timeout |
 | resource bar shows real save values mid-run | the run never started | reload and retry |
+| `the game has crashed — Proton dialog: "..."` | the game died and left a Wine dialog carrying the same window class | it cannot be recovered from inside the harness; the game must be restarted through Steam. Stop and hand off |
+| a modal with an orange "Run Failed" line | the run was stopped, never terminated, or ended short of its target | `cycle.sh` already exits 2 on this. **Never record the duration** — it looks exactly like a score |
+
+## Aborting a run is dangerous
+
+`Shift+F5` does not stop a leaderboard run, focused or not. The control that
+works is the red stop button that appears in a code window's title bar while it
+executes — and using it killed the game outright on 2026-08-16 with
+`Fatal error in GC` / `SuspendThread loop failed`, a Mono GC fault under Proton,
+which ended the night's loop.
+
+So treat aborting as a last resort with a real chance of taking the game with it.
+If a variant is running long, prefer letting it finish, or read the answer off
+the resource bar and the in-game clock while it runs — that is how 011 was priced
+at 67x without needing its final number.
