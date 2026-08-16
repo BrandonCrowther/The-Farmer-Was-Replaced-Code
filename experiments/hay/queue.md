@@ -50,6 +50,12 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Done
 
+- [x] 024 lattice-wrapaware — **rejected**, 03:19.655 against 021's 03:19.653.
+      Two milliseconds apart, so the wrap fix changed nothing and that
+      explanation is dead as well. The lattice penalty is structural and
+      deterministic; 025 instruments it instead of guessing a third time.
+      `experiments/hay/024/result.md`
+
 - [x] 022 denser-spacing — **rejected, +63.1 s (+36.6%).** With 021 this brackets
       an optimum: disjoint (L1 8) +15.9%, champion (L1 5) best, dense (L1 4)
       +36.6%. Layout tuning is not where the remaining gap lives.

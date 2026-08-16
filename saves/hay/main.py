@@ -87,34 +87,38 @@ def driver(x, y):
 			rerolls = rerolls + 1
 
 clear()
-# max_drones() is 32 (measured in 013) and this grid has 36 positions, so four
-# spawns have always returned None. The loop runs column-major, so the four that
-# failed were never random: (5,2) through (5,5), a contiguous unfarmed strip down
-# one edge, silently absorbed by the `if d:` guard ever since 001.
+# Lattice placement, retried with the wrap bug fixed.
 #
-# Position only matters for contention. A drone farms its own tile, so where it
-# stands changes nothing about its own yield — but neighbouring drones overlap in
-# the band their companion requests reach (spacing 5 against a range of 3), and
-# every overlap is a chance to invalidate another drone's map entry.
+# 021 tried this and came back 15.9% slower, and the write-up blamed contention.
+# 023 then measured the arrival outcomes directly: a neighbour had pre-stocked the
+# requested tile on 44 arrivals out of 32,727 — 0.13%. There was no cooperation to
+# lose, and the explanation was invented.
 #
-# So spend the four missing drones deliberately: keep the spacing-5 grid and put
-# four holes through the middle instead of losing a whole edge. Same 32 drones,
-# spread more evenly, fewer neighbours each.
-HOLES = [(1, 1), (1, 4), (4, 1), (4, 4)]
+# The real cause was almost certainly a broken assumption. "Companion requests
+# never cross the seam" was verified for the *champion* layout, whose drones sit
+# at 3..28. This lattice puts drones on x=0 and y=0, whose companions land at 31 —
+# across the wrap — and Common.move_to is not wrap-aware, so it walks 31 moves
+# east instead of 1 west. At 200 ticks a move that is 6200 ticks instead of 200,
+# on roughly 7 of 32 drones. 022 put ~11 of 32 on a zero edge and lost 36.6%,
+# which is the same story at a larger dose.
+#
+# So: same lattice, but polyculture now moves with move_to_wrapped.
+ROWS = 8
+COLS = 4
 quick_print("FARM", "world", get_world_size(), "max_drones", max_drones())
 drones = []
-for i in range(6):
-	for j in range(6):
-		if i + j != 0:
-			if (i, j) not in HOLES:
-				d = spawn_drone(driver, 3 + i*5, 3 + j*5)
-				# None would mean the cap was hit anyway, and there is no handle
-				# to wait on. Requesting 32 against a cap of 32 it should not
-				# happen — the count below is how we find out if it does.
-				if d:
-					drones.append(d)
+for j in range(ROWS):
+	for i in range(COLS):
+		x = 8 * i
+		if j % 2 == 1:
+			x = x + 4
+		y = 4 * j
+		if x + y != 0:
+			d = spawn_drone(driver, x, y)
+			if d:
+				drones.append(d)
 quick_print("SPAWNED", len(drones) + 1, "of", max_drones())
-driver(3, 3)
+driver(0, 0)
 # The run is not over until the program is, and the program is not over while a
 # spawned drone is still farming. Reap them before falling off the end.
 for d in drones:
