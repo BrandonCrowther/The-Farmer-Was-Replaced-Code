@@ -7,6 +7,9 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
+- [ ] 022 reroll-limit — 020 caps rerolls at 2, leaving ~4% of passes still on a
+      carrot request. Each reroll is one 200-tick plant. Try 3 and 4.
+
 - [ ] 019 mechanics-probe — **method fix.** Measure what has only been inferred:
       the polyculture multiplier (hay delta across one harvest, satisfied vs not,
       single drone so `num_items` is uncontaminated), growth ticks with no walk
@@ -37,6 +40,10 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       `num_items(Items.Water)`. Metric: mean over 3 runs vs the 002 baseline.
 
 ## Done
+
+- [x] 020 reroll-after-harvest — **adopted, new champion.** 02:52.271, −12.4 s
+      (−6.7%), rank #177 -> #149. 006's idea with its placement fixed: reroll
+      after the multiplied harvest, not before it. `experiments/hay/020/result.md`
 
 - [x] 017 water-threshold — **adopted**, 03:04.715, −0.608 s. Gate the watering
       loop on `num_items(Items.Water) > 0` so it stops spinning on an unreachable
