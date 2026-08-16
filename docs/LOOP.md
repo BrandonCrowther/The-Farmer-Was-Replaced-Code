@@ -136,9 +136,22 @@ The record from one session:
 | "carrot fails 7 times in 8" (019) | 031 traced 1,114 plantings: **99.6% succeed** |
 | "the reroll rerolls nothing" (032) | 033 measured **66.4%** of attempts changing the preference |
 | "the noise floor is 2.41 s" (027) | 028 ran four clean runs: **sd 0.069 s** |
+| "`get_companion()` rerolls per call" (033) | 036 bracketed **7,958** query pairs: **zero** changed |
 
-Four of those were written into result files as fact and two were built on by
+Five of those were written into result files as fact and three were built on by
 later experiments before being caught.
+
+**A probe can be wrong in its prose while right in its numbers.** 033 measured
+the reroll correctly and then explained it with an untested side-claim — that
+`mid_entity == Grass` proved no replant had happened. 035 was built on that
+side-claim and lost 12.5 s. When a probe's *headline* is an interpretation rather
+than a count, mark it as one.
+
+**Prefer a number that is over-determined.** What settled 036 was not the
+cleaner probe but a distribution that could be computed two ways: Carrot appeared
+at 4.1% of preferences where a fresh roll gives 33%, and (1/3)³ = 3.7% is exactly
+what two successful replants leave. A quantity you can predict independently and
+then check will expose a wrong story on its own; a single count will not.
 
 **The rule.** Any claim about mechanism must come with a test that observes the
 mechanism *directly*, and that test must not be a full run:

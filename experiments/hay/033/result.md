@@ -12,13 +12,25 @@
 66.4% is precisely the 2/3 expected from a fresh uniform roll over {Bush, Tree,
 Carrot} when the previous value was Carrot. **The reroll works.**
 
-**And it works without replanting anything.** `mid_entity` reads
+> **CORRECTION 2026-08-16 (036).** Everything below this line in this section was
+> wrong. `get_companion()` is **deterministic for a standing plant**: 036
+> bracketed 7,958 query pairs around ~800 ticks of work and saw zero changes in
+> type or position. The 66.4% above is real, but the replant is what causes it —
+> 036 also finds Carrot at 4.1% of preferences where a fresh roll gives 33%, and
+> (1/3)³ = 3.7% is exactly what `REROLL_LIMIT = 2` successful replants leave.
+>
+> The bad step was reading `mid_entity == Entities.Grass` as proof that no
+> replant occurred. It does not show that, and I never tested what it does show.
+> 035 was then built on the false reading and lost 12.5 s. A cheap 1-tick reroll
+> does not exist; a reroll costs a 200-tick plant.
+
+~~**And it works without replanting anything.**~~ `mid_entity` reads
 `Entities.Grass` on all 5,485 attempts, so the loop's `harvest()` did not clear
 the tile (the plant was unripe) and `instructions()` planted nothing (the entity
 was already Grass). Nothing about the tile changed — and the preference changed
 anyway.
 
-**`get_companion()` is therefore non-deterministic per call**, not a fixed
+~~**`get_companion()` is therefore non-deterministic per call**~~, not a fixed
 property of the plant standing there. Two earlier statements need adjusting:
 
 - **032's write-up is wrong** where it says the loop "spins to its cap and

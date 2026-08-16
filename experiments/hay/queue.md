@@ -13,17 +13,38 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       names a tile the map already satisfies, cap the attempts, and the pass
       becomes a 26-tick skip instead of a 1,455-tick walk. 034 shows the skip rate
       must reach ~66% (from 45%) before a second plot can pay.
-- [ ] 037 preference-stability — **the crux, and it bears on a merged result.**
-      Does the companion in force at `harvest()` match the one we satisfied? 033
-      showed `get_companion()` rerolls per call, so a skip decided from an earlier
-      query may forfeit the 160x multiplier. Record the companion at the skip
-      decision, query again immediately before harvesting, compare. If they
-      disagree often, 013's 18.5 s map win rests on something narrower than its
-      write-up claims.
-- [ ] 036 skip-then-two-plots — once 035 lands, retry two plots. 034's arithmetic:
-      a second tile pays only when work per harvest is under ~509 ticks, and the
-      leader implies 2.2 tiles per drone at 466 ticks. 029 failed because it added
-      the plot before cutting the work.
+- [x] 036 preference-stability — **`get_companion()` is deterministic for a
+      standing plant** (7,958 bracketed pairs, zero changes). 013 is safe, 035 is
+      explained, and 033's "non-deterministic per call" is withdrawn: the replant
+      is what rerolls the preference, confirmed independently by Carrot sitting at
+      4.1% against (1/3)³ = 3.7%. **A reroll costs a 200-tick plant, never a
+      1-tick query.** `experiments/hay/036/result.md`
+
+- [ ] 037 growth-schedulability — **the gate on every multi-plot design, and it
+      answers the standing question about the theoretical ceiling directly.**
+      Multi-plot died in 027/029 because a drone walks to a plot and finds it
+      unripe (30% of visits, 030). That is only unavoidable if ripening time is
+      unpredictable. Now that the companion request is known to be fixed at plant
+      time, the remaining unknown is growth.
+      Probe, all 0-tick prints, on the champion unmodified: record
+      `get_tick_count()` at replant, again when `polyculture_mapped` returns, and
+      again the moment `can_harvest()` first turns true, plus `get_water()`.
+      That yields three things at once:
+        * **the growth-time distribution** — if it is tight, a drone can compute
+          when to come back and multi-plot stops paying the 200-tick blind check;
+        * **idle vs walk split** — how much of each pass is spent waiting rather
+          than working, which is the true headroom for a second plot;
+        * **the ceiling** — harvests per tile per second at this water level, so
+          the leader's implied ~2.2 tiles per drone can be checked against what a
+          tile can physically produce, rather than inferred from a run time.
+      Write the falsifier first: if idle time is near zero, the farm is
+      tick-limited, multi-plot is dead for good, and the gap has to be elsewhere.
+
+- [ ] 038 skip-then-two-plots — retry two plots, but only if 037 shows real idle
+      time *and* a tight growth distribution. 034's arithmetic: a second tile pays
+      only when work per harvest is under ~509 ticks, and the leader implies 2.2
+      tiles per drone at 466 ticks. 029 failed because it added the plot before
+      cutting the work; scheduling is the way to cut it.
 
 Cleaned 2026-08-16 13:05: the merge-conflict resolution in 020 resurrected
 entries that were already finished (017, 018, 019, 023, 013, 008). Those are in
@@ -48,15 +69,18 @@ Done. What follows is genuinely open.
       until the request names a tile the map says is *already correct*: at a 45%
       hit rate that is ~1.2 throws, ~240 ticks, to turn a 1,459-tick pass into a
       462-tick one. Cap it, and measure the resulting skip rate.
-- [ ] 033 probe-the-reroll — **prerequisite for trusting 020.** 032 found that
-      `harvest()` fails on an unripe plant, so the reroll loop replants nothing
-      and `get_companion()` returns the same preference every iteration. If that
-      is right the reroll has never rerolled, and 020's 12.4 s win came from the
-      single post-harvest replant rather than from rerolling. Print the companion
-      before and after each attempt and count how many ever change.
-- [ ] 022 reroll-limit — 020 caps rerolls at 2, leaving ~4% of passes still on a
-      carrot request. Each reroll is one 200-tick plant. Try 3 and 4. Small, and
-      only worth running if 031/032 do not make carrot succeed outright.
+- [x] 033 probe-the-reroll — done, and its write-up was later corrected by 036.
+      The reroll changes the preference 66.4% of the time; the claim that it does
+      so *without replanting* was wrong and cost 035 a run.
+- [ ] 022 reroll-limit — 020 caps rerolls at 2. 036 confirms the residue exactly:
+      Carrot sits at **4.1%** of preferences, matching (1/3)³. Limit 3 would take
+      it to 1.2%, so this can move at most ~3% of passes and each reroll costs a
+      200-tick plant. Small by construction.
+      **And its premise is now in doubt.** 020's reroll was justified by 019's
+      "carrot fails 7 in 8", which 031 falsified — carrot plantings succeed
+      **99.6%** of the time. 020's −12.4 s is real, so the reroll buys something,
+      but not what its comment claims. Worth one probe of *why* (affordability
+      skips? longer walks to carrot tiles?) before spending a run on the cap.
 - [ ] 033 monocrop-checkerboard — the user's design: permanent Bush/Tree stock on
       alternating tiles so a companion stops being work at all. Deprioritised
       against 031 because a permanent stock makes carrot requests *harder* to

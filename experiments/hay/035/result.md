@@ -7,22 +7,26 @@
 **Verdict.** Asking repeatedly for a favourable request made the run slower, not
 faster, even though each ask costs 1 tick against the 200 a replant costs.
 
-**Leading explanation — inference, and the test is cheap.** If the preference
-rerolls on every call, then the preference we *satisfy* is not necessarily the
-one in force when we harvest. This experiment skips the walk on the strength of
-an observation that may already be stale by the time the harvest happens, so it
-forfeits the 160x multiplier on exactly the passes it was meant to make cheap.
-Losing the multiplier on even a small fraction of passes swamps a saving of a few
-hundred ticks.
+**Explanation — CORRECTED 2026-08-16 by 036.** The account below was wrong, and
+is kept because the way it was wrong is the point.
 
-That would also explain why the effect is a *loss* rather than a wash: the more
-we query, the longer between observation and harvest, and the more drift.
+*What I wrote:* that the preference rerolls on every call, so the companion we
+satisfy is not the one in force at `harvest()`, and the skip forfeits the 160x
+multiplier — a loss rather than a wash because more querying means more drift.
 
-**How to test it directly** (queued as 037): record the companion at the moment
-of the skip decision, then query again immediately before `harvest()` and compare.
-If they disagree often, the map-skip path is fundamentally lossy and 013's win
-comes from something narrower than it appears — which would matter, because 013
-is a merged 18.5 s champion result.
+*What 036 measured:* `get_companion()` is **deterministic for a standing plant**
+— 7,958 bracketed query pairs, zero changes in type or position. Nothing drifts,
+no multiplier is forfeited, and 013 is unaffected.
+
+*The actual fault:* this experiment was built on a mechanism that does not exist.
+It queried repeatedly waiting for a different answer, and the answer cannot
+change without a replant. So every pass ran the query loop to its cap and then
+walked anyway — the walk it meant to avoid, plus the cap in wasted queries. That
+is the +12.5 s, and it is a straightforward cost, not a subtle yield loss.
+
+The root error is upstream, in 033: it saw the preference change across a reroll
+and concluded the *query* was non-deterministic, when what changed it was the
+replant. I built 035 on that reading without testing it. See `036/result.md`.
 
 **Three failed attempts preceded this one**, all mine: a crash with 54 GB free
 (so `Fatal error in GC` is not only OOM), a silently no-op `.replace()` that left
