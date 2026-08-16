@@ -6,11 +6,12 @@
   "entry": "main",
   "speedup": 5000,
   "seeded_from": "Hay_Achievement.py",
-  "personal_best": "02:52.271",
-  "global_rank": 149,
+  "personal_best": "02:47.682",
+  "global_rank": 130,
   "best_branch": "auto_experiment/hay/020",
-  "baseline": "02:52.271",
-  "noise_floor": "0.15s (1 sd over 3 runs)",
+  "baseline": "02:52.323 (mean of 4 clean champion runs)",
+  "noise_floor": "0.069s (1 sd, 4 clean runs) -- valid ONLY between runs made under similar game conditions",
   "status": "scoring",
-  "updated": "2026-08-15"
+  "updated": "2026-08-15",
+  "note": "Clean champion runs are extremely repeatable: 02:52.271/.275/.329/.419, sd 0.069s. But runs made deep into the memory leak scored very differently on the same code -- exp-023 at 02:47.682 (67 sd faster) and exp-026 at 02:51.263 (15 sd faster). The score depends on run conditions as well as code, so only compare runs made close together under similar game state. The PB of 02:47.682 is real but is not attributable to any code change."
 }

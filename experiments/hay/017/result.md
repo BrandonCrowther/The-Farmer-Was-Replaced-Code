@@ -29,3 +29,17 @@ spends it first.
 **Standing caveat.** The starvation figure motivating this change is arithmetic
 on wiki constants, not measurement — exp-019 samples `get_water()` and
 `num_items(Items.Water)` directly.
+
+---
+
+**CORRECTION WITHDRAWN (exp-028).** The correction above was itself wrong. It
+computed a 2.41 s floor by pooling clean champion runs with *instrumented* ones —
+comparing different code, which is the error it was written to correct.
+
+Four clean champion runs measure **sd 0.069 s, range 0.148 s**. The 0.15 s floor
+this result was originally judged against was correct, and this delta stands.
+
+What survives from the correction is different and more important: runs made deep
+into the memory leak score very differently on identical code (exp-023 at 67 sd,
+exp-026 at 15 sd from the clean mean). **Comparisons are only valid between runs
+made under similar game conditions** — see `record.json`.
