@@ -14,7 +14,7 @@ REROLL_LIMIT = 2
 entity = Entities.Grass
 instructions = Common.get_planting_instructions(entity)
 
-def driver(x, y):
+def driver(x, y, report):
 	Common.move_to(x,y)
 	instructions()
 	# What this drone believes it has planted, keyed by position.
@@ -30,6 +30,7 @@ def driver(x, y):
 	# harvest, while a needless walk costs 800 ticks. Wrong-and-skip is far worse
 	# than wrong-and-walk, so nothing speculative belongs in here.
 	planted = {}
+	passes = 0
 	while num_items(Items.Hay) < TARGET:
 		# Water while there is water to use, not until an unreachable level.
 		#
@@ -77,14 +78,37 @@ def driver(x, y):
 		# empty, so a reroll costs one plant (200 ticks) rather than a harvest plus
 		# a plant, and throws away nothing. Capped, because each reroll also resets
 		# the growth clock.
+		# PROBE. 032 argued the reroll cannot work: harvest() fails on an unripe
+		# plant, so the tile still holds the grass planted an instant earlier,
+		# instructions() sees Grass and plants nothing, and get_companion()
+		# returns the same preference forever. If so, 020's REROLL_LIMIT has
+		# never done anything and its 12.4 s win came from the single replant.
+		#
+		# Print what actually happens: the preference before and after each
+		# attempt, and the entity in between.
 		rerolls = 0
 		instructions()
 		companion = get_companion()
+		if report:
+			if passes < 300:
+				quick_print("ROLL0", passes, companion[0])
 		while rerolls < REROLL_LIMIT and companion != None and companion[0] == Entities.Carrot:
+			before_type = companion[0]
 			harvest()
+			mid_entity = get_entity_type()
 			instructions()
 			companion = get_companion()
+			if report:
+				if passes < 300:
+					quick_print("ROLLN", passes, "attempt", rerolls,
+						"before", before_type, "mid_entity", mid_entity,
+						"after", companion[0],
+						"changed", companion[0] != before_type)
 			rerolls = rerolls + 1
+		if report:
+			if passes < 300:
+				quick_print("ROLLEND", passes, "rerolls", rerolls, "final", companion[0])
+			passes = passes + 1
 
 clear()
 # max_drones() is 32 (measured in 013) and this grid has 36 positions, so four
@@ -107,14 +131,14 @@ for i in range(6):
 	for j in range(6):
 		if i + j != 0:
 			if (i, j) not in HOLES:
-				d = spawn_drone(driver, 3 + i*5, 3 + j*5)
+				d = spawn_drone(driver, 3 + i*5, 3 + j*5, False)
 				# None would mean the cap was hit anyway, and there is no handle
 				# to wait on. Requesting 32 against a cap of 32 it should not
 				# happen — the count below is how we find out if it does.
 				if d:
 					drones.append(d)
 quick_print("SPAWNED", len(drones) + 1, "of", max_drones())
-driver(3, 3)
+driver(3, 3, True)
 # The run is not over until the program is, and the program is not over while a
 # spawned drone is still farming. Reap them before falling off the end.
 for d in drones:
