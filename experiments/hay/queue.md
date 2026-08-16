@@ -28,6 +28,13 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Done
 
+- [x] 011 no-polyculture — **rejected decisively.** Polyculture is worth **67x**,
+      not the ~5x it needs to break even against its ~800 ticks of movement per
+      pass. Aborted at 1.26e9 hay / 2:24:43 in-game (145k hay/s vs the champion's
+      9.78M hay/s). Retires every "trade yield for ticks" idea, 008's shape
+      included. Surfaced two harness faults: `stop` never worked, and a failed
+      run was being reported as a score. `experiments/hay/011/result.md`
+
 - [x] 008 plot-rotation — **rejected, ~59x slower** (3:38:11 vs 03:40.911). The
       premise was a misreading of 007: 94% of passes *beginning* unripe is a
       frequency, not a duration. Dropping polyculture "to isolate the variable"
