@@ -11,10 +11,23 @@ instructions = Common.get_planting_instructions(entity)
 def driver(x, y):
 	Common.move_to(x,y)
 	instructions()
+	# What this drone believes it has planted, keyed by position.
+	#
+	# 010 already skips the harvest-and-replant when the companion tile is
+	# already correct — but it only learns that *after* walking there, and a move
+	# costs 200 ticks. Remembering it turns a ~800 tick round trip into a couple
+	# of ticks of dictionary lookup on the passes where the tile has not changed.
+	#
+	# Only this drone's own plantings go in, and the map is never trusted for
+	# anything except skipping a trip. The asymmetry matters: believing a
+	# companion is present when it is not costs the 67x multiplier on that
+	# harvest, while a needless walk costs 800 ticks. Wrong-and-skip is far worse
+	# than wrong-and-walk, so nothing speculative belongs in here.
+	planted = {}
 	while num_items(Items.Hay) < TARGET:
 		while get_water() < 0.75:
 			use_item(Items.Water)
-		Common.polyculture()
+		Common.polyculture_mapped(planted)
 		# Not Common.await_harvest(): that spins forever on a plant that will
 		# never ripen, and once the target is hit nothing else is going to move.
 		# Checking the target here too is what stops a straggler from hanging
@@ -25,6 +38,10 @@ def driver(x, y):
 		harvest()
 
 clear()
+# Free measurement, two ticks, once: the spawn grid below is a hard-coded 6x6
+# inherited from the achievement code. If the farm allows more drones than that,
+# parallelism is being left unused and no amount of tick-shaving competes with it.
+quick_print("FARM", "world", get_world_size(), "max_drones", max_drones())
 drones = []
 for i in range(6):
 	for j in range(6):
