@@ -99,7 +99,7 @@ def move_to_wrapped(x, y):
 		else:
 			move(South)
 
-def polyculture_mapped(planted):
+def polyculture_mapped(planted, report):
 	# polyculture(), but the caller carries a memory of what it planted where, so
 	# a companion tile that is already correct costs a dictionary lookup rather
 	# than a round trip. A move is 200 ticks; the lookup is a handful.
@@ -122,8 +122,29 @@ def polyculture_mapped(planted):
 			return
 	move_to(px, py)
 	if get_entity_type() != plant_type:
+		# Probe. 019 measured Carrot satisfied 1 time in 8 while Bush and Tree
+		# never fail, and the cause has been *assumed* to be till() refusing
+		# ground that a plant stands on. Nobody has looked.
+		#
+		# Print the tile's actual state either side of the attempt: ground and
+		# entity before, and what is there afterwards. If the entity is unchanged
+		# and the ground never became Soil, the blocker is the till. If the ground
+		# turned to Soil and the plant still did not go in, it is something else.
+		if report:
+			if plant_type == Entities.Carrot:
+				quick_print("CARROT_PRE", "ground", get_ground_type(),
+					"entity", get_entity_type(), "ripe", can_harvest())
 		harvest()
+		if report:
+			if plant_type == Entities.Carrot:
+				quick_print("CARROT_MID", "ground", get_ground_type(),
+					"entity", get_entity_type())
 		plant_companion(plant_type)
+		if report:
+			if plant_type == Entities.Carrot:
+				quick_print("CARROT_POST", "ground", get_ground_type(),
+					"entity", get_entity_type(),
+					"ok", get_entity_type() == plant_type)
 	planted[key] = plant_type
 	move_to(x, y)
 
