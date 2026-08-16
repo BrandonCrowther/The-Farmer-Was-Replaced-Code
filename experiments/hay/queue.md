@@ -7,6 +7,15 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
+- [ ] 028 renoise — pin the champion noise floor properly with three clean runs
+      of unmodified champion code. The 2.41 s figure comes from three runs that
+      were not identical (two carried instrumentation). Everything downstream
+      depends on this number, and using a stale one has already cost three false
+      results.
+- [ ] 029 two-plots — 027 lost at four plots because a lap costs four moves. Two
+      adjacent plots cost one move (200 ticks) against 437 ticks of waiting, so
+      the trade may go the other way.
+
 - [ ] 023 measure-preplanted — count arrivals where the companion tile already
       holds the requested plant, with `quick_print`, under the spacing-5 grid.
       021 claims overlap is cooperation; this is the measurement that would
@@ -49,6 +58,11 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       `num_items(Items.Water)`. Metric: mean over 3 runs vs the 002 baseline.
 
 ## Done
+
+- [x] 027 multi-plot — **rejected**, 03:37.380 (+47 s, 19 sd). Four plots cost
+      more in movement than the idling they remove. Surfaced the real finding of
+      the day: the noise floor is **2.41 s, not 0.15 s**, and 012/014/017 are
+      noise. `experiments/hay/027/result.md`
 
 - [x] 024 lattice-wrapaware — **rejected**, 03:19.655 against 021's 03:19.653.
       Two milliseconds apart, so the wrap fix changed nothing and that
