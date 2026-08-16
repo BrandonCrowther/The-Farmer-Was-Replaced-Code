@@ -33,6 +33,12 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Done
 
+- [x] 019 mechanics-probe — **the multiplier is 160x, not 67x**, and carrot is
+      satisfied only 1 time in 8 while Bush and Tree never fail. A third of
+      passes therefore yield 512 instead of 81,920; satisfying all of them would
+      be 2.8x, against a 3x gap to the leader. Growth is 2819 ticks at water 0.
+      Companion distances are 1–3 and never wrap. `experiments/hay/019/result.md`
+
 - [x] 016 no-carrot — **rejected**, 03:16.787 (+11.5 s). Skipping a doomed
       planting should have been free and was not: **the companion walk is how
       grass growth time gets hidden.** Walk time ~= growth time, which is why
