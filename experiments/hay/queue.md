@@ -189,21 +189,33 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       `reroll` (484.85, ~52% of total) is now clearly dominant and
       already at 069's p=1/3 structural floor. `experiments/hay/072/result.md`
 
-- [ ] 073 (open) — 923.53 is within striking distance of the cluster
-      band (750-856) but not in it yet. Two directions: (a) the ~27
-      ticks/harvest "unaccounted" overhead is consistent test-harness
-      bookkeeping (windowed-print check, accumulator updates) — a
-      non-instrumented production version might shed most of it for
-      free; (b) `reroll` is the dominant remaining cost and is already
-      structurally floored per 069 — no further gain expected there
-      without changing the type-space. Separately, still unresolved
-      from 070: the 32-drone macro-layout question (fitting tile-pairs
-      into the grid without neighbor bush-wall conflicts, since
-      adjacent pairs' 30-tile walls would overlap heavily at normal
-      5-spacing) — this two-tile design cannot become the real champion
-      until that's designed and tested for real. #1's implied budget
-      remains unexplained by anything found in 062-065, unaffected by
-      any of this.
+- [x] 073 first-real-run — **ADOPTED, new champion. 02:00.734, #65 (was
+      02:42.421, #111) — -41.687s (-25.7%), +46 ranks.** Built the full
+      32-drone two-tile version, reusing the champion's existing
+      spacing-5/6x6/HOLES grid with each drone's second tile at
+      base+(1,0). The macro-layout collision risk flagged at the end of
+      070 (a drone's bush-wall reaching within 1 tile of a same-row
+      neighbor's own crop at 5-spacing) was fixed with a global
+      `ALL_CROPS` exclusion set every drone's setup checks against, not
+      just its own two tiles — geometry alone (1-tile margin) was
+      judged too tight to trust. Validated live before the real attempt:
+      a target-reduced, `zzRunner`-removed run confirmed zero crop-tile
+      collisions across all 64 tiles. The real run then confirmed the
+      entire chain from 066-072 (207-tick reroll cost, 615-tick floor,
+      growth-hiding, water/move optimizations) generalizes from
+      single-drone smoke tests to the real macro-layout on the first
+      attempt. `experiments/hay/073/result.md`
+
+- [ ] 074 (open) — the champion now sits at 02:00.734/#65. The
+      single-drone smoke test predicted 923.53 ticks/harvest; worth
+      characterizing whether the real 32-drone run's per-drone
+      performance matches that (concurrency at scale wasn't directly
+      measured, only inferred safe from the collision check). #1's
+      implied budget remains unexplained by anything found in 062-065.
+      The #2-10 cluster band (750-856, as last observed) may have moved
+      given ranks shift as others submit — worth re-checking where #65
+      actually sits relative to a fresh read of the board, not the
+      2026-08-17 snapshot.
 
 **#1 (`const arch *`, 00:58.549) is very likely not honestly
 achievable under current mechanics** — web research (2026-08-17, user's
