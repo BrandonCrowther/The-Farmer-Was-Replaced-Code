@@ -2,10 +2,35 @@
 
 Target: **100_000_000 hay** on an 8x8 farm with a single drone
 Leader: **02:17.995** (confirmed on the in-game leaderboard, rank #1)
-Champion: **03:57.198, global rank #169** (exp-012) — **paused here, see below**
+Champion: **03:08.281, global rank #89** (exp-016)
 Entry point: `main` · Runner: `leaderboard_run(Leaderboards.Hay_Single, "main", 5000)`
 
 Branches: `auto_experiment/hay_single/NNN` · Results: `experiments/hay_single/NNN/result.md`
+
+## CORRECTION (2026-08-17) — the "proven ceiling" below was computed on a wrong number
+
+Everything in "PAUSED" below (001-015) rests on 011's reroll-only
+model, which assumed `harvest()` + replant costs ~400 ticks. That's
+wrong: Grass auto-regrows (`Grass.md`: "Grass grows automatically on
+grassland"), so the replant call is a ~7-tick no-op, not ~200 —
+confirmed directly in this leaderboard's own 8x8/single-drone context
+(exp-016: `instructions_ticks=7` in 6/6 cycles), the same correction
+Hay(multi)'s exp-066 made for the 32-drone category. 011's "exactly
+1,200 ticks/harvest, a hard ceiling, not an estimate" and 013/015's
+closures were all computed against that wrong number.
+
+**exp-016** ported Hay(multi)'s exp-073 champion verbatim (two tiles at
+distance 1, every position within distance 3 of either pre-seeded once
+as permanent Bush, water threshold 0.75, direct `move()`) — no macro-
+layout work needed, single-drone means only a self-collision check
+(confirmed clean). **Adopted: 03:08.281, #89 (was 03:57.198, #169) —
+-48.917s (-20.6%), +80 ranks.** `experiments/hay_single/016/result.md`
+
+This is a close relative of 015's "4 clustered tiles, board blanketed
+with Bush" design, which was rejected as "matching or slightly
+trailing" the champion — under the wrong cost model. It wasn't a bad
+idea; it was priced wrong. The section below is preserved for history,
+not as current guidance.
 
 ## 014/015 — the user's fundamental-shift challenge, tested empirically
 
@@ -105,3 +130,10 @@ scored design, 1.72x off the world #1, not abandoned mid-failure.
       `experiments/hay_single/012/result.md`
 - [x] 013 reroll-sequence-pattern — confirmed IID-uniform, no exploit.
       **Closes the paradigm; pivoting to Hay.** `experiments/hay_single/013/result.md`
+- [x] 015 bush-blanket-quad — rejected under the (later found wrong)
+      400-tick cost model. `experiments/hay_single/015/result.md`
+- [x] 016 two-tile-port — **adopted, new champion.** Corrects the
+      400-vs-207 error (Grass auto-regrows) and ports Hay(multi)'s
+      exp-073 two-tile design verbatim. 03:08.281, #89 (was 03:57.198,
+      #169) — -48.917s (-20.6%), +80 ranks. See the CORRECTION section
+      above. `experiments/hay_single/016/result.md`
