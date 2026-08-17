@@ -7,6 +7,17 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
+- [x] 043 tick-rate-check — **rejected the shared-compute-budget
+      hypothesis, decisively: tick rate is identical (6,074.97/s to 6 sig
+      figs) solo vs. with all 31 other drones actively farming**, and
+      matches hay_single's own directly-measured rate. 041's ~3x
+      growth-time gap vs hay_single is real but not caused by this; the
+      leader-implied ~441-ticks/harvest estimate (039) is unaffected since
+      it never depended on cross-category tick-rate comparability.
+      `experiments/hay/043/result.md`. (Hit and recovered from a genuine
+      infinite-loop bug — unbounded spawned-drone loop meant the run never
+      ended on its own, and Shift+F5 doesn't stop a leaderboard run,
+      confirming docs/LOOP.md; recovered with `relaunch`, no data lost.)
 - [x] 041 growth-schedulability — **the old, never-run 037, finally
       answered: unlike hay_single, real idle time exists here.** On the
       ~68% of passes that miss (real walk), idle ≈3 ticks, matching
