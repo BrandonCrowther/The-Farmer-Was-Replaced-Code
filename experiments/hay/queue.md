@@ -7,24 +7,29 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
-- [ ] 058 higher-reroll-limit — 057 confirmed the memory-maturity
-      theory (a real, positive result over the full run, opposite of
-      049's short-probe regression). Now that memory-matched reroll is
-      confirmed to actually help, try `REROLL_LIMIT` higher than 5 —
-      the mature per-draw hit rate (~1/3, matching the physical
-      baseline skip rate) compounds favorably with more attempts
-      (`1-(2/3)^(k+1)`), and each attempt is cheap (400 ticks) relative
-      to a real walk.
-- [ ] 059 fresh leaderboard-gap re-derivation — with 056's clean
-      growth-floor measurement (415 ticks at water≈1, not the
-      607-724 estimated from Plant-growth.md's raw seconds), the
-      zero-servicing single-tile floor is ≈815 ticks/harvest — inside
-      the #3-10 cluster's implied band (≈750-856), not below it. The
-      remaining gap to the cluster is realistic to close by cutting
-      servicing cost further (058's direction); the gap to #1 alone
-      (≈409-466, *below* even the zero-servicing floor) implies
-      something the 32-drone-even-split model still doesn't capture —
-      chase the cluster, not #1 (user's call, 2026-08-17).
+- [ ] 062 (open) — the reroll-before-walk accept-policy family is
+      settled at 057's numbers (see standing summary below): eight
+      distance/limit variants (051, 053-055, 058-061) all tied or lost.
+      Closing the remaining gap to the #2-10 cluster needs a
+      structurally different mechanism, not another accept-policy
+      tweak — no concrete candidate identified yet. Ideas not yet
+      tried: reducing the fixed 400-tick own-handling cost itself (is
+      there any way to avoid paying a full harvest+plant every single
+      cycle?), or a genuinely different macro-layout not yet
+      considered.
+
+**#1 (`const arch *`, 00:58.549) is very likely not honestly
+achievable under current mechanics** — web research (2026-08-17, user's
+suggestion) found the game's Dec 4 2025 "Leaderboard Rebalance" patch
+reset all boards specifically because old times used three mechanics
+since patched: a shared-memory bug between drones (independently
+confirmed structurally closed tonight, 050), an RNG made "harder to
+break" (not "unbreakable"), and a zero-tick computation exploit via
+dynamic-module function calls. This cleanly explains why #1's implied
+~409-466 ticks/harvest budget sits *below* even our zero-servicing
+floor (815) — not a design gap on our end. The #2-10 cluster
+(01:27-01:48, ≈750-856 ticks/harvest) is the honest target and remains
+the goal; #1 is out of scope going forward.
 
 **Standing summary after 038-057, continued past the "leader-gap-
 unexplained" checkpoint at the user's explicit request** (a persistent
@@ -237,6 +242,28 @@ Done. What follows is genuinely open.
       (was 02:47.682, #130/131). Confirms 049's short-probe regression
       was a time-horizon artifact — memory has to mature and a 150-cycle
       sample can't see that. `experiments/hay/057/result.md`
+- [x] 058 higher-reroll-limit — **rejected.** `REROLL_LIMIT=10`:
+      02:55.859, worse than 057's 5. `experiments/hay/058/result.md`
+- [x] 059 lower-reroll-limit — **rejected.** `REROLL_LIMIT=3`:
+      02:44.211, worse than 057's 5 (smaller regression than 058) —
+      brackets 5 as the true local optimum.
+      `experiments/hay/059/result.md`
+- [x] 060 hybrid-accept-every-attempt — **tied, not adopted.** Accept
+      on (memory-hit OR distance==1) checked every attempt, plus
+      wrapped setup movement: 02:42.439, a dead tie with 057
+      (+0.018s). Modeled a real improvement (S≈737 vs ≈800-816) that
+      didn't materialize — an unmodeled opportunity cost (accepting a
+      paid walk early forfeits later free-hit chances).
+      `experiments/hay/060/result.md`
+- [x] 061 hybrid-accept-late-only — **rejected.** Accept on (memory-hit
+      always OR (`rerolls>=REROLL_LIMIT-2` AND distance<=2)): 02:49.099,
+      worse than 057 and worse than 060's tie — widening the accept
+      distance to catch something before the budget runs out still
+      gives up real free-hit chances for a sometimes-more-expensive
+      guaranteed payment. Closes the accept-policy-tuning family for
+      real: four variants (058-061) plus four earlier ones (051,
+      053-055) all tied or lost to 057's simple design.
+      `experiments/hay/061/result.md`
 - [x] 056 clean-growth-floor — isolated, single-tile, water
       deliberately maintained at 0.999: **415 ticks** growth at
       water≈1 (952 unwatered) — smaller than the ~608-724 estimated
