@@ -206,16 +206,34 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       single-drone smoke tests to the real macro-layout on the first
       attempt. `experiments/hay/073/result.md`
 
-- [ ] 074 (open) — the champion now sits at 02:00.734/#65. The
-      single-drone smoke test predicted 923.53 ticks/harvest; worth
-      characterizing whether the real 32-drone run's per-drone
-      performance matches that (concurrency at scale wasn't directly
-      measured, only inferred safe from the collision check). #1's
-      implied budget remains unexplained by anything found in 062-065.
-      The #2-10 cluster band (750-856, as last observed) may have moved
-      given ranks shift as others submit — worth re-checking where #65
-      actually sits relative to a fresh read of the board, not the
-      2026-08-17 snapshot.
+- [x] 074 real-champion-measurement — **confirmed and better than
+      predicted.** The exact deployed `main.py` logic (no measurement-
+      harness overhead), single drone, 900 cycles: **889.78
+      ticks/harvest**, beating 072's instrumented 923.53 by 33.75 —
+      close to the ~27-tick bookkeeping cost 071 identified, within
+      normal variance. Now only **33.78 ticks above the cluster's upper
+      bound (856)**. Cluster reference was already re-confirmed fresh:
+      exp-073's own completion screenshot (captured live, moments
+      before this entry) showed #2-10 unchanged at 01:27.694-01:48.665
+      — no re-check needed, the board hadn't moved. No further concrete
+      lever identified: `reroll` is the dominant, structurally-floored
+      cost (069's p=1/3 analysis), REROLL_LIMIT retuning doesn't change
+      the average (only an already-negligible `(2/3)^30≈5×10⁻⁶`
+      exhaustion tail), and 3+ tile round-robins were already reasoned
+      (070) to give no further gain since one sibling's service time
+      already exceeds the growth floor. Treated as the practical
+      ceiling for the two-tile-interleaving paradigm absent a new
+      structural idea. `experiments/hay/074/result.md`
+
+- [ ] 075 (open) — the champion (073) sits at 02:00.734/#65, measured
+      889.78 ticks/harvest, 33.78 above the cluster's upper bound (856)
+      — the closest this investigation has gotten to the honest
+      current-mechanics ceiling. No concrete next lever identified
+      within the two-tile-interleaving paradigm; closing the remaining
+      gap, if possible at all, likely needs a genuinely different
+      structural idea (not accept-policy tuning, not growth-hiding
+      scheduling — both are now confirmed exhausted). #1's implied
+      budget remains unexplained by anything found in 062-065.
 
 **#1 (`const arch *`, 00:58.549) is very likely not honestly
 achievable under current mechanics** — web research (2026-08-17, user's
