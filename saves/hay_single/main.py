@@ -1,23 +1,17 @@
 import Common
 
-# exp-hay_single-010 -- finish-and-score-v2
+# exp-hay_single-012 -- reroll-limit-5
 #
-# 008's champion (walk on every companion miss) plus 009's measured
-# improvement: the structural hit rate against remembered stock is only
-# ~1/3 (004 -- three companion types, one stocked per position), so most
-# misses are cheaper to resolve with up to REROLL_LIMIT cheap rerolls
-# (harvest the just-planted unripe grass -- "harvesting an entity that
-# can't be harvested destroys it", 200 ticks -- then replant, ~400
-# ticks/attempt, no travel) than with one real ~1,600-tick walk. Capped, so
-# the memory still gets new stock from a real walk often enough to keep
-# growing -- pure reroll-forever never establishes anything new.
-#
-# 009 measured ≈98.75 hay/tick steady state against the champion's ≈55.8,
-# projecting roughly 02:47 -- an estimate, not a guarantee; see
-# experiments/hay_single/009/result.md and 010/hypothesis.md.
+# 010's champion (walk on every companion miss, after up to REROLL_LIMIT
+# cheap rerolls -- see 010's comment for the full rationale). 011 fit an
+# exact probability model to real data (R=400 reroll, W=1,600 walk, p=1/3
+# hit chance) and it reproduces 008's real 55.8 hay/tick at K=0 almost
+# exactly. The model predicts diminishing but real further gains raising
+# REROLL_LIMIT past 2: K=2 -> 62.13, K=5 -> 66.33, K=7 -> 67.39 hay/tick.
+# This tests K=5, the point past which 011 found returns thin out sharply.
 
 TARGET = 100000000
-REROLL_LIMIT = 2
+REROLL_LIMIT = 5
 instructions = Common.get_planting_instructions(Entities.Grass)
 ax, ay = get_pos_x(), get_pos_y()
 instructions()

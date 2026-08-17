@@ -2,45 +2,51 @@
 
 Target: **100_000_000 hay** on an 8x8 farm with a single drone
 Leader: **02:17.995** (confirmed on the in-game leaderboard, rank #1)
-Champion: **04:13.399, global rank #182** (exp-010)
+Champion: **03:57.198, global rank #169** (exp-012)
 Entry point: `main` · Runner: `leaderboard_run(Leaderboards.Hay_Single, "main", 5000)`
 
 Branches: `auto_experiment/hay_single/NNN` · Results: `experiments/hay_single/NNN/result.md`
 
-## 011 confirmed 010's number and modeled the remaining headroom
+## Three champions tonight; REROLL_LIMIT tuning treated as done
 
-001-011 in one line each — see individual result.md files for full detail:
+001-012 in one line each — see individual result.md files for full detail:
 
 - 001-007: design settled (single tile, reroll-before-walk, wood accumulates
   for free from companion churn, multi-tile closed three ways).
 - 008: first champion, 04:49.565, #302, ≈55.8 hay/tick.
 - 009: reroll-before-walk probe, ≈98.75 hay/tick (200-cycle tail — later
   shown unrepresentative).
-- 010: **champion.** 04:13.399, #182, ≈64.7 hay/tick real.
-- **011: full-run tick profile (real scored run, 04:13.634, PB unchanged —
-  confirms 010 is reproducible). Real steady state is ≈1,200-1,300
-  ticks/harvest from harvest 100 onward, matching 010's real average far
-  better than 009's optimistic 829.5. The exact reroll-probability model
-  (R=400, W=1,600, p=1/3) reproduces 008's real 55.8 hay/tick at K=0
-  almost exactly and predicts diminishing returns past K≈5:
-  K=0→55.85, K=2→62.13, K=5→66.33, K=7→67.39 hay/tick.
-  `experiments/hay_single/011/result.md`.**
+- 010: champion, `REROLL_LIMIT=2`. 04:13.399, #182, ≈64.7 hay/tick real.
+- 011: full-run tick profile confirms 010's real steady state (~1,200-1,300
+  ticks/harvest) and fits an exact reroll-probability model to real data
+  (K=0 reproduces 008's 55.8 hay/tick almost exactly); predicts diminishing
+  returns past K≈5 (K=5→66.33, K=7→67.39 modeled hay/tick).
+- **012: `REROLL_LIMIT=5`, real scored run. Champion —
+  **03:57.198, global rank #169 (−6.4% vs 010, ≈68.7 hay/tick, ≈1.72x off
+  the leader).** Beat its own model prediction (66.33), the same direction
+  010 beat its. `experiments/hay_single/012/result.md`.**
+  (Hit and recovered from the documented memory-leak crash on the first
+  attempt — see 012's result.md.)
 
 ## Queued
 
-- [ ] 012 reroll-limit-5 — one more real run with `REROLL_LIMIT=5` (model
-      predicts ≈66.33 hay/tick, ≈+7% over 010's ≈62-65). If it lands near
-      that, adopt as champion. Diminishing returns past K≈5-7 are already
-      clear from 011's model (K=5→7 only +1.06 hay/tick) — this is meant to
-      be the last tuning pass on `REROLL_LIMIT`, not the start of a sweep.
-      Falsifier: if it doesn't beat 010, the model's assumptions (fixed
-      W=1,600, clean p=1/3) don't hold precisely enough to bank on for
-      further K increases, and 013 should stop tuning this knob.
-- [ ] 013 (open, after 012) — if 012 lands close to model, the queue is
-      genuinely thin: multi-tile closed (001/005/006), Carrot lever
-      resolved (003/006/007), reroll-vs-walk tuned near its ceiling (011,
-      012). Check for a fundamental fork before declaring this exhausted
-      (docs/LOOP.md, "Empty queue") rather than assuming one doesn't exist.
+- [ ] 013 fundamental-fork-check — `REROLL_LIMIT` tuning is treated as
+      exhausted (011's model: K=5→7 only +1.06 hay/tick, and 012 already
+      landed above the K=5 prediction). Multi-tile is closed three ways
+      (001/005/006). Carrot's wood-funding question is resolved (003,
+      corrected by 006/007). Per docs/LOOP.md's bar for an empty queue,
+      look explicitly for a genuinely different strategy before stopping:
+      candidates to weigh (not yet run) — does the *own-tile handling* cost
+      (harvest + replant, ~400 ticks) have any slack left, e.g. is `till()`
+      ever called unnecessarily on the home tile; is there a cheaper way to
+      discover a companion match than a full reroll-and-check when the
+      position space is only ~24 cells (e.g., precomputing/caching more
+      than one candidate before committing); does watering ever cost a
+      wasted tick once the tank is empty. If none of these look like a real
+      lever on inspection, say so and stop chasing further — 003 was a
+      generous number even 20x over budget; check whether the remaining
+      1.72x gap has any single-drone-achievable path left at all before
+      declaring victory at #169.
 
 ## Done
 
@@ -59,7 +65,9 @@ Branches: `auto_experiment/hay_single/NNN` · Results: `experiments/hay_single/N
       `experiments/hay_single/008/result.md`
 - [x] 009 reroll-before-walk — probe measured ≈77% throughput gain; fed
       010. `experiments/hay_single/009/result.md`
-- [x] 010 finish-and-score-v2 — adopted, champion. 04:13.399, #182.
+- [x] 010 finish-and-score-v2 — champion. 04:13.399, #182.
       `experiments/hay_single/010/result.md`
 - [x] 011 champion-tick-profile — confirmed 010's real steady state and
       modeled `REROLL_LIMIT` headroom. `experiments/hay_single/011/result.md`
+- [x] 012 reroll-limit-5 — **adopted, champion.** 03:57.198, #169.
+      `experiments/hay_single/012/result.md`
