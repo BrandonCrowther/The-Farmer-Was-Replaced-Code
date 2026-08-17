@@ -6,11 +6,11 @@
   "entry": "main",
   "speedup": 5000,
   "seeded_from": null,
-  "personal_best": "04:49.565",
-  "global_rank": 302,
+  "personal_best": "04:13.399",
+  "global_rank": 182,
   "leader_time": "02:17.995",
-  "best_branch": "auto_experiment/hay_single/008",
-  "status": "improvement-queued",
+  "best_branch": "auto_experiment/hay_single/010",
+  "status": "scoring",
   "updated": "2026-08-16",
-  "note": "Champion (008): single tile, reactive skip-and-remember, walk on every miss. 04:49.565, rank #302, ~55.8 hay/tick. 009 probed a reroll-before-walk hybrid (miss's true hit rate is only 1/3 per 004, so up to 2 cheap rerolls (~400 ticks, no travel) before falling back to a walk beats walking every time) and measured ~98.75 hay/tick steady state, a ~77% throughput gain. 010 builds this into a real terminating driver and runs it for score -- if it lands near the ~02:47 projection, it becomes the new champion at ~1.2x off the leader instead of ~2.1x. See experiments/hay_single/00{1..9}/result.md and queue.md."
+  "note": "Champion (010): single tile, reactive skip-and-remember with a reroll-before-walk hybrid (up to 2 cheap rerolls -- destroy-unripe grass + replant, ~400 ticks, no travel -- before falling back to a real walk on a companion miss, since the structural hit rate against remembered stock is only 1/3, 004). 04:13.399, rank #182, ~64.7 hay/tick average across 29 internal repeats, ~1.84x off the leader's 02:17.995. Undershot the 200-cycle probe's 98.75 hay/tick projection (009) -- the probe's tail window warmed up faster than the full ~1,221-harvest run does; 011 gets a real steady-state number before the next tuning pass. Wood accumulates for free from ordinary companion churn (006/007), unlocking Carrot; multi-tile is closed (001/005/006). See experiments/hay_single/00{1..10}/result.md and queue.md."
 }

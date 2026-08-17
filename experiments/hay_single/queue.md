@@ -2,14 +2,14 @@
 
 Target: **100_000_000 hay** on an 8x8 farm with a single drone
 Leader: **02:17.995** (confirmed on the in-game leaderboard, rank #1)
-Champion: **04:49.565, global rank #302** (exp-008)
+Champion: **04:13.399, global rank #182** (exp-010)
 Entry point: `main` · Runner: `leaderboard_run(Leaderboards.Hay_Single, "main", 5000)`
 
 Branches: `auto_experiment/hay_single/NNN` · Results: `experiments/hay_single/NNN/result.md`
 
-## Scored, and a large win queued to land
+## Two real scores landed tonight
 
-001-009 in one line each:
+001-010 in one line each:
 
 - 001: 1-tile schedulability floor (growth isn't the bottleneck).
 - 002: single-tile short probe, ~39.2 hay/tick, Carrot looked permanently dead.
@@ -20,26 +20,32 @@ Branches: `auto_experiment/hay_single/NNN` · Results: `experiments/hay_single/N
   more than it buys — multi-tile closed for good. Also found wood
   accumulates *for free* from ordinary companion churn, correcting 003.
 - 007: single tile run long (200 cycles) — ≈49.9 hay/tick steady state.
-- **008: real terminating driver, run to an actual score —
-  04:49.565, global rank #302 (≈55.8 hay/tick, ≈2.1x off the leader).**
-- **009: reroll-before-walk probe — a miss's true structural hit rate is
-  1/3 (004), so most misses are cheaper to resolve with up to 2 cheap
-  rerolls (~400 ticks each, destroy-unripe + replant, no travel) than one
-  ~1,600-tick walk. Measured steady-state throughput ≈98.75 hay/tick —
-  **~77% higher than the champion.** `experiments/hay_single/009/result.md`.**
+- 008: **first champion.** 04:49.565, rank #302, ≈55.8 hay/tick.
+- 009: reroll-before-walk probe — up to 2 cheap rerolls (~400 ticks,
+  destroy-unripe + replant, no travel) before falling back to a walk,
+  since a miss's true structural hit rate is only 1/3 (004). Measured
+  ≈98.75 hay/tick over a 200-cycle tail window.
+- **010: real terminating driver with 009's logic, run to score —
+  **04:13.399, global rank #182 (−12.8% vs 008, ≈64.7 hay/tick, ≈1.84x off
+  the leader).** Undershot 009's 98.75 projection: a 200-cycle probe warms
+  up its own small set of companion positions faster than the full
+  ~1,221-harvest run does, so 009's tail window wasn't the true steady
+  state for a run 6x longer. `experiments/hay_single/010/result.md`.**
 
 ## Queued
 
-- [ ] 010 finish-and-score-v2 — build 009's reroll-before-walk logic into a
-      real terminating driver (same shape as 008: `while num_items(Hay) <
-      TARGET`) and run it as a real scored cycle. If it lands near 009's
-      ≈167s (02:47) projection, adopt it as the new champion — a ~1.2x gap
-      to the leader instead of ~2.1x. Falsifier: none needed, same as 008 —
-      first correctness check for this variant, not a comparison.
-- [ ] 011 (open, after 010) — if 010 lands close to the leader, worth asking
-      whether `REROLL_LIMIT` itself is tuned right (2 was chosen by analogy
-      to Hay's own constant, not derived here) before declaring the queue
-      exhausted again.
+- [ ] 011 real-run-tick-profile — before tuning `REROLL_LIMIT` or trying
+      another lever, read the *actual* per-harvest tick trajectory from a
+      real (or much longer, 500+ cycle) probe of the current champion, to
+      get a steady-state number that isn't optimistic the way 009's 200
+      cycles were. That number, not another guess, should set the next
+      target.
+      Falsifier: none needed — this is measurement, not a design change.
+- [ ] 012 (open, after 011) — whatever 011's real steady-state number
+      suggests is still on the table. `REROLL_LIMIT` (currently 2, chosen
+      by analogy to Hay's own constant, never derived here) is the most
+      likely next knob, but tune it from 011's real trajectory, not another
+      short probe.
 
 ## Done
 
@@ -54,7 +60,9 @@ Branches: `auto_experiment/hay_single/NNN` · Results: `experiments/hay_single/N
       the free-wood mechanism. `experiments/hay_single/006/result.md`
 - [x] 007 single-tile-long-run — adopted as the design.
       `experiments/hay_single/007/result.md`
-- [x] 008 finish-and-score — adopted, first champion. 04:49.565, #302.
+- [x] 008 finish-and-score — first champion. 04:49.565, #302.
       `experiments/hay_single/008/result.md`
-- [x] 009 reroll-before-walk — probe measured ≈77% throughput gain; feeds
+- [x] 009 reroll-before-walk — probe measured ≈77% throughput gain; fed
       010. `experiments/hay_single/009/result.md`
+- [x] 010 finish-and-score-v2 — **adopted, new champion.** 04:13.399, #182.
+      `experiments/hay_single/010/result.md`
