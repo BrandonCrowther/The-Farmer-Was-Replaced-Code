@@ -115,18 +115,32 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       correct and stand; the *conclusion* drawn from them ("real room,
       not a wall") does not, and is retracted. `experiments/hay/068/result.md`
 
-- [ ] 069 (open) — 068 identifies the real lever, if one exists: the
-      ~17% reroll-exhaustion tail and its walk-fallback cost, not the
-      reroll operation cost itself (058/059 already correctly bracketed
-      REROLL_LIMIT under these true costs). One untried, more targeted
-      idea: instead of falling through to whatever companion was drawn
-      *last* when the budget exhausts, remember the *cheapest* (closest
-      distance, or a partial-type match) option seen across the whole
-      reroll chase and walk to that instead — a real behavior change,
-      not a limit retune, and not yet tested in any of 051/053-055/
-      058-061. No concrete implementation sketched yet. #1's implied
-      budget remains unexplained by anything found in 062-065, unaffected
-      by this correction.
+- [x] 069 bush-wall-spatial-preseed — **user's design, tested in two
+      variants, closes the accept-policy family for real.** Proposal:
+      pre-seed every n=2/n=3 reachable position (20 of 24) with
+      permanent Bush before the loop starts, leaving only the 4 n=1
+      tiles genuinely dynamic — accept a draw the instant it's either a
+      memory-matched Bush at n=2/3 (free) or any type at n=1 (cheap to
+      walk); reroll everything else. Predicted accept probability
+      32/72≈0.444 vs 068's measured ~0.288 — confirmed almost exactly
+      (avg rerolls/cycle dropped from 1.93 to 1.19, exhaustion rate
+      0%). But total ticks/harvest barely moved (1069.57 vs 068's
+      ~1070-1220): 230/900 cycles needed a real ~800-tick walk to
+      service the n=1 tile (its type changes almost every draw), which
+      ate the reroll savings almost exactly. Follow-up v2 (all 24
+      positions static, zero walk ever): reroll rate rose back to
+      ~2.07/cycle (matches the p=1/3 prediction with the n=1 shortcut
+      removed, `(1-1/3)/(1/3)=2.0`) and total landed at 1068.35 —
+      predicted 1043.72 from the corrected model, within 2.4%. Three
+      independently structured designs (natural accumulation, hybrid,
+      fully static) now converge on the same ~1000-1200 band, for three
+      different, well-understood reasons — a real conservation trade
+      between reroll cost and walk cost, not a coincidence. Combined
+      with the eight earlier real-measured rejections (051, 053-055,
+      058-061), this is convergent evidence of a genuine structural
+      ceiling on accept/reroll policy design given the current
+      24-position/3-type/207-reroll/~800-walk mechanics — not fixable
+      by policy alone. No champion change. `experiments/hay/069/result.md`
 
 **#1 (`const arch *`, 00:58.549) is very likely not honestly
 achievable under current mechanics** — web research (2026-08-17, user's
