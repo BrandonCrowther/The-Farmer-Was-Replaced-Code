@@ -7,6 +7,28 @@ Entry point: `main` · Runner: `leaderboard_run(Leaderboards.Hay_Single, "main",
 
 Branches: `auto_experiment/hay_single/NNN` · Results: `experiments/hay_single/NNN/result.md`
 
+## 014/015 — the user's fundamental-shift challenge, tested empirically
+
+013's pause was challenged (fairly): does the model's ceiling actually
+survive a *genuinely different* strategy shape, not just parameter tweaks
+on the same reactive design? Two real tests, both against the champion's
+real 68.7 hay/tick:
+
+- **014 (prepared, superseded by 015's more literal test):** two adjacent
+  tiles with a same-tile guard.
+- **015 bush-blanket-quad:** the user's literal proposal — 4 clustered
+  tiles, the entire rest of the board pre-planted with Bush, reroll
+  (uncapped) until Bush. Real run: 1,237.6 ticks/harvest post-setup
+  (≈66.19 hay/tick), ≈64.99 hay/tick full-run-projected once the
+  27,675-tick one-time setup is amortized — **matching or slightly
+  trailing** the champion, not beating it. `experiments/hay_single/015/result.md`.
+
+**The ceiling holds under a from-scratch alternative shape, empirically,
+not just by the same model re-applied.** This is the strongest version of
+the closure yet: four independent tests (schedulability 001, self-
+collision 005, commute-tax 006, and now a genuinely different
+full-coverage strategy 015) all land in the same place.
+
 ## PAUSED — the companion-servicing paradigm is provably at its ceiling
 
 001-013 in one line each — see individual result.md files for full detail:
