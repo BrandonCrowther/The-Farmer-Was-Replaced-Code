@@ -7,6 +7,25 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
+- [x] 045 unlock-level-check — **rejected, cleanly.** `Unlocks.Grass`
+      ("increases the yield of grass" — real, never checked before
+      tonight) is already at max level 10, same as Polyculture (5/5) and
+      Watering (9/9). No unrealized yield lever here; already baked into
+      the measured 512/81,920 figures. Closes the last genuinely
+      unexamined assumption underlying tonight's arithmetic.
+      `experiments/hay/045/result.md`.
+
+**Standing summary after 038-045: every mechanism this project can
+directly inspect has been checked and confirmed as expected** — the
+companion draw is IID (040), tick rate is constant regardless of drone
+count (043), the measured idle window is real but too small to fund a
+second tile (041, 044), and every yield-affecting unlock is maxed (045).
+The leader's ~3x edge (00:58.549 vs our ~02:52) remains unexplained by
+anything found this way. Two threads remain, neither yet tried: (a) verify
+or replace 039's same-drone-count assumption behind its ~441-tick
+leader estimate, or (b) retest layout/spacing (021/022, both pre-dating
+tonight's corrected understanding) fresh.
+
 - [x] 044 multi-tile-scheduled — **rejected, with a precise reason.**
       Tested the actual scheduled-second-tile design 041's idle-time
       finding motivated: only visit tile B (distance 1) during A's
