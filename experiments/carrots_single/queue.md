@@ -44,9 +44,12 @@ Branches: `auto_experiment/carrots_single/NNN` · Results: `experiments/carrots_
       **3,430.43 ticks/harvest** vs 003's 8,362 — **2.44x throughput**,
       close to the model's ≈3,222 prediction. Projects ≈11.5 minutes for
       the full target (down from ≈28.0). `experiments/carrots_single/004/result.md`.
-- [ ] 005 finish-and-score — real terminating driver from 004's 3-tile
-      design, run to an actual score. First recorded time for this
-      category.
+- [x] 005 finish-and-score — **adopted, first-ever score.** Real 3-tile
+      terminating driver, real scored run: **11:54.303, Global Rank
+      #118**, 100% multiplier rate (0 lost hits over the full ~1,221-cycle
+      run). ~3.5% above 004's ≈690s projection (likely a full-run vs.
+      60-cycle-sample averaging difference, not a bug).
+      `experiments/carrots_single/005/result.md`.
 
 ## Done
 
@@ -61,3 +64,5 @@ Branches: `auto_experiment/carrots_single/NNN` · Results: `experiments/carrots_
       in. `experiments/carrots_single/002/result.md`
 - [x] 003 reactive-single-tile — adopted, 100% multiplier rate, ~71% idle.
       `experiments/carrots_single/003/result.md`
+- [x] 005 finish-and-score — adopted, first score 11:54.303, #118.
+      `experiments/carrots_single/005/result.md`
