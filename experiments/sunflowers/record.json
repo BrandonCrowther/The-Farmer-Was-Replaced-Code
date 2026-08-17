@@ -6,9 +6,10 @@
   "entry": "main",
   "speedup": 5000,
   "seeded_from": "Power_Achievement.py",
-  "personal_best": null,
-  "global_rank": null,
-  "best_branch": null,
-  "status": "seeded",
-  "updated": null
+  "personal_best": "04:03.434",
+  "global_rank": 126,
+  "best_branch": "auto_experiment/sunflowers/001",
+  "status": "scored",
+  "updated": "2026-08-17",
+  "note": "Seeded design: 32 drones, each farming its own dedicated column (1,024 tiles total), continuous base-yield harvest+replant, no max-petal 8x bonus tracking. Only needed target-gating (seed's while True never terminated) and a water-topup guard (num_items(Items.Water) > 0 -- 32 drones racing a shared pool produces expected harmless warnings otherwise, matching saves/hay/main.py's documented pattern). 001 scored it: 04:03.434, Global Rank #126, all 30 internal repeats clean. sunflowers_single's reroll-to-15 trick (proven tonight, guarantees the 8x bonus on every harvest) is not used here -- an ~8x throughput multiple is the obvious next lever if revisited. See experiments/sunflowers/001/result.md and queue.md."
 }
