@@ -60,17 +60,30 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       the seed-timing exploit has nothing to exploit even in the most
       generous reading. `experiments/hay/064/result.md`
 
-- [ ] 065 (open) — the reroll-before-walk accept-policy family is
+- [x] 065 harvest-race-duplication-check — **no duplication, exploit-
+      hunt fully closed.** Last open brainstorm direction: could the
+      known drone-concurrency race (050) be provoked deliberately to
+      duplicate a harvest, rather than just tolerated as a rare loss?
+      Tested directly: two drones spawned on the *same* tile, racing to
+      `harvest()` the same ripe plant. Both executed `harvest()` and
+      each *locally* observed a 512 gain around their own call — but the
+      true final total after both finished was `before + 512`, not
+      `before + 1024`. Only one harvest ever actually lands; the loser's
+      call is a silent no-op against an already-emptied tile. Confirms
+      046/047's plant-side finding generalizes to harvest: the race
+      resolves cleanly (win/lose), never corrupts or duplicates.
+      `experiments/hay/065/result.md`
+
+- [ ] 066 (open) — the reroll-before-walk accept-policy family is
       settled at 057's numbers (see standing summary below): eight
       distance/limit variants (051, 053-055, 058-061) all tied or lost.
-      062, 063, and 064 closed the exploit-hunt (Hay tradeability,
-      module-call cost gap, RNG-seed timing/luck) without finding a
-      usable lever. One brainstorm direction remains unprobed:
-      deliberately exploiting the already-documented drone-concurrency
-      race (050) rather than just tolerating its <0.2%-of-harvests cost
-      — no concrete mechanism identified yet, just the raw observation
-      that concurrent drone writes aren't atomic. Absent that panning
-      out, closing the gap to the #2-10 cluster needs a structurally
+      062-065 closed the entire exploit-hunt (Hay tradeability,
+      module-call cost gap, RNG-seed timing/luck, harvest-race
+      duplication) without finding a usable lever. #1's implied budget
+      remains unexplained by anything found — consistent with it being a
+      residual/historical mechanic the Dec 2025 patch closed, not
+      something reachable from the current game version. Closing the gap
+      to the #2-10 cluster (the real target) needs a structurally
       different mechanism — reducing the fixed 400-tick own-handling
       cost itself, or a genuinely different macro-layout — not another
       accept-policy tweak.
