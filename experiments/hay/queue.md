@@ -43,12 +43,29 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       and the standing concern about manipulating a shared public
       leaderboard. Full writeup: `docs/RNG-Seed-Mechanism.md`.
 
-- [ ] 064 (open) — the reroll-before-walk accept-policy family is
+- [x] 064 seed-luck-vs-growth-floor — **RNG-luck theory falsified,
+      closes the exploit-hunt for real.** User's follow-up: if #1's
+      budget only makes sense as an exploit, and RNG is the mechanism,
+      could a seed be forced favorable enough to explain it (e.g. by
+      controlling system uptime, "freezing the clock")? Tested directly:
+      swept `simulate()`'s legitimate seed parameter across 24 values,
+      measuring 056's isolated single-tile growth-time floor at each one
+      (sandboxed — never touched the real farm or live leaderboard).
+      Result: 20/24 seeds landed on the same floor value, 4/24 landed on
+      *exactly double* it (one whole extra growth-cycle) — **no seed
+      went below the floor.** RNG luck only ever costs a full cycle, it
+      never saves one. That, plus 063's own practicality problems
+      (unverified sub-ms timing, and the 2-hour repeat-averaging rule
+      capping any one controlled seed to ~1% of the final score), means
+      the seed-timing exploit has nothing to exploit even in the most
+      generous reading. `experiments/hay/064/result.md`
+
+- [ ] 065 (open) — the reroll-before-walk accept-policy family is
       settled at 057's numbers (see standing summary below): eight
       distance/limit variants (051, 053-055, 058-061) all tied or lost.
-      062 and 063 closed three exploit-adjacent candidates (Hay
-      tradeability, module-call cost gap, RNG-seed timing) without
-      finding a usable lever. One brainstorm direction remains unprobed:
+      062, 063, and 064 closed the exploit-hunt (Hay tradeability,
+      module-call cost gap, RNG-seed timing/luck) without finding a
+      usable lever. One brainstorm direction remains unprobed:
       deliberately exploiting the already-documented drone-concurrency
       race (050) rather than just tolerating its <0.2%-of-harvests cost
       — no concrete mechanism identified yet, just the raw observation
