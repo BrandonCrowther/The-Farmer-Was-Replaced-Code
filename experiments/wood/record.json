@@ -6,9 +6,10 @@
   "entry": "main",
   "speedup": 5000,
   "seeded_from": "Tree_Achievement.py",
-  "personal_best": null,
-  "global_rank": null,
-  "best_branch": null,
-  "status": "seeded",
-  "updated": null
+  "personal_best": "06:07.889",
+  "global_rank": 111,
+  "best_branch": "auto_experiment/wood/001",
+  "status": "scored",
+  "updated": "2026-08-17",
+  "note": "Seeded design: 32 drones (one per column, world 32x32), each cycling North by 2, harvest+replant with an interleaved Tree/Grass companion pattern -- not growth-pipelined, each drone fully waits before moving on. Only needed target-gating (seed's while True never terminated) and a water-topup guard (same fix as sunflowers (multi) 001). Smoke-test projections were badly wrong (5-harvest sample: ~8h, 64-harvest sample: ~68min) vs the real ~24,415-harvest run finishing in ~6 minutes -- true steady-state throughput needed a much larger sample to reveal. 001 scored it: 06:07.889, Global Rank #111, all 20 internal repeats clean. Leader time not yet checked -- see queue.md."
 }
