@@ -11,7 +11,7 @@ Every category runs `leaderboard_run(Leaderboards.<name>, "main", <speedup>)` fr
 | --- | --- | --- | --- | --- | --- | --- |
 | Cactus | cactus | multi | 33_554_432 cacti | 01:00.697 | #961 | scored |
 | Cactus_Single | cactus_single | single | 131_072 cacti | 00:32.063 | #228 | scored |
-| Carrots | carrots | multi | 2_000_000_000 carrots | — | — | seeded |
+| Carrots | carrots | multi | 2_000_000_000 carrots | 06:39.725 | #143 | scored |
 | Carrots_Single | carrots_single | single | 100_000_000 carrots | 07:49.969 | #85 | scored |
 | Dinosaur | dinosaur | multi | 33_488_928 bones | — | — | seeded |
 | Fastest_Reset | fastest_reset | multi | unlock Unlocks.Leaderboard | 15:11:42.399 | #833 | baseline |
