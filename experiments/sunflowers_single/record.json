@@ -6,9 +6,10 @@
   "entry": "main",
   "speedup": 5000,
   "seeded_from": null,
-  "personal_best": null,
-  "global_rank": null,
-  "best_branch": null,
-  "status": "empty",
-  "updated": null
+  "personal_best": "20:53.149",
+  "global_rank": 300,
+  "best_branch": "auto_experiment/sunflowers_single/003",
+  "status": "scored",
+  "updated": "2026-08-17",
+  "note": "Sunflowers are not polyculture and not a merge/cascade crop -- Sunflowers.md: harvesting the max-petal sunflower (7-15, fixed at plant time) with >=10 standing gives 8x power, base yield 1. Key finding (001): harvest() on an unripe entity destroys it for 200 ticks rather than requiring ripeness, and petals are readable immediately at plant time -- so a cheap reroll (harvest+replant, ~400 ticks/attempt) redraws petals before paying the ~17,643-tick growth cost. Rerolling every tile to petals=15 (the max) before growing means a farm-wide tie for max is permanent -- every harvest gets 8x with zero tracking. 10 tiles is both the mandatory minimum for bonus eligibility and enough to fully hide growth (002). 003 scored the real driver: 20:53.149, Global Rank #300, all 6 internal repeats clean. Real run landed 37.8% above the 30-cycle probe's projection -- the fixed-target-15 reroll is geometric (p=1/9, true mean 9) with a long tail the small sample undersampled; a capped/dynamic-target reroll is the next lever, see queue.md. See experiments/sunflowers_single/00{1,2,3}/result.md and queue.md."
 }
