@@ -31,13 +31,25 @@ every single time across 133 internal repeats).
 
 ## Queued
 
-- [ ] 005 faster-sort — the naive early-exit bubble sort averages
-      ≈290k of the ≈330k total ticks (004). The leader scores 7.3x
-      faster (00:07.447 vs 004's 00:54.267) — the sort is the clear
-      lever. Try exploiting the small value range (10 possible sizes
-      across 64 cells) instead of a generic comparison sort.
+- [ ] 007 tighter-movement — `move_to` re-queries position every call;
+      the planting phase (~38k ticks) is now a much larger share of a
+      smaller total. Leader is still 4.3x faster (00:07.447 vs 006's
+      00:32.063) — real headroom remains.
 
 ## Done
+
+- [x] 005 insertion-sort-validation (4x4) — **adopted the technique.**
+      Insertion sort (single forward walk, backward-correct on each
+      inversion — O(n+inversions) vs bubble sort's O(n²) full re-walk
+      per pass) hit the exact `32*16**2=8192` formula match and cut
+      `SORT_TICKS` 42.4% (20,059 vs 003's 34,852) on the same 4x4 grid.
+      `experiments/cactus_single/005/result.md`.
+- [x] 006 finish-and-score (insertion sort) — **adopted, new champion.**
+      Real 8x8 insertion-sort driver, real scored run: **00:32.063,
+      Global Rank #228** (up from #350), 131,072/131,072 on all 225
+      internal repeats. Real average ticks −40.9% (194,688 vs 004's
+      329,568), matching 005's 4x4 prediction closely.
+      `experiments/cactus_single/006/result.md`.
 
 - [x] 001 mechanics-probe — starting stockpile (Pumpkin 1B, Cactus costs
       64 Pumpkin), growth fixed at 5,876 ticks (zero variance), size
@@ -55,3 +67,7 @@ every single time across 133 internal repeats).
       real scored run: **00:54.267, Global Rank #350**, 131,072/131,072
       every one of 133 internal repeats (100% reliability).
       `experiments/cactus_single/004/result.md`
+- [x] 005 insertion-sort-validation — adopted, 42.4% fewer sort ticks
+      at 4x4. `experiments/cactus_single/005/result.md`
+- [x] 006 finish-and-score (insertion sort) — adopted, new champion
+      00:32.063, #228. `experiments/cactus_single/006/result.md`

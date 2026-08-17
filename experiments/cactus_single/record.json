@@ -6,10 +6,10 @@
   "entry": "main",
   "speedup": 5000,
   "seeded_from": null,
-  "personal_best": "00:54.267",
-  "global_rank": 350,
-  "best_branch": "auto_experiment/cactus_single/004",
+  "personal_best": "00:32.063",
+  "global_rank": 228,
+  "best_branch": "auto_experiment/cactus_single/006",
   "status": "scored",
   "updated": "2026-08-17",
-  "note": "Cactus is not a polyculture crop -- it's Cactus.md's size/sort cascade: cacti grow to a random fixed size 0-9, and harvesting a fully-grown cactus whose neighbors are also fully-grown and sorted (non-decreasing North/East) cascades recursively, yielding 32*n**2 Items.Cactus for an n-cactus cascade (002, exact formula, confirmed at n=2, n=16, and n=64). 32*8**2=131,072 is exactly the target -- the category is solved by building one fully-sorted 8x8 grid and harvesting a single corner. Sorting uses a classical lemma (sort every row, then every column -- rows stay sorted) validated at 4x4 (003) then full 8x8 (004): real score 00:54.267, Global Rank #350, 131,072/131,072 on every one of 133 internal repeats. Leader scores 00:07.447 (7.3x faster) -- the bubble-sort (~290k of ~330k avg ticks) is the clear next lever, see queue.md. See experiments/cactus_single/00{1,2,3,4}/result.md and queue.md."
+  "note": "Cactus is not a polyculture crop -- it's Cactus.md's size/sort cascade: cacti grow to a random fixed size 0-9, and harvesting a fully-grown cactus whose neighbors are also fully-grown and sorted (non-decreasing North/East) cascades recursively, yielding 32*n**2 Items.Cactus for an n-cactus cascade (002, exact formula, confirmed at n=2, n=16, and n=64). 32*8**2=131,072 is exactly the target -- the category is solved by building one fully-sorted 8x8 grid and harvesting a single corner. Sorting uses a classical lemma (sort every row, then every column -- rows stay sorted) validated at 4x4 (003) then full 8x8 (004): first score 00:54.267, #350. 005/006 swapped the bubble sort for insertion sort (O(n+inversions) vs O(n^2) full re-walk per pass), validated at 4x4 (42% fewer sort ticks) then scored for real: 00:32.063, Global Rank #228, 131,072/131,072 on all 225 internal repeats. Leader scores 00:07.447 (4.3x faster) -- planting (~38k ticks) and move_to's repeated position re-querying are the next levers, see queue.md. See experiments/cactus_single/00{1..6}/result.md and queue.md."
 }

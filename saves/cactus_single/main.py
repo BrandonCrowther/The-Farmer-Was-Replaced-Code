@@ -1,24 +1,28 @@
-# exp-cactus_single-004 -- finish-and-score (8x8 grid sort + single cascade)
+# exp-cactus_single-006 -- finish-and-score (8x8 grid sort + single cascade, insertion sort)
 #
-# 001/002/003's design, at full scale. Cactus is not a polyculture crop
-# (Polyculture.md excludes it) -- it's Cactus.md's size/sort cascade:
-# harvesting n simultaneously-cascading, fully-grown, sorted cacti
-# yields 32 * n**2 Items.Cactus (002, exact, independent of individual
-# cactus size). 32 * 8**2 = 32 * 64 = 131,072 -- exactly Cactus_Single's
-# target (Leaderboard.md). So: plant a full 8x8 grid, sort it, harvest
-# one corner, done in a single cascade.
+# 004's design, with 005's insertion sort in place of bubble sort.
+# Cactus is not a polyculture crop (Polyculture.md excludes it) -- it's
+# Cactus.md's size/sort cascade: harvesting n simultaneously-cascading,
+# fully-grown, sorted cacti yields 32 * n**2 Items.Cactus (002, exact,
+# independent of individual cactus size). 32 * 8**2 = 131,072 --
+# exactly Cactus_Single's target. So: plant a full 8x8 grid, sort it,
+# harvest one corner, done in a single cascade.
 #
 # Sizes (0-9) are randomly fixed once a cactus is fully grown and never
 # converge by waiting (001) -- a real swap()-based sort is required.
 # Sorting every row, then every column, of a matrix leaves the rows
-# still sorted (classical lemma) -- so one row-bubble-sort pass over
-# every row followed by one column-bubble-sort pass over every column
-# is provably sufficient to sort the whole grid in both dimensions at
-# once (Cactus.md's sorted-order condition, applied grid-wide).
-# Validated exactly at 4x4 scale in 003 (8192 = 32*16**2, first try).
-# Early exit added to each bubble pass here: stop once a pass makes
-# zero swaps, since much of the naive worst-case pass count does no
-# real work once the row/column is already sorted.
+# still sorted (classical lemma) -- so one row-sort pass over every row
+# followed by one column-sort pass over every column is provably
+# sufficient to sort the whole grid in both dimensions at once.
+#
+# 004 used a full-re-walk bubble sort (early exit per pass, but each
+# pass still walks the entire row/column regardless of real inversion
+# count -- O(n) per pass for up to n-1 passes). This uses insertion
+# sort instead: walk forward once; on finding an out-of-order adjacent
+# pair, swap and walk backward correcting until in order, then resume
+# forward. Cost is n + inversions, the minimum possible for an
+# adjacent-swap sort -- validated exactly at 4x4 in 005 (exact
+# 32*16**2=8192 match, 42% fewer sort ticks than 003's bubble sort).
 #
 # Planting uses a boustrophedon (snake) path so every one of the 63
 # non-first tiles needs exactly one move, and the drone ends up
@@ -44,33 +48,37 @@ def till_plant():
 		till()
 	plant(Entities.Cactus)
 
-def bubble_row(y, n):
-	for p in range(n - 1):
-		move_to(OX, y)
-		swapped = False
-		for i in range(n - 1):
-			a = measure()
-			b = measure(East)
+def insertion_row(y, n):
+	move_to(OX, y)
+	for i in range(1, n):
+		move_to(OX + i, y)
+		j = i
+		cont = True
+		while j > 0 and cont:
+			a = measure(West)
+			b = measure()
 			if a > b:
-				swap(East)
-				swapped = True
-			move(East)
-		if not swapped:
-			break
+				swap(West)
+				move(West)
+				j = j - 1
+			else:
+				cont = False
 
-def bubble_col(x, n):
-	for p in range(n - 1):
-		move_to(x, OY)
-		swapped = False
-		for i in range(n - 1):
-			a = measure()
-			b = measure(North)
+def insertion_col(x, n):
+	move_to(x, OY)
+	for i in range(1, n):
+		move_to(x, OY + i)
+		j = i
+		cont = True
+		while j > 0 and cont:
+			a = measure(South)
+			b = measure()
 			if a > b:
-				swap(North)
-				swapped = True
-			move(North)
-		if not swapped:
-			break
+				swap(South)
+				move(South)
+				j = j - 1
+			else:
+				cont = False
 
 till_plant()
 going_east = True
@@ -92,9 +100,9 @@ while not h:
 	h = can_harvest()
 
 for dy in range(N):
-	bubble_row(OY + dy, N)
+	insertion_row(OY + dy, N)
 for dx in range(N):
-	bubble_col(OX + dx, N)
+	insertion_col(OX + dx, N)
 
 move_to(OX, OY)
 before = num_items(Items.Cactus)
