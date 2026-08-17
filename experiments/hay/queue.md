@@ -7,6 +7,20 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
+- [x] 044 multi-tile-scheduled — **rejected, with a precise reason.**
+      Tested the actual scheduled-second-tile design 041's idle-time
+      finding motivated: only visit tile B (distance 1) during A's
+      measured ~492-tick idle window, never on A's expensive cycles.
+      Real result: **1,342.73 ticks/harvest — worse than the 1,300
+      baseline.** The idle window (492) is smaller than even the
+      *cheapest possible* B-visit cost (own-handling 400 + minimum
+      commute 400 = 800) — a 308-tick shortfall that no scheduling
+      refinement fixes. Closes multi-tile-per-drone for Hay for a sharper
+      reason than hay_single's (which had zero idle time; Hay has real
+      idle time, just not enough of it). Casts doubt on 039's
+      ~2.2-tiles-per-drone reading of the leader-implied ~441 figure — the
+      leader's edge is not "champion + a scheduled second tile."
+      `experiments/hay/044/result.md`.
 - [x] 043 tick-rate-check — **rejected the shared-compute-budget
       hypothesis, decisively: tick rate is identical (6,074.97/s to 6 sig
       figs) solo vs. with all 31 other drones actively farming**, and
