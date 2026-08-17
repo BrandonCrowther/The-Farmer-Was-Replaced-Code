@@ -14,9 +14,30 @@ REROLL_LIMIT = 2
 entity = Entities.Grass
 instructions = Common.get_planting_instructions(entity)
 
-def driver(x, y):
+# exp-hay-040 -- draw-pattern-check
+#
+# 039 found the leader's pace implies ~441 ticks/harvest, only ~41 above
+# the bare own-tile floor -- consistent with near-100% instant-hit
+# servicing, which the proven 1/3 IID-uniform draw (013, hay_single) should
+# make impossible. But 013 only checked the *solo* category. This samples
+# raw (type, position) draws for the main drone -- with all 31 neighbours
+# actively farming around it, unlike hay_single -- to see whether the draw
+# is still IID-uniform here, or whether the multi-drone context changes it.
+SAMPLES = 300
+
+def driver(x, y, sample):
 	Common.move_to(x,y)
 	instructions()
+	if sample:
+		for i in range(SAMPLES):
+			companion = get_companion()
+			if companion != None:
+				ctype, (cx, cy) = companion
+				quick_print("DRAW", i, ctype, cx, cy)
+			else:
+				quick_print("DRAW", i, "None")
+			harvest()
+			instructions()
 	# What this drone believes it has planted, keyed by position.
 	#
 	# 010 already skips the harvest-and-replant when the companion tile is
@@ -107,14 +128,14 @@ for i in range(6):
 	for j in range(6):
 		if i + j != 0:
 			if (i, j) not in HOLES:
-				d = spawn_drone(driver, 3 + i*5, 3 + j*5)
+				d = spawn_drone(driver, 3 + i*5, 3 + j*5, False)
 				# None would mean the cap was hit anyway, and there is no handle
 				# to wait on. Requesting 32 against a cap of 32 it should not
 				# happen — the count below is how we find out if it does.
 				if d:
 					drones.append(d)
 quick_print("SPAWNED", len(drones) + 1, "of", max_drones())
-driver(3, 3)
+driver(3, 3, True)
 # The run is not over until the program is, and the program is not over while a
 # spawned drone is still farming. Reap them before falling off the end.
 for d in drones:
