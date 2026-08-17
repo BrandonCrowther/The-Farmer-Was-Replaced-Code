@@ -1,30 +1,25 @@
 import Common
 
-# exp-hay-073 -- first multi-drone champion built on the two-tile
-# interleaving design (070-072). Single-drone smoke tests measured
-# 923.53 ticks/harvest (water=0.75, direct move, all-static-bush
-# companion policy), vs the single-tile champion's real ~1068-1220 and
-# the honest floor of 615 -- this is the first real leaderboard attempt
-# against those findings, not another smoke test.
+# exp-hay-075 -- drop instructions() from the hot loop entirely.
+# 066/067 already proved Grass auto-regrows and harvest() alone -- no
+# ripeness check needed -- correctly destroys/regrows it every time,
+# 200 ticks, 0 yield, still Grass after. 073's champion still called
+# instructions() once after the real harvest AND once per reroll
+# attempt anyway -- ~3.1 calls/harvest at 7 ticks each, pure guard-
+# check overhead that never fires (entity_type is never anything but
+# Grass to guard against). Only the two INITIAL calls (first planting
+# of each tile, starting from empty ground) are load-bearing.
 #
-# Each drone now owns TWO adjacent Hay tiles (base, base+East) instead
-# of one, round-robining between them so growth on one tile hides
-# behind the reroll-chase on the other (confirmed: wait~=1 tick/harvest
-# in the single-drone tests). Every position within distance 3 of
-# EITHER tile is pre-seeded once as permanent Bush -- accept a
-# companion draw the instant it's a memory-matched Bush; anything else
-# is cheap to reroll (207/attempt), never worth walking to.
+# Single-drone smoke test (075): 873.02 ticks/harvest, down from 073's
+# 889.78 -- confirms the ~17-tick saving, landing within 17 ticks of
+# the #2-10 cluster's upper bound (856).
 #
-# Macro-layout risk: at the champion's original 5-tile drone spacing, a
-# drone's bush-wall (reaching 3 past its offset tile, i.e. 4 tiles out)
-# comes within 1 tile of a same-row neighbor's own crop tiles -- a real
-# collision risk if unhandled. Fixed two ways: (1) every drone's setup
-# loop checks against ALL_CROPS, the full precomputed set of every
-# drone's two tiles, not just its own -- geometry alone was judged too
-# tight to trust; (2) overlapping BUSH WALLS between neighbors are
-# harmless by design, since every drone wants the same thing (Bush) at
-# any shared position -- only crop-tile collisions are dangerous, and
-# those are the ones explicitly excluded.
+# Everything else unchanged from 073: two adjacent Hay tiles per drone
+# (base, base+East), round-robining so growth on one hides behind the
+# reroll-chase on the other; every position within distance 3 of
+# either tile pre-seeded once as permanent Bush; water threshold 0.75;
+# direct move() for the known single-hop; global ALL_CROPS exclusion
+# set so no drone's bush-wall setup can overwrite another's crop tile.
 
 TARGET = 2000000000
 REROLL_LIMIT = 30
@@ -94,7 +89,6 @@ def driver(bx, by):
 		harvest()
 
 		rerolls = 0
-		instructions()
 		companion = get_companion()
 		while rerolls < REROLL_LIMIT and companion != None:
 			ctype, (cx, cy) = companion
@@ -102,7 +96,6 @@ def driver(bx, by):
 			if key in planted and planted[key] == ctype:
 				break
 			harvest()
-			instructions()
 			companion = get_companion()
 			rerolls = rerolls + 1
 
