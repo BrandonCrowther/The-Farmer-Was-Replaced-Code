@@ -214,6 +214,61 @@ Three rejections rest on the first two rows. The rule that follows:
    as measured and later experiments will build on it. Say what was measured and
    what was concluded from it, separately.
 
+## A rule can exist and still get missed — gate it, don't just state it
+
+Hay's 046-069 arc ran on `harvest() + plant() = 400 ticks`, inferred from the
+generic Operation-Costs table, never measured for Grass specifically. Every
+servicing-cost estimate, every REROLL_LIMIT decision, every "057 is at the true
+optimum" conclusion since 046 was built on it. It was wrong by 2x: Grass "grows
+automatically on grassland" (`Grass.md`, in the repo the whole time), so the
+replant call is a 7-tick no-op, not a 200-tick action. The real number — 207 —
+only surfaced at 066, after eight real-game experiments (051, 053-055, 058-061)
+had already run on top of the wrong one, and only because the user asked "do you
+need to plant again?" The two rules above — measure before designing around it,
+a constant carries its conditions — already covered this exactly. They were
+still missed, twice, for dozens of experiments, because nothing forced them to
+apply at the moment they mattered. A rule that only lives in prose gets
+re-derived from first principles by whoever reads it that day, which means it
+depends on remembering to ask. The fix is turning the ones that matter most into
+things that have to be checked off, not just recalled:
+
+1. **A primitive-cost checklist gates policy work, not just precedes it.** For a
+   new category — or a new entity inside one — the *entity-specific* costs
+   (harvest, replant-after-harvest, growth at the real water level) have to be
+   directly measured and recorded with their source experiment before any
+   accept/reroll/policy-tuning experiment is allowed to start. "Plant costs 200
+   because the table says so" does not satisfy this; a probe that harvests the
+   actual entity twice in a row and reads `get_tick_count()` around it does.
+2. **Read the entity's own wiki page in full, and grep it for exceptions** —
+   "automat-", "instead of", "does not", "free", "unlike" — not just the generic
+   Operation-Costs/Item-Costs pages. The generic page is what a mechanic costs by
+   default; the entity's own page is where it stops being the default.
+3. **A prediction that misses by more than ~15-20% is not noise to explain, it is
+   a primitive to re-verify.** 058 (REROLL_LIMIT=10, worse than 5) got a
+   plausible story and the next experiment moved on to 059. The divergence
+   itself was the signal that something feeding the model was wrong, four
+   experiments before 066 actually found it. When a measured result and a
+   model's prediction disagree by this much, the next experiment re-measures the
+   number the prediction depends on — it does not tune the next parameter in the
+   same family.
+4. **Idle time is a standard column, not a special request.** Every windowed
+   probe in this arc reported ticks/harvest. None reported what fraction of that
+   was the drone blocked on a wait with nothing else scheduled against it — so
+   the fact that a single-tile design was wasting its entire 415-tick growth
+   wait sat unremarked through 24 experiments (046-069) until a direct question
+   about the budget forced the calculation once, manually, in conversation
+   (leading to 070). Report it by default: ticks spent on harvest/plant/move
+   actions vs. ticks spent purely waiting. A large wait fraction is a standing
+   invitation to ask what else could fill it.
+5. **Three same-family rejections in a row means change the shape, not the next
+   parameter.** 051, 053-055, 058-061 — eight experiments — all tuned distance
+   thresholds, reroll limits, or accept timing inside the *same* reroll-before-
+   walk design. All eight lost or tied. Nothing in the protocol forced a step
+   back to question the macro-structure itself (one drone, one tile, blocking
+   wait) until asked to from outside it. After a third consecutive loss inside
+   one design family, the next experiment changes what the drone's loop looks
+   like, not another knob inside the loop that's already been tuned three times.
+
 ## The game leaks memory — relaunch on a schedule
 
 Measured on 2026-08-16: after ~14 hours of continuous cycling the Steam scope hit
