@@ -10,7 +10,7 @@
   "global_rank": null,
   "leader_time": "02:17.995",
   "best_branch": null,
-  "status": "probed",
+  "status": "fork-search-closed",
   "updated": "2026-08-16",
-  "note": "001 computed a floor from arithmetic. 002 measured the real design: 81,920 satisfied yield confirmed, Carrot permanently unaffordable, solo-drone skip rate settles near 25-30% (not >=75%). Steady-state ~1300 ticks/harvest, ~3x slower than the leader. 003 rejected a dedicated wood income for Carrot from the wiki alone (Tree=5 wood vs Carrot=512 wood cost, ~20x over budget even at the most generous floor). All queued levers closed; 004 tests the one remaining fundamental fork (multi-tile for companion-zone overlap, not idle-hiding) before concluding the category settles ~3x off the leader. See experiments/hay_single/00{1,2,3}/result.md and queue.md."
+  "note": "001-004 measured/priced every lever this category's mechanics expose: schedulability (1 tile suffices, growth isn't the bottleneck), reactive companion skip (~25-30% solo ceiling, not Hay's 44-66% which relies on neighbour drones), a wood-funded Carrot path (dead, ~20x over budget), and cluster/overlap sharing (hard 1/3 hit-rate ceiling, best case ~800 ticks/harvest vs a 686 budget). None closes the gap to 02:17.995; best-case design lands ~1.6-2x off the leader, current measured design ~3x off. 005 builds the clustered design as a real, correct, terminating driver rather than continuing to chase the record. See experiments/hay_single/00{1,2,3,4}/result.md and queue.md."
 }
