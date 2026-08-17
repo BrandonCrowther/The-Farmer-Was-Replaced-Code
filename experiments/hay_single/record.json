@@ -8,7 +8,9 @@
   "seeded_from": null,
   "personal_best": null,
   "global_rank": null,
+  "leader_time": "02:17.995",
   "best_branch": null,
-  "status": "empty",
-  "updated": null
+  "status": "probed",
+  "updated": "2026-08-16",
+  "note": "001 measured this category directly: tick rate ~6070/s (~15.2x unpowered), grass growth ~404 ticks mean at water ~1.0, companion distance <=3 wrapped, op costs confirmed at 200 ticks. Computed floor: leader's pace needs ~686 ticks/harvest average against a ~400-404 tick own-tile floor, so 1 hay tile is schedulability-sufficient (growth is not the bottleneck) but needs a >=~75% companion-skip rate -- higher than Hay's own champion (45-66%) -- to hit budget. See experiments/hay_single/001/result.md and queue.md."
 }
