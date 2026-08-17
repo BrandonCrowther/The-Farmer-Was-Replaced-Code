@@ -14,9 +14,28 @@ REROLL_LIMIT = 2
 entity = Entities.Grass
 instructions = Common.get_planting_instructions(entity)
 
+# exp-hay-041 -- growth-schedulability (the old, never-run 037)
+#
+# 039 measured ~1,300 ticks/harvest real; the leader's pace implies ~441.
+# 040 ruled out "the leader beat the draw" -- the companion RNG is
+# genuinely IID here too. This is the other half of the old 037 plan,
+# never actually run: is growth itself the bottleneck for a *single*
+# drone's own tile, the way hay_single's 001 proved it is NOT for the solo
+# category? If servicing (polyculture_mapped) already takes longer than
+# growth, there's no idle time -- matching hay_single's finding. If
+# servicing finishes with real idle time left over, that is exactly the
+# gap a genuine multi-tile-per-drone design could fill, which hay_single's
+# closed multi-tile conclusion does NOT automatically transfer to, because
+# Hay has neighbour cooperation (021) that hay_single structurally lacks.
+PROFILE_POS = (3, 3)
+SAMPLES = 60
+
 def driver(x, y):
 	Common.move_to(x,y)
 	instructions()
+	profile = (x, y) == PROFILE_POS
+	samples = 0
+	t_plant = get_tick_count()
 	# What this drone believes it has planted, keyed by position.
 	#
 	# 010 already skips the harvest-and-replant when the companion tile is
@@ -48,6 +67,7 @@ def driver(x, y):
 		while num_items(Items.Water) > 0 and get_water() < 0.75:
 			use_item(Items.Water)
 		Common.polyculture_mapped(planted)
+		t_service_done = get_tick_count()
 		# Not Common.await_harvest(): that spins forever on a plant that will
 		# never ripen, and once the target is hit nothing else is going to move.
 		# Checking the target here too is what stops a straggler from hanging
@@ -55,6 +75,11 @@ def driver(x, y):
 		h = can_harvest()
 		while not h and num_items(Items.Hay) < TARGET:
 			h = can_harvest()
+		t_ripe = get_tick_count()
+		if profile and samples < SAMPLES:
+			quick_print("SCHED", samples, "PLANT", t_plant, "SVC_DONE", t_service_done,
+				"RIPE", t_ripe, "WATER", get_water())
+			samples = samples + 1
 		harvest()
 
 		# Reroll a Carrot companion — but only now, after the harvest.
@@ -85,6 +110,7 @@ def driver(x, y):
 			instructions()
 			companion = get_companion()
 			rerolls = rerolls + 1
+		t_plant = get_tick_count()
 
 clear()
 # max_drones() is 32 (measured in 013) and this grid has 36 positions, so four

@@ -7,6 +7,27 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
+- [x] 041 growth-schedulability — **the old, never-run 037, finally
+      answered: unlike hay_single, real idle time exists here.** On the
+      ~68% of passes that miss (real walk), idle ≈3 ticks, matching
+      hay_single. But on the ~32% of passes that hit (memory skip), idle ≈
+      **492 ticks average** — the drone finishes servicing almost
+      instantly and then genuinely waits for the plant to ripen. This is
+      the slack hay_single structurally never had (001), and it's why
+      hay_single's four-way multi-tile closure does not automatically
+      transfer here. `experiments/hay/041/result.md`.
+- [ ] 042 multi-tile-per-drone — design a layout that adds a second tile
+      *scheduled to fill the ~492-tick idle window on hit-cycles only*,
+      not a blind second plot the way 027/029 were (030's postmortem: they
+      failed because idle time was assumed, not measured — now it's
+      measured). Converges with two independent estimates: 039's
+      leader-implied ~441 ticks/harvest and the old queue's own "leader
+      implies ~2.2 tiles per drone at 466 ticks."
+      Falsifier: if a scheduled second tile still doesn't beat the
+      champion, the ~492-tick window may be real but too unpredictable
+      (which pass will hit, decided by the same 1/3 RNG confirmed twice
+      tonight — 013, 040) to reliably schedule around without adding
+      commute cost on misses too.
 - [x] 039 drone-tick-profile — measured the main drone's real steady-state
       cost: **≈1,300 ticks/harvest**. Cross-checked against the real
       leader time (00:58.549, confirmed on-screen, never previously
