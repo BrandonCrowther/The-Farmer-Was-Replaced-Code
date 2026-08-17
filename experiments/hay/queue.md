@@ -162,19 +162,48 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       investigation. Doesn't yet reach the #2-10 cluster's 750-856 band.
       `experiments/hay/070/result.md`
 
-- [ ] 071 (open) — two candidates to close the remaining ~104-tick gap
-      to the cluster's upper bound (856): (a) confirm/fix the water-
-      decay theory from 070 (instrument top-up frequency directly, or
-      pre-top water higher before leaving a tile); (b) test 3+ tile
-      round-robins (070's math predicts no further per-harvest gain
-      past 2 tiles since a single sibling's service already exceeds the
-      growth floor — worth confirming rather than assuming). Neither
-      tested yet. Separately: 070 was a single-drone smoke test: the
-      32-drone macro-layout implications (fitting tile-pairs into the
-      grid without new inter-drone bush-wall conflicts, since neighbor
-      pairs' 30-tile walls would overlap heavily at normal spacing)
-      haven't been designed. #1's implied budget remains unexplained by
-      anything found in 062-065, unaffected by any of this.
+- [x] 071 breakdown-instrumentation — **070's water-decay theory was
+      wrong; the real gap is simpler and now fully attributed.** Direct
+      category breakdown (water/wait/harvest/reroll/move, each timed
+      separately) instead of another guess. `wait≈1` confirmed growth is
+      fully hidden as predicted. But `water=62.76`/harvest (0.276
+      `use_item()` calls/harvest) was real and simply never modeled at
+      all — not a two-tile-specific effect, just an unmeasured cost that
+      exists in the single-tile design too. `move=226` vs the 200 a bare
+      distance-1 hop should cost — `Common.move_to()`'s wrapper carries
+      ~26 ticks of avoidable overhead. `reroll=482.63` (avg 2.14
+      rerolls/cycle) is within normal variance of 069/070's numbers, not
+      a new finding. Sum of real gaps (~155) closely matches the
+      observed 145-tick shortfall. `experiments/hay/071/result.md`
+
+- [x] 072 water-and-move-optimization — **both fixes confirmed almost
+      exactly as predicted — real ~7.6% improvement.** Water threshold
+      0.999→0.75 (safe: growth still finishes in ~518 ticks, comfortably
+      inside the ~900-tick away-window `071` confirmed is idle) and
+      `Common.move_to()`→direct `move()` for the known single-hop
+      direction. Result: water 62.76→9.66 (`WATER_CALLS` 248→16, a
+      15.5x drop), move 226→201 (essentially the 200 floor), `wait`
+      unchanged at 1 (the lower threshold didn't push growth past the
+      away-window). **Total: 999.41→923.53 (-75.88, -7.6%)** — now only
+      67.5 ticks above the #2-10 cluster's upper bound (856).
+      `reroll` (484.85, ~52% of total) is now clearly dominant and
+      already at 069's p=1/3 structural floor. `experiments/hay/072/result.md`
+
+- [ ] 073 (open) — 923.53 is within striking distance of the cluster
+      band (750-856) but not in it yet. Two directions: (a) the ~27
+      ticks/harvest "unaccounted" overhead is consistent test-harness
+      bookkeeping (windowed-print check, accumulator updates) — a
+      non-instrumented production version might shed most of it for
+      free; (b) `reroll` is the dominant remaining cost and is already
+      structurally floored per 069 — no further gain expected there
+      without changing the type-space. Separately, still unresolved
+      from 070: the 32-drone macro-layout question (fitting tile-pairs
+      into the grid without neighbor bush-wall conflicts, since
+      adjacent pairs' 30-tile walls would overlap heavily at normal
+      5-spacing) — this two-tile design cannot become the real champion
+      until that's designed and tested for real. #1's implied budget
+      remains unexplained by anything found in 062-065, unaffected by
+      any of this.
 
 **#1 (`const arch *`, 00:58.549) is very likely not honestly
 achievable under current mechanics** — web research (2026-08-17, user's
