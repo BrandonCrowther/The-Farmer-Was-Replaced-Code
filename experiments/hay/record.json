@@ -12,6 +12,6 @@
   "baseline": "02:52.323 (mean of 4 clean champion runs)",
   "noise_floor": "0.069s (1 sd, 4 clean runs) -- valid ONLY between runs made under similar game conditions",
   "status": "scoring",
-  "updated": "2026-08-15",
-  "note": "Clean champion runs are extremely repeatable: 02:52.271/.275/.329/.419, sd 0.069s. But runs made deep into the memory leak scored very differently on the same code -- exp-023 at 02:47.682 (67 sd faster) and exp-026 at 02:51.263 (15 sd faster). The score depends on run conditions as well as code, so only compare runs made close together under similar game state. The PB of 02:47.682 is real but is not attributable to any code change."
+  "updated": "2026-08-16",
+  "note": "Clean champion runs are extremely repeatable: 02:52.271/.275/.329/.419, sd 0.069s. But runs made deep into the memory leak scored very differently on the same code -- exp-023 at 02:47.682 (67 sd faster) and exp-026 at 02:51.263 (15 sd faster). The score depends on run conditions as well as code, so only compare runs made close together under similar game state. The PB of 02:47.682 is real but is not attributable to any code change. 038 (2026-08-16) ported hay_single's reroll-before-walk win here (generalised 020's Carrot-only reroll to any companion) -- rejected, +0.172s vs a fresh 02:52.338 baseline. Hay's baseline hit rate (44-66%, neighbour cooperation) leaves too little slack for the same trick that worked solo on hay_single (~25-33% baseline)."
 }

@@ -7,6 +7,16 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
+- [x] 038 reroll-before-walk-general — **rejected**, 02:52.510 vs a fresh
+      02:52.338 baseline (+0.172s, ≈2.5 noise-floor sd, small and
+      negative). Ported hay_single's decisive reroll-before-walk win
+      (009-012: solo hit rate ~25-33% baseline, ~77-90% throughput gain)
+      by generalising 020's Carrot-only reroll to "reroll toward any
+      companion already in `planted`". Didn't help here: Hay's baseline
+      hit rate is already 44-66% via 021's neighbour-cooperation effect,
+      leaving little slack for a cheap reroll to capture, and the extra
+      reroll attempts on passes that were never going to hit cost more
+      than they saved. `experiments/hay/038/result.md`. Not merged.
 - [x] 035 query-until-hit — **the unlock.** 033 found `get_companion()` rerolls
       on every call, and a call costs **1 tick**; every reroll so far has
       replanted at 200 ticks to get a fresh request. Call it repeatedly until it
