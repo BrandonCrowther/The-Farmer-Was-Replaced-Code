@@ -7,6 +7,26 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
+- [x] 039 drone-tick-profile — measured the main drone's real steady-state
+      cost: **≈1,300 ticks/harvest**, close to hay_single's proven ~1,200
+      ceiling despite Hay's 44-66% skip rates (021) — those rates are
+      *physical-match-on-arrival* after a walk, not *skip-the-walk*, since
+      `polyculture_mapped` gates the whole trip on this drone's own memory
+      regardless of what a neighbour left standing. Cross-checked against
+      the real leader time (00:58.549, confirmed on-screen, never
+      previously recorded here): implies the leader's design runs at
+      **≈441 ticks/harvest — only ~41 above the bare floor**, consistent
+      with near-100% instant-hit servicing, not our ~33% asymptote.
+      `experiments/hay/039/result.md`.
+- [ ] 040 draw-pattern-check — 013 verified the (type, position) draw is
+      IID-uniform, but only for hay_single's solo context. Check the same
+      thing directly here: sample many raw draws for one drone with 31
+      neighbours active, look for correlation with nearby board state or
+      any deviation from uniform. If it's still IID, the leader's ~41-tick
+      figure needs an explanation that isn't "beat the draw" — recheck the
+      arithmetic and the same-drone-count assumption before concluding
+      anything mechanic-level. If it isn't IID here, that's the real lever
+      neither 011 nor 013 could have found from the solo category alone.
 - [x] 038 reroll-before-walk-general — **rejected**, 02:52.510 vs a fresh
       02:52.338 baseline (+0.172s, ≈2.5 noise-floor sd, small and
       negative). Ported hay_single's decisive reroll-before-walk win

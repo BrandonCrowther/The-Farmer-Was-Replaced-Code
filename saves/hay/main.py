@@ -14,9 +14,13 @@ REROLL_LIMIT = 2
 entity = Entities.Grass
 instructions = Common.get_planting_instructions(entity)
 
+PROFILE_POS = (3, 3)
+
 def driver(x, y):
 	Common.move_to(x,y)
 	instructions()
+	profile = (x, y) == PROFILE_POS
+	harvests = 0
 	# What this drone believes it has planted, keyed by position.
 	#
 	# 010 already skips the harvest-and-replant when the companion tile is
@@ -56,6 +60,10 @@ def driver(x, y):
 		while not h and num_items(Items.Hay) < TARGET:
 			h = can_harvest()
 		harvest()
+		if profile:
+			harvests = harvests + 1
+			if harvests < 10 or harvests % 25 == 0:
+				quick_print("PROFILE", harvests, get_tick_count(), num_items(Items.Hay))
 
 		# Reroll a Carrot companion — but only now, after the harvest.
 		#
