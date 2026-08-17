@@ -242,16 +242,42 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       collisions) before the real attempt, same as 073.
       `experiments/hay/075/result.md`
 
-- [ ] 076 (open) — the champion (075) sits at 01:58.059/#63, measured
-      873.02 ticks/harvest, only 17.02 above the cluster's upper bound
-      (856) — the closest this investigation has gotten. `reroll`
-      (structurally floored at p=1/3 per 069) is now the overwhelming
-      majority of the remaining cost; no further concrete lever
-      identified, but 074's identical claim turned out to be wrong once
-      looked at more carefully (075), so this should be treated as
-      "nothing found yet," not "nothing to find" — worth one more
-      careful line-by-line pass over the hot loop before concluding the
-      paradigm is genuinely exhausted. #1's implied budget remains
+- [~] 076 setup-phase-movement — **INCOMPLETE, not validated, not
+      adopted.** User review of the setup/spawn phase (not the hot
+      loop) found two more real issues: (a) the initial long walk from
+      each drone's spawn point to its base tile used `Common.move_to()`
+      — unwrapped, always the direct path — instead of
+      `Common.move_to_wrapped()`, paying a much longer walk than
+      necessary for far-corner assignments on the 32-wide farm; (b)
+      `move_to()` also carries a leftover `protocol()` indirect-call
+      parameter and a `num_unlocked(Unlocks.Mazes)` check on every move,
+      for a maze-avoidance feature this category never uses —
+      `move_to_wrapped()` has neither. Code fix written (every
+      `Common.move_to()` in `driver()` → `Common.move_to_wrapped()`),
+      committed on `auto_experiment/hay/076`, but a crash during live
+      validation plus a stuck-window/false-positive-state-detection
+      problem burned the remaining session time before a real run could
+      be attempted. Live game restored to 075 (known-good, adopted) — not
+      left in an uncertain state. `experiments/hay/076/hypothesis.md`
+      has the full writeup and next-session pickup instructions.
+
+- [ ] 077 (open) — pick up 076 first (validation pass, then a real
+      run) — the code is written, just unverified. Two more ideas from
+      the same setup-phase review, not attempted at all: (a) spawn-tree
+      parallelization (073's one drone sequentially spawns all 31
+      others, ~6200 ticks of pure spawn latency; a tree pattern could
+      cut this to ~5 sequential rounds, but needs its own correctness
+      validation — every position covered exactly once); (b) shared
+      bush-wall planting (every drone still walks and checks all ~30 of
+      its reachable companion positions even when a neighbor already
+      planted a shared one — the redundant *plant* is skipped, not the
+      redundant *walk*; partitioning tile ownership across neighbors
+      would cut this further, but risks a silent gap if the partition
+      is wrong). Neither is safe to rush. Separately: the champion
+      (075) sits at 01:58.059/#63, measured 873.02 ticks/harvest, only
+      17.02 above the cluster's upper bound (856) in the *hot loop* —
+      076/077's setup-phase gains are a separate, additive lever on top
+      of that, not competing with it. #1's implied budget remains
       unexplained by anything found in 062-065.
 
 **#1 (`const arch *`, 00:58.549) is very likely not honestly
