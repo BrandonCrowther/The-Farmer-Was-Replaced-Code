@@ -225,15 +225,34 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       ceiling for the two-tile-interleaving paradigm absent a new
       structural idea. `experiments/hay/074/result.md`
 
-- [ ] 075 (open) — the champion (073) sits at 02:00.734/#65, measured
-      889.78 ticks/harvest, 33.78 above the cluster's upper bound (856)
-      — the closest this investigation has gotten to the honest
-      current-mechanics ceiling. No concrete next lever identified
-      within the two-tile-interleaving paradigm; closing the remaining
-      gap, if possible at all, likely needs a genuinely different
-      structural idea (not accept-policy tuning, not growth-hiding
-      scheduling — both are now confirmed exhausted). #1's implied
-      budget remains unexplained by anything found in 062-065.
+- [x] 075 drop-instructions-noop — **ADOPTED, new champion. 01:58.059,
+      #63 (was 02:00.734, #65) — -2.675s, +2 ranks.** "No further
+      concrete lever identified" in 074 was wrong — 066/067 already
+      proved Grass auto-regrows and a bare `harvest()` (no ripeness
+      check) correctly destroys/regrows it every time, but the champion
+      still called `instructions()` (a guarded, always-false `plant()`
+      check) once after every harvest *and* once per reroll attempt —
+      ~3.1 calls/harvest × 7 ticks ≈ 22 ticks of pure overhead that was
+      simply never removed when 073 was built, despite the underlying
+      fact being known since 066. Removed every `instructions()` call
+      except the two that plant Grass on empty ground for the first
+      time. Single-drone smoke test: 873.02 ticks/harvest (down from
+      074's 889.78, -16.76) — now only **17.02 ticks above the
+      cluster's upper bound (856)**. Validated live (zero crop
+      collisions) before the real attempt, same as 073.
+      `experiments/hay/075/result.md`
+
+- [ ] 076 (open) — the champion (075) sits at 01:58.059/#63, measured
+      873.02 ticks/harvest, only 17.02 above the cluster's upper bound
+      (856) — the closest this investigation has gotten. `reroll`
+      (structurally floored at p=1/3 per 069) is now the overwhelming
+      majority of the remaining cost; no further concrete lever
+      identified, but 074's identical claim turned out to be wrong once
+      looked at more carefully (075), so this should be treated as
+      "nothing found yet," not "nothing to find" — worth one more
+      careful line-by-line pass over the hot loop before concluding the
+      paradigm is genuinely exhausted. #1's implied budget remains
+      unexplained by anything found in 062-065.
 
 **#1 (`const arch *`, 00:58.549) is very likely not honestly
 achievable under current mechanics** — web research (2026-08-17, user's
