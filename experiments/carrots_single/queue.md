@@ -29,25 +29,27 @@ Branches: `auto_experiment/carrots_single/NNN` · Results: `experiments/carrots_
 
 ## Queued
 
-- [ ] 003 single-tile-reactive-probe — build the direct analogue of
-      hay_single's 007/008: single Carrot tile, skip Grass companions for
-      free (checking `planted` only to catch positions this drone has
-      itself overwritten), reactive skip-or-walk for Bush/Tree, revert a
-      serviced position back to Grass after use to keep the free rate from
-      eroding. Instrument real ticks/harvest and measure the real
-      steady-state hit rate (should structurally exceed 1/3 given the free
-      Grass third) before committing further.
-      Falsifier: if own-tile handling turns out close to growth (~7,196),
-      idle time is smaller than 001 suggests and multi-tile shouldn't be
-      pursued — check this explicitly (analogous to hay_single's 001)
-      before assuming.
-- [ ] 004 (after 003) — if real idle time is confirmed large, design and
-      test a multi-tile layout properly scheduled around it (the
-      hay_single 015 / Hay 044 playbook: measure first, schedule around
-      the *measured* window, verify a same-tile guard if tiles are close
-      enough to risk self-collision).
-- [ ] 005 (after 003/004) — real terminating driver, run to score. First
-      recorded time for this category.
+- [x] 003 reactive-single-tile — **adopted, after fixing two real bugs**
+      (forgot to water at all in r1; `plant()` doesn't overwrite an
+      existing entity so a revisited reverted-to-Grass position needs
+      `harvest()` first, r2 lost the multiplier on 2/40 for this). Fixed
+      (r3): **40/40 harvests multiplied, 100%.** ~71% of the ~8,362-tick
+      average cycle is idle wait — this category is growth-bound.
+      Projects ≈9.80 carrots/tick, ≈28.0 minutes for the full target.
+      Handling cost (~2,422 ticks) vs growth (~7,196) implies **~3 tiles
+      could nearly perfectly pipeline**. `experiments/carrots_single/003/result.md`.
+- [ ] 004 multi-tile-pipeline — build and test a 3-tile round-robin design
+      (own-tile handling + companion service, ~2,422 ticks/tile, against
+      ~7,196-tick growth — 3 tiles revisit each roughly every ~7,266
+      ticks, near-matching growth). Same-tile guard needed if tiles sit
+      within companion range (≤3) of each other, per hay_single's 005/013
+      and Hay's 044 lessons — space tiles or guard, don't assume. Measure
+      real ticks/harvest and compare to 003's ≈8,362 single-tile baseline.
+      Falsifier: if commute between 3 tiles costs more than the idle time
+      it recovers (the Hay 044 failure mode), single-tile stands as the
+      design and 005 builds the real driver from 003 instead.
+- [ ] 005 (after 004) — real terminating driver from whichever design
+      wins, run to score. First recorded time for this category.
 
 ## Done
 
@@ -58,3 +60,5 @@ Branches: `auto_experiment/carrots_single/NNN` · Results: `experiments/carrots_
 - [x] 002 natural-grass-growth-check — **direct confirmation**: untouched
       grassland has standing Grass from tick ~2, not something that grows
       in. `experiments/carrots_single/002/result.md`
+- [x] 003 reactive-single-tile — adopted, 100% multiplier rate, ~71% idle.
+      `experiments/carrots_single/003/result.md`
