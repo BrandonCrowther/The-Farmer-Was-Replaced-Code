@@ -5,15 +5,21 @@ Entry point: `main` · Runner: `leaderboard_run(Leaderboards.Carrots, "main", 50
 
 Branches: `auto_experiment/carrots/NNN` · Results: `experiments/carrots/NNN/result.md`
 
+## The mechanic
+
+Structurally identical to wood (multi)'s seeded driver (32 drones, one
+per column of the 32x32 world, interleaved Grass companion pattern,
+not growth-pipelined). Same fix as wood/sunflowers (multi): target-gate
+both loops, guard the water-topup against depletion. No design work
+needed beyond the fix already proven twice.
+
 ## Queued
 
-- [ ] 001 terminate — the seeded driver is an endless `while True` achievement
-      farmer; a leaderboard run only scores if the program ends. Add a
-      termination check on the target and stop the drones. Metric: the run
-      completes and reports a time at all.
-- [ ] 002 baseline — record the time the terminating seed produces, as the
-      number every later variant has to beat. Metric: mean over 3 runs.
+- [ ] 002 leader-gap — check the real leader time; not benchmarked
+      during 001.
 
 ## Done
 
-_(nothing yet)_
+- [x] 001 terminate — **adopted, first-ever score.** Real scored run:
+      **06:39.725, Global Rank #143**, all 19 internal repeats crossed
+      the target cleanly. `experiments/carrots/001/result.md`

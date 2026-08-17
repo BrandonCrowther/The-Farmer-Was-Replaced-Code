@@ -6,9 +6,10 @@
   "entry": "main",
   "speedup": 5000,
   "seeded_from": "Carrot_Achievement.py",
-  "personal_best": null,
-  "global_rank": null,
-  "best_branch": null,
-  "status": "seeded",
-  "updated": null
+  "personal_best": "06:39.725",
+  "global_rank": 143,
+  "best_branch": "auto_experiment/carrots/001",
+  "status": "scored",
+  "updated": "2026-08-17",
+  "note": "Structurally identical to wood (multi)'s seeded driver (32 drones, one per column, interleaved Grass companion pattern, not growth-pipelined). Same fix as wood/sunflowers (multi): target-gate both loops, guard the water-topup. 001 scored it directly with zero extra design work: 06:39.725, Global Rank #143, all 19 internal repeats clean. Leader time not yet checked -- see queue.md."
 }
