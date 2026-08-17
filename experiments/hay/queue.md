@@ -7,16 +7,36 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
-- [ ] 062 (open) — the reroll-before-walk accept-policy family is
+- [x] 062 exploit-candidate-probe — **both candidates closed, no
+      champion change.** User pushback: since boards were reset, #1's
+      post-patch time should be replicable if it rests on a residual
+      version of a patched exploit — worth checking before assuming
+      it's out of reach. (a) Direct Hay tradeability: not a real
+      mechanism — `get_cost()` only accepts `Entity`/`Unlock`, never a
+      bare `Item` (confirmed live, errors on `Items.Hay`), and there is
+      no `trade()`/`sell()`/`buy()` in the builtin API at all. (b)
+      Module-function-call cost gap (checking for a residual version of
+      the patched "free function calls in dynamic modules" exploit):
+      none found. `Common.move_to()` costs exactly its real body work
+      (228 ticks = 200 move + 28 getter/comparison overhead), and
+      indirect-via-variable costs exactly +1 tick over direct-by-name —
+      identically for a local function (200→201) and an imported-module
+      function (228→229) — matching Operation-Costs.md's documented
+      rule precisely, no discount or gap. `experiments/hay/062/result.md`
+
+- [ ] 063 (open) — the reroll-before-walk accept-policy family is
       settled at 057's numbers (see standing summary below): eight
       distance/limit variants (051, 053-055, 058-061) all tied or lost.
-      Closing the remaining gap to the #2-10 cluster needs a
-      structurally different mechanism, not another accept-policy
-      tweak — no concrete candidate identified yet. Ideas not yet
-      tried: reducing the fixed 400-tick own-handling cost itself (is
-      there any way to avoid paying a full harvest+plant every single
-      cycle?), or a genuinely different macro-layout not yet
-      considered.
+      062 closed two exploit-adjacent candidates (Hay tradeability,
+      module-call cost gap) without finding anything. Remaining
+      brainstorm directions, not yet probed: residual RNG predictability
+      under a specific trigger condition, or deliberately exploiting the
+      already-documented drone-concurrency race (050) rather than just
+      tolerating its <0.2%-of-harvests cost. Absent one of those panning
+      out, closing the gap to the #2-10 cluster needs a structurally
+      different mechanism — reducing the fixed 400-tick own-handling
+      cost itself, or a genuinely different macro-layout — not another
+      accept-policy tweak.
 
 **#1 (`const arch *`, 00:58.549) is very likely not honestly
 achievable under current mechanics** — web research (2026-08-17, user's
