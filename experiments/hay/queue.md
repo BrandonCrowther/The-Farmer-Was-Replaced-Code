@@ -142,6 +142,40 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       24-position/3-type/207-reroll/~800-walk mechanics — not fixable
       by policy alone. No champion change. `experiments/hay/069/result.md`
 
+- [x] 070 two-tile-interleaving — **first real gain in this whole
+      family: ~10% below 069v2's ceiling.** 069 closed accept/reroll
+      *policy* — this changes the macro-layout instead. Ticks are a
+      single global clock; growth is passive and doesn't care where the
+      drone is. A single-tile drone wastes its 415-tick growth wait
+      doing nothing; a drone alternating between two adjacent tiles
+      (distance 1, shared all-static-bush wall, 30 tiles covering the
+      union of both radius-3 diamonds) can spend that wait servicing the
+      sibling tile instead — a single sibling visit (~628 ticks, no
+      walk) already exceeds 415, so growth is fully hidden. Predicted
+      ~815-828 ticks/harvest; measured **959.57**, avg rerolls/cycle
+      2.003 (matches p=1/3 almost exactly, confirming the reroll math is
+      unaffected by adding a tile). The 145-tick gap from prediction is
+      most likely water decaying further over the longer inter-visit
+      interval, requiring more top-up per visit — plausible, not yet
+      directly instrumented. Still a genuine, reproducible win over
+      069v2's 1068.35 — the first one since 057 in this entire
+      investigation. Doesn't yet reach the #2-10 cluster's 750-856 band.
+      `experiments/hay/070/result.md`
+
+- [ ] 071 (open) — two candidates to close the remaining ~104-tick gap
+      to the cluster's upper bound (856): (a) confirm/fix the water-
+      decay theory from 070 (instrument top-up frequency directly, or
+      pre-top water higher before leaving a tile); (b) test 3+ tile
+      round-robins (070's math predicts no further per-harvest gain
+      past 2 tiles since a single sibling's service already exceeds the
+      growth floor — worth confirming rather than assuming). Neither
+      tested yet. Separately: 070 was a single-drone smoke test: the
+      32-drone macro-layout implications (fitting tile-pairs into the
+      grid without new inter-drone bush-wall conflicts, since neighbor
+      pairs' 30-tile walls would overlap heavily at normal spacing)
+      haven't been designed. #1's implied budget remains unexplained by
+      anything found in 062-065, unaffected by any of this.
+
 **#1 (`const arch *`, 00:58.549) is very likely not honestly
 achievable under current mechanics** — web research (2026-08-17, user's
 suggestion) found the game's Dec 4 2025 "Leaderboard Rebalance" patch
