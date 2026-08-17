@@ -1,26 +1,22 @@
 import Common
 
-# exp-hay_single-010 -- finish-and-score-v2
+# exp-hay_single-011 -- champion-tick-profile
 #
-# 008's champion (walk on every companion miss) plus 009's measured
-# improvement: the structural hit rate against remembered stock is only
-# ~1/3 (004 -- three companion types, one stocked per position), so most
-# misses are cheaper to resolve with up to REROLL_LIMIT cheap rerolls
-# (harvest the just-planted unripe grass -- "harvesting an entity that
-# can't be harvested destroys it", 200 ticks -- then replant, ~400
-# ticks/attempt, no travel) than with one real ~1,600-tick walk. Capped, so
-# the memory still gets new stock from a real walk often enough to keep
-# growing -- pure reroll-forever never establishes anything new.
-#
-# 009 measured ≈98.75 hay/tick steady state against the champion's ≈55.8,
-# projecting roughly 02:47 -- an estimate, not a guarantee; see
-# experiments/hay_single/009/result.md and 010/hypothesis.md.
+# Same logic as 010's champion (see its comment for the reroll-before-walk
+# rationale), unchanged, plus a periodic tick/hay print every 50 harvests.
+# 010 undershot 009's 200-cycle probe projection because 200 cycles warms
+# its own small set of companion positions up faster than a real
+# ~1,221-harvest run does. This measures the *actual* full-run trajectory
+# instead of extrapolating from a short probe -- quick_print costs 0 ticks
+# (Timing.md), so printing every 50 harvests is free and this run scores
+# exactly like 010 while also producing the profile.
 
 TARGET = 100000000
 REROLL_LIMIT = 2
 instructions = Common.get_planting_instructions(Entities.Grass)
 ax, ay = get_pos_x(), get_pos_y()
 instructions()
+harvests = 0
 
 # What this drone believes it has planted, keyed by companion position --
 # see Common.polyculture_mapped. Only this drone ever touches the farm, so
@@ -40,6 +36,9 @@ while num_items(Items.Hay) < TARGET:
 	if num_items(Items.Hay) >= TARGET:
 		break
 	harvest()
+	harvests = harvests + 1
+	if harvests % 50 == 0:
+		quick_print("PROFILE", harvests, get_tick_count(), num_items(Items.Hay))
 
 	if num_items(Items.Hay) >= TARGET:
 		break

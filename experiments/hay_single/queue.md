@@ -7,45 +7,40 @@ Entry point: `main` · Runner: `leaderboard_run(Leaderboards.Hay_Single, "main",
 
 Branches: `auto_experiment/hay_single/NNN` · Results: `experiments/hay_single/NNN/result.md`
 
-## Two real scores landed tonight
+## 011 confirmed 010's number and modeled the remaining headroom
 
-001-010 in one line each:
+001-011 in one line each — see individual result.md files for full detail:
 
-- 001: 1-tile schedulability floor (growth isn't the bottleneck).
-- 002: single-tile short probe, ~39.2 hay/tick, Carrot looked permanently dead.
-- 003: priced a *dedicated* wood tile for Carrot — dead, ~20x over budget.
-- 004: clustering's hit-rate ceiling is ~1/3 — arithmetic said "maybe worth it".
-- 005: clustering (dist 2) self-collides with its own farm tiles — bug.
-- 006: clustering (dist 4) fixes the bug but the inter-tile commute costs
-  more than it buys — multi-tile closed for good. Also found wood
-  accumulates *for free* from ordinary companion churn, correcting 003.
-- 007: single tile run long (200 cycles) — ≈49.9 hay/tick steady state.
-- 008: **first champion.** 04:49.565, rank #302, ≈55.8 hay/tick.
-- 009: reroll-before-walk probe — up to 2 cheap rerolls (~400 ticks,
-  destroy-unripe + replant, no travel) before falling back to a walk,
-  since a miss's true structural hit rate is only 1/3 (004). Measured
-  ≈98.75 hay/tick over a 200-cycle tail window.
-- **010: real terminating driver with 009's logic, run to score —
-  **04:13.399, global rank #182 (−12.8% vs 008, ≈64.7 hay/tick, ≈1.84x off
-  the leader).** Undershot 009's 98.75 projection: a 200-cycle probe warms
-  up its own small set of companion positions faster than the full
-  ~1,221-harvest run does, so 009's tail window wasn't the true steady
-  state for a run 6x longer. `experiments/hay_single/010/result.md`.**
+- 001-007: design settled (single tile, reroll-before-walk, wood accumulates
+  for free from companion churn, multi-tile closed three ways).
+- 008: first champion, 04:49.565, #302, ≈55.8 hay/tick.
+- 009: reroll-before-walk probe, ≈98.75 hay/tick (200-cycle tail — later
+  shown unrepresentative).
+- 010: **champion.** 04:13.399, #182, ≈64.7 hay/tick real.
+- **011: full-run tick profile (real scored run, 04:13.634, PB unchanged —
+  confirms 010 is reproducible). Real steady state is ≈1,200-1,300
+  ticks/harvest from harvest 100 onward, matching 010's real average far
+  better than 009's optimistic 829.5. The exact reroll-probability model
+  (R=400, W=1,600, p=1/3) reproduces 008's real 55.8 hay/tick at K=0
+  almost exactly and predicts diminishing returns past K≈5:
+  K=0→55.85, K=2→62.13, K=5→66.33, K=7→67.39 hay/tick.
+  `experiments/hay_single/011/result.md`.**
 
 ## Queued
 
-- [ ] 011 real-run-tick-profile — before tuning `REROLL_LIMIT` or trying
-      another lever, read the *actual* per-harvest tick trajectory from a
-      real (or much longer, 500+ cycle) probe of the current champion, to
-      get a steady-state number that isn't optimistic the way 009's 200
-      cycles were. That number, not another guess, should set the next
-      target.
-      Falsifier: none needed — this is measurement, not a design change.
-- [ ] 012 (open, after 011) — whatever 011's real steady-state number
-      suggests is still on the table. `REROLL_LIMIT` (currently 2, chosen
-      by analogy to Hay's own constant, never derived here) is the most
-      likely next knob, but tune it from 011's real trajectory, not another
-      short probe.
+- [ ] 012 reroll-limit-5 — one more real run with `REROLL_LIMIT=5` (model
+      predicts ≈66.33 hay/tick, ≈+7% over 010's ≈62-65). If it lands near
+      that, adopt as champion. Diminishing returns past K≈5-7 are already
+      clear from 011's model (K=5→7 only +1.06 hay/tick) — this is meant to
+      be the last tuning pass on `REROLL_LIMIT`, not the start of a sweep.
+      Falsifier: if it doesn't beat 010, the model's assumptions (fixed
+      W=1,600, clean p=1/3) don't hold precisely enough to bank on for
+      further K increases, and 013 should stop tuning this knob.
+- [ ] 013 (open, after 012) — if 012 lands close to model, the queue is
+      genuinely thin: multi-tile closed (001/005/006), Carrot lever
+      resolved (003/006/007), reroll-vs-walk tuned near its ceiling (011,
+      012). Check for a fundamental fork before declaring this exhausted
+      (docs/LOOP.md, "Empty queue") rather than assuming one doesn't exist.
 
 ## Done
 
@@ -64,5 +59,7 @@ Branches: `auto_experiment/hay_single/NNN` · Results: `experiments/hay_single/N
       `experiments/hay_single/008/result.md`
 - [x] 009 reroll-before-walk — probe measured ≈77% throughput gain; fed
       010. `experiments/hay_single/009/result.md`
-- [x] 010 finish-and-score-v2 — **adopted, new champion.** 04:13.399, #182.
+- [x] 010 finish-and-score-v2 — adopted, champion. 04:13.399, #182.
       `experiments/hay_single/010/result.md`
+- [x] 011 champion-tick-profile — confirmed 010's real steady state and
+      modeled `REROLL_LIMIT` headroom. `experiments/hay_single/011/result.md`

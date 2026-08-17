@@ -10,7 +10,7 @@
   "global_rank": 182,
   "leader_time": "02:17.995",
   "best_branch": "auto_experiment/hay_single/010",
-  "status": "scoring",
+  "status": "tuning-reroll-limit",
   "updated": "2026-08-16",
-  "note": "Champion (010): single tile, reactive skip-and-remember with a reroll-before-walk hybrid (up to 2 cheap rerolls -- destroy-unripe grass + replant, ~400 ticks, no travel -- before falling back to a real walk on a companion miss, since the structural hit rate against remembered stock is only 1/3, 004). 04:13.399, rank #182, ~64.7 hay/tick average across 29 internal repeats, ~1.84x off the leader's 02:17.995. Undershot the 200-cycle probe's 98.75 hay/tick projection (009) -- the probe's tail window warmed up faster than the full ~1,221-harvest run does; 011 gets a real steady-state number before the next tuning pass. Wood accumulates for free from ordinary companion churn (006/007), unlocking Carrot; multi-tile is closed (001/005/006). See experiments/hay_single/00{1..10}/result.md and queue.md."
+  "note": "Champion (010, confirmed reproducible by 011's rerun: 04:13.634, PB unchanged): single tile, reroll-before-walk (REROLL_LIMIT=2), ~64.7 hay/tick real, ~1.84x off the leader. 011's full-run tick profile confirmed the real steady state (~1,200-1,300 ticks/harvest from harvest 100 onward) and validated an exact reroll-probability model against real data (K=0 predicts 55.85 hay/tick, matching 008's real 55.8 almost exactly). Model predicts diminishing returns: K=2->62.13, K=5->66.33, K=7->67.39 hay/tick. 012 tests REROLL_LIMIT=5 as one more real run before calling this knob tuned out. See experiments/hay_single/00{1..11}/result.md and queue.md."
 }
