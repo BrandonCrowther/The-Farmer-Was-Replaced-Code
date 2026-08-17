@@ -1,18 +1,15 @@
 import Common
 
-# exp-hay-057 -- full memory-matched reroll-before-walk, real full run
+# exp-hay-058 -- higher REROLL_LIMIT (10, not 5)
 #
-# Champion only rerolls to escape Carrot (REROLL_LIMIT=2). This rerolls
-# toward ANY memory-matched companion (any type), REROLL_LIMIT=5 --
-# hay_single's proven cap -- since Hay has no free-type shortcut (Grass
-# excludes itself as a companion), memory has to mature over many
-# cycles; 049's 150-cycle probe couldn't see that, the real run gives
-# each drone ~871 cycles. Water threshold raised to 0.999 (056/046/047
-# found the champion's "10x short" comment measured wrong -- real
-# water sits at 0.8-1.0 already).
+# 057 confirmed memory-matched reroll-before-walk is a real win over
+# the full run. The mature per-draw hit rate (~1/3) compounds
+# favorably with more attempts (1-(2/3)^(k+1)), and each attempt is
+# cheap (400 ticks) relative to a real walk. Raising REROLL_LIMIT to
+# 10 to capture more of that compounding.
 
 TARGET = 2000000000
-REROLL_LIMIT = 5
+REROLL_LIMIT = 10
 entity = Entities.Grass
 instructions = Common.get_planting_instructions(entity)
 
