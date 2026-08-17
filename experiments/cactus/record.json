@@ -6,9 +6,10 @@
   "entry": "main",
   "speedup": 5000,
   "seeded_from": "Cactus_Achievement.py",
-  "personal_best": null,
-  "global_rank": null,
-  "best_branch": null,
-  "status": "seeded",
-  "updated": null
+  "personal_best": "01:00.697",
+  "global_rank": 961,
+  "best_branch": "auto_experiment/cactus/001",
+  "status": "scored",
+  "updated": "2026-08-17",
+  "note": "Same cascade mechanic as cactus_single: harvesting a fully-grown, sorted n-cactus region yields 32*n**2 (32 from num_unlocked(Unlocks.Cactus), same save state). World is 32x32 here (vs 8x8 for the single-drone farms) -- 32*1024**2=33,554,432, exactly the target, so one fully-sorted 32x32 grid harvested once completes the whole run. The seeded achievement code already implemented this correctly (up to 32 parallel drones, one per row then one per column, selection sort + physical drag -- the same row-then-column sort lemma cactus_single validated independently) -- it only needed the endless while True loop replaced with a single execution. 001 scored it: 01:00.697, Global Rank #961, 33,554,432/33,554,432 on all 119 internal repeats, no bugs on the first real attempt. Leader scores 00:07.800 (7.8x faster) -- likely the same class of win as cactus_single's bubble-to-insertion-sort improvement, see queue.md. See experiments/cactus/001/result.md and queue.md."
 }
