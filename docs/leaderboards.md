@@ -10,7 +10,7 @@ Every category runs `leaderboard_run(Leaderboards.<name>, "main", <speedup>)` fr
 | Leaderboard | Slug | Mode | Target | PB | Rank | Status |
 | --- | --- | --- | --- | --- | --- | --- |
 | Cactus | cactus | multi | 33_554_432 cacti | — | — | seeded |
-| Cactus_Single | cactus_single | single | 131_072 cacti | 00:54.267 | #350 | scored |
+| Cactus_Single | cactus_single | single | 131_072 cacti | 00:32.063 | #228 | scored |
 | Carrots | carrots | multi | 2_000_000_000 carrots | — | — | seeded |
 | Carrots_Single | carrots_single | single | 100_000_000 carrots | 07:49.969 | #85 | scored |
 | Dinosaur | dinosaur | multi | 33_488_928 bones | — | — | seeded |
