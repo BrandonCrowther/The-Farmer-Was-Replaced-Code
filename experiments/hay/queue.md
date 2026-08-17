@@ -86,28 +86,47 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       instructions (7) ≈ **207**, not 400. This halves the reroll cost R
       used in every servicing-cost estimate since 046: `S = R(1-p)/p`
       drops from ≈800 to ≈414, and the zero-servicing floor (own-
-      handling + 415 growth) drops from ~815 to **~622**. The #2-10
-      cluster's ~750-856 tick/harvest band, previously read as barely
-      above our floor, now sits comfortably above the corrected one —
-      real room, not a wall. Does **not** overturn 051/053-055/058-061's
+      handling + 415 growth) drops from ~815 to **~622** *in the
+      idealized case*. Does **not** overturn 051/053-055/058-061's
       specific results (real measured game runs, unaffected by a wrong
-      model), but does overturn the *narrative* built on them ("057 is
-      at the true optimum, further tuning can't help") — that reasoning
-      used the wrong number throughout. `experiments/hay/066/result.md`
+      model) — see 068 below for why the "real headroom" conclusion
+      drawn here at the time did not survive direct measurement.
+      `experiments/hay/066/result.md`
 
-- [ ] 067 (open) — re-evaluate the reroll-before-walk accept-policy
-      family under the corrected ~207-tick reroll cost (066), not the
-      ~400 assumed by 046-065. The corrected zero-servicing floor
-      (~622) sits well under the #2-10 cluster's implied band
-      (~750-856), meaning there is real headroom the old model said
-      didn't exist. Candidates worth a fresh look given the true cost:
-      REROLL_LIMIT retuning (058/059 bracketed 5 as optimal, but against
-      the wrong cost — worth re-bracketing), and the distance-threshold
-      accept variants (053-055) that were rejected partly on the
-      now-wrong assumption that rerolling was expensive relative to a
-      cheap walk. 062-065's exploit-hunt closure stands independent of
-      this correction. #1's implied budget still remains unexplained by
-      anything found so far, independent of this correction too.
+- [x] 067 reroll-pattern-validation — confirms 066's 207-tick number in
+      the champion's *exact* reroll usage (harvest with no ripeness
+      check, on a just-regrown tile): still 200 ticks, 0 yield, still
+      auto-regrows after. No correction needed to 066.
+      `experiments/hay/067/result.md`
+
+- [x] 068 real-ticks-per-harvest — **corrects 066's "real headroom"
+      claim: it was premature.** Directly measured the unmodified
+      champion's real ticks/harvest, single drone, 900 cycles (matching
+      a full run's ~871/drone), windowed every 150. Memory saturates by
+      cycle 300 (~23-24 of ~25 reachable positions) and never grows
+      further, so cycles 300-900 *are* steady state — and steady-state
+      ticks/harvest plateaus at **~1070-1220**, nowhere near the
+      corrected 622 floor, or even the old 815 one. Cause: **17.2% of
+      cycles exhaust all 5 rerolls with no memory hit** even at full
+      maturity (vs. ~8.8% a naive independent-draw model at p=1/3
+      predicts) and fall through to a real walk (200-1200 ticks) next
+      cycle — a structural tax the operation-cost floor treated as
+      avoidable. 066/067's *operation* costs (207, not 400) are still
+      correct and stand; the *conclusion* drawn from them ("real room,
+      not a wall") does not, and is retracted. `experiments/hay/068/result.md`
+
+- [ ] 069 (open) — 068 identifies the real lever, if one exists: the
+      ~17% reroll-exhaustion tail and its walk-fallback cost, not the
+      reroll operation cost itself (058/059 already correctly bracketed
+      REROLL_LIMIT under these true costs). One untried, more targeted
+      idea: instead of falling through to whatever companion was drawn
+      *last* when the budget exhausts, remember the *cheapest* (closest
+      distance, or a partial-type match) option seen across the whole
+      reroll chase and walk to that instead — a real behavior change,
+      not a limit retune, and not yet tested in any of 051/053-055/
+      058-061. No concrete implementation sketched yet. #1's implied
+      budget remains unexplained by anything found in 062-065, unaffected
+      by this correction.
 
 **#1 (`const arch *`, 00:58.549) is very likely not honestly
 achievable under current mechanics** — web research (2026-08-17, user's
