@@ -147,6 +147,18 @@ the reroll correctly and then explained it with an untested side-claim — that
 side-claim and lost 12.5 s. When a probe's *headline* is an interpretation rather
 than a count, mark it as one.
 
+**A measured constant carries its conditions with it.** 019 measured grass growth
+at **2,819 ticks** and that figure was used as *the* growth constant for a dozen
+experiments. It was taken **at water 0**. The farm runs at water ~1.0, where 037
+measures **422 ticks** — 6.7x faster. Every design that weighed movement against
+growth was using a number from a farm that does not exist, and 030's "waiting in
+place beats walking to check" inverts once the right constant goes in.
+
+So: when recording a measurement, record the conditions it was taken under in the
+same sentence, and before reusing one, check those conditions still hold. A
+constant with no conditions attached is the most dangerous kind of measured fact,
+because it looks like knowledge.
+
 **Prefer a number that is over-determined.** What settled 036 was not the
 cleaner probe but a distribution that could be computed two ways: Carrot appeared
 at 4.1% of preferences where a fresh roll gives 33%, and (1/3)³ = 3.7% is exactly
