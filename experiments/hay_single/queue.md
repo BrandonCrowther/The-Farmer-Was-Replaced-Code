@@ -2,14 +2,14 @@
 
 Target: **100_000_000 hay** on an 8x8 farm with a single drone
 Leader: **02:17.995** (confirmed on the in-game leaderboard, rank #1)
-Champion: **03:57.198, global rank #169** (exp-012)
+Champion: **03:57.198, global rank #169** (exp-012) — **paused here, see below**
 Entry point: `main` · Runner: `leaderboard_run(Leaderboards.Hay_Single, "main", 5000)`
 
 Branches: `auto_experiment/hay_single/NNN` · Results: `experiments/hay_single/NNN/result.md`
 
-## Three champions tonight; REROLL_LIMIT tuning treated as done
+## PAUSED — the companion-servicing paradigm is provably at its ceiling
 
-001-012 in one line each — see individual result.md files for full detail:
+001-013 in one line each — see individual result.md files for full detail:
 
 - 001-007: design settled (single tile, reroll-before-walk, wood accumulates
   for free from companion churn, multi-tile closed three ways).
@@ -17,36 +17,46 @@ Branches: `auto_experiment/hay_single/NNN` · Results: `experiments/hay_single/N
 - 009: reroll-before-walk probe, ≈98.75 hay/tick (200-cycle tail — later
   shown unrepresentative).
 - 010: champion, `REROLL_LIMIT=2`. 04:13.399, #182, ≈64.7 hay/tick real.
-- 011: full-run tick profile confirms 010's real steady state (~1,200-1,300
-  ticks/harvest) and fits an exact reroll-probability model to real data
-  (K=0 reproduces 008's 55.8 hay/tick almost exactly); predicts diminishing
-  returns past K≈5 (K=5→66.33, K=7→67.39 modeled hay/tick).
-- **012: `REROLL_LIMIT=5`, real scored run. Champion —
-  **03:57.198, global rank #169 (−6.4% vs 010, ≈68.7 hay/tick, ≈1.72x off
-  the leader).** Beat its own model prediction (66.33), the same direction
-  010 beat its. `experiments/hay_single/012/result.md`.**
-  (Hit and recovered from the documented memory-leak crash on the first
-  attempt — see 012's result.md.)
+- 011: full-run tick profile + exact probability model. **Proved the
+  reroll-only asymptote (K→∞, full coverage) is exactly 1,200
+  ticks/harvest ≈ 68.27 hay/tick** — a hard ceiling, not an estimate.
+- 012: `REROLL_LIMIT=5`, champion. **03:57.198, #169, ≈68.7 hay/tick —
+  already at the K→∞ ceiling.**
+- **013: checked whether the ceiling's IID-uniform assumption could be
+  false (a predictable draw sequence would break it). 300 raw draws:
+  type frequencies within 0.4% of 1/3 each, all 24 positions reached by
+  all 3 types, no autocorrelation, no type-position correlation. The
+  draws are genuinely IID uniform — there is no hidden structure to
+  exploit. `experiments/hay_single/013/result.md`.**
 
-## Queued
+**The leader's implied pace needs ≈119 hay/tick; this design tops out at
+≈68-70 hay/tick, mathematically, not by estimate.** Multi-tile is closed
+three ways (001/005/006), Carrot/wood is resolved (003, corrected by
+006/007), `swap()` and Fertilizer were considered and don't reduce the
+fixed costs involved (013's result.md). Every avenue inside "harvest,
+replant, satisfy the companion" has been checked.
 
-- [ ] 013 fundamental-fork-check — `REROLL_LIMIT` tuning is treated as
-      exhausted (011's model: K=5→7 only +1.06 hay/tick, and 012 already
-      landed above the K=5 prediction). Multi-tile is closed three ways
-      (001/005/006). Carrot's wood-funding question is resolved (003,
-      corrected by 006/007). Per docs/LOOP.md's bar for an empty queue,
-      look explicitly for a genuinely different strategy before stopping:
-      candidates to weigh (not yet run) — does the *own-tile handling* cost
-      (harvest + replant, ~400 ticks) have any slack left, e.g. is `till()`
-      ever called unnecessarily on the home tile; is there a cheaper way to
-      discover a companion match than a full reroll-and-check when the
-      position space is only ~24 cells (e.g., precomputing/caching more
-      than one candidate before committing); does watering ever cost a
-      wasted tick once the tank is empty. If none of these look like a real
-      lever on inspection, say so and stop chasing further — 003 was a
-      generous number even 20x over budget; check whether the remaining
-      1.72x gap has any single-drone-achievable path left at all before
-      declaring victory at #169.
+**Decision (per the user's own instruction): pivot to `Hay` (the regular,
+32-drone category) and carry the two lessons that transfer:**
+1. **Reroll-before-walk** when the structural hit rate is low — Hay's
+   current champion (020, 02:47.682, #130) only rerolls specifically for
+   Carrot misses, not as a general "cheap reroll before an expensive walk"
+   policy the way hay_single's does.
+2. **Wood/Carrot accumulates for free from ordinary companion churn on a
+   long run** — worth checking whether Hay's own champion already benefits
+   from this incidentally (32 drones churning companions constantly) or
+   whether there's a similar short-probe blind spot there too.
+
+hay_single is left at **#169, 03:57.198** — a real, working, competitively
+scored design, 1.72x off the world #1, not abandoned mid-failure.
+
+## Queued (if picked back up later)
+
+- [ ] 014 (deferred) — if a genuinely different mechanism is ever found
+      (not another companion-servicing tweak — 013 closed that
+      mathematically), it goes here. Candidates already ruled out:
+      `swap()`-based tile access (013), Fertilizer-accelerated growth
+      (013 — growth was never the bottleneck), sequence prediction (013).
 
 ## Done
 
@@ -67,7 +77,9 @@ Branches: `auto_experiment/hay_single/NNN` · Results: `experiments/hay_single/N
       010. `experiments/hay_single/009/result.md`
 - [x] 010 finish-and-score-v2 — champion. 04:13.399, #182.
       `experiments/hay_single/010/result.md`
-- [x] 011 champion-tick-profile — confirmed 010's real steady state and
-      modeled `REROLL_LIMIT` headroom. `experiments/hay_single/011/result.md`
-- [x] 012 reroll-limit-5 — **adopted, champion.** 03:57.198, #169.
+- [x] 011 champion-tick-profile — proved the REROLL_LIMIT ceiling.
+      `experiments/hay_single/011/result.md`
+- [x] 012 reroll-limit-5 — champion. 03:57.198, #169.
       `experiments/hay_single/012/result.md`
+- [x] 013 reroll-sequence-pattern — confirmed IID-uniform, no exploit.
+      **Closes the paradigm; pivoting to Hay.** `experiments/hay_single/013/result.md`
