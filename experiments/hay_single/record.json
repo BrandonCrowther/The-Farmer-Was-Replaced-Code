@@ -10,7 +10,7 @@
   "global_rank": null,
   "leader_time": "02:17.995",
   "best_branch": null,
-  "status": "multi-tile-closed",
+  "status": "design-settled",
   "updated": "2026-08-16",
-  "note": "001-006: multi-tile is closed for three independent reasons (no idle time to hide, self-collision at useful overlap distances (005), and a flat commute tax at safe distances that beats any sharing benefit (006, measured throughput lower than single-tile despite better hit rate)). 006 also corrected 003: wood is not permanently zero -- companion-tile churn eventually harvests a mature standing Bush/Tree for real wood, and Carrot becomes satisfiable once that accumulates (measured from ~cycle 22 in a 90-cycle run). 002's single-tile design is the right shape; 007 reruns it longer to see if the same wood-accumulation and Carrot-unlock happens there, which would set the real achievable steady-state pace. See experiments/hay_single/00{1..6}/result.md and queue.md."
+  "note": "Design settled after 001-007: single tile, reactive skip-and-remember companion servicing (no dedicated wood investment -- wood accumulates for free from ordinary companion churn once a standing Bush/Tree matures, unlocking Carrot around cycle ~15-25). Measured steady-state throughput ~49.9 hay/tick, projecting ~330s (05:30) to 100,000,000 -- ~2.4x off the leader's 02:17.995, but a real, measured improvement over earlier ~3x/~7:00 estimates. Multi-tile is closed (schedulability floor is 1 tile; useful clustering distances self-collide; safe distances pay a commute tax that outweighs any benefit). 008 builds the real terminating driver from 007's exact logic and runs it for an actual score. See experiments/hay_single/00{1..7}/result.md and queue.md."
 }

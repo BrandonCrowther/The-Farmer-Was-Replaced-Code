@@ -6,62 +6,48 @@ Entry point: `main` · Runner: `leaderboard_run(Leaderboards.Hay_Single, "main",
 
 Branches: `auto_experiment/hay_single/NNN` · Results: `experiments/hay_single/NNN/result.md`
 
-## Where this stands after 001-006 — multi-tile is closed, for three independent reasons
+## The design is settled: single tile, reactive skip-and-remember
 
-- **001**: no idle time to hide behind (schedulability floor is 1 tile).
-- **005**: useful overlap distances (≤3) let a tile's own coordinate be
-  named as another tile's companion target — self-collision, self-healing
-  but costly.
-- **006**: safe distances (>3) avoid the collision but pay a flat commute
-  tax (~800 ticks *every* cycle just to shuttle between tiles) that exceeds
-  any companion-sharing benefit — measured throughput was *lower* than
-  single-tile despite a better hit rate.
+001-007 in one line each:
 
-**Multi-tile is closed.** Single tile (002's design) is the right shape;
-what's left is refining *it*.
+- 001: 1-tile schedulability floor (growth isn't the bottleneck).
+- 002: single-tile short probe, ~39.2 hay/tick, Carrot looked permanently dead.
+- 003: priced a *dedicated* wood tile for Carrot — dead, ~20x over budget.
+- 004: clustering's hit-rate ceiling is ~1/3 — arithmetic said "maybe worth it".
+- 005: clustering (dist 2) self-collides with its own farm tiles — bug.
+- 006: clustering (dist 4) fixes the bug but the inter-tile commute costs
+  more than it buys — multi-tile closed for good. Also found wood
+  accumulates *for free* from ordinary companion churn (not a dedicated
+  tile), correcting 003.
+- 007: single tile run long (200 cycles) confirms the free-wood mechanism
+  there too, and gives the real number: **≈49.9 hay/tick steady state,
+  ≈330s (05:30) projected to 100,000,000 — ≈2.4x off the leader**, a real
+  improvement over 002's ~7:00 estimate.
 
-## Correction to 003 (flag, don't silently leave standing)
-
-003 concluded Carrot is permanently unaffordable (no wood source). 006 found
-this is only true for a **short/cold run**: `Common.polyculture_mapped`-style
-service logic harvests a companion tile before replanting it whenever the
-stocked type no longer matches a fresh request, and once a standing
-Bush/Tree companion has had real time to mature, that harvest yields real
-wood. In 006's 90-cycle run, wood reached 573,952 and nearly every request
-(Carrot included) was satisfiable from cycle ~22 on. 002's own 60-cycle probe
-never ran long enough to see this (`WOOD` stayed 0 throughout). **003's
-"dead forever" claim is wrong for the ~1,221-harvest run this category
-actually needs** — it was priced for a *deliberately farmed* wood tile on a
-cold start, not incidental wood from companion churn over a long run.
+**No further design exploration queued.** The remaining work is building
+this into a real terminating driver and running it for a genuine score.
 
 ## Queued
 
-- [ ] 007 single-tile-long-run — rerun 002's exact single-tile design (not
-      the cluster) for ~150-200 cycles instead of 60, to see (a) whether wood
-      accumulates there too and Carrot starts clearing at the same ~cycle-20
-      mark, and (b) what steady-state ticks/harvest and hit rate look like
-      once that happens — this is now the best candidate for "the real
-      achievable pace," not the ~1,300-tick number 002 measured before wood
-      kicked in anywhere.
-      Falsifier: if wood never accumulates on a *single* tile the way it did
-      across two (006's mismatches may have been more frequent simply from
-      having 2x the distinct companion positions in play), say so — the
-      mechanism might need enough tile-visits or enough distinct stocked
-      positions to fire at all, not just enough time.
-- [ ] 008 finish-and-score — once 007 settles the real steady-state number,
-      extend the winning single-tile design to terminate on the actual
-      100,000,000 target and run it for a real recorded time.
+- [ ] 008 finish-and-score — take 007's exact single-tile logic, add the
+      `num_items(Items.Hay) >= 100_000_000` termination condition, and run
+      it as a real (non-probe) leaderboard cycle. Report the actual time,
+      not the ≈330s projection — the projection ignores warm-up drag and
+      hasn't been checked against a real full run. If it lands close to
+      007's estimate, adopt it as hay_single's first-ever real score.
+      Falsifier: none needed — this is the category's first correctness
+      check (does it actually terminate and score at all), not a comparison.
 
 ## Done
 
 - [x] 001 mechanics-probe. `experiments/hay_single/001/result.md`
 - [x] 002 reactive-companion-probe. `experiments/hay_single/002/result.md`
-- [x] 003 price-carrot-lever — **corrected by 006**: true only for a
-      short/cold run, not the full run. `experiments/hay_single/003/result.md`
+- [x] 003 price-carrot-lever — corrected by 006/007 (true only cold/short).
+      `experiments/hay_single/003/result.md`
 - [x] 004 overlap-arithmetic. `experiments/hay_single/004/result.md`
-- [x] 005 clustered-probe (distance 2) — self-collision bug found.
+- [x] 005 clustered-probe (distance 2) — self-collision bug.
       `experiments/hay_single/005/result.md`
-- [x] 006 clustered-v2 (distance 4) — bug fixed, but commute tax makes
-      multi-tile strictly worse than single-tile; also found wood
-      accumulates given enough run length, correcting 003.
-      `experiments/hay_single/006/result.md`
+- [x] 006 clustered-v2 (distance 4) — commute tax closes multi-tile; found
+      the free-wood mechanism. `experiments/hay_single/006/result.md`
+- [x] 007 single-tile-long-run — **adopted as the design.** ≈49.9 hay/tick
+      steady state, ≈05:30 projected. `experiments/hay_single/007/result.md`
