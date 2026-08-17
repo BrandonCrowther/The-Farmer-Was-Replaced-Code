@@ -10,7 +10,7 @@
   "global_rank": 169,
   "leader_time": "02:17.995",
   "best_branch": "auto_experiment/hay_single/012",
-  "status": "scoring",
+  "status": "paused-at-provable-ceiling",
   "updated": "2026-08-16",
-  "note": "Champion (012): single tile, reroll-before-walk with REROLL_LIMIT=5. 03:57.198, rank #169, ~68.7 hay/tick real across 30 internal repeats, ~1.72x off the leader's 02:17.995. Beat 011's model prediction for K=5 (66.33), same as 010 beat its K=2 prediction -- real walk cost is somewhat below the model's W=1,600 assumption. 011 proved the reroll-only asymptote (K->infinity, full coverage) is ~1,200 ticks/harvest (~68.27 hay/tick) -- we are already at that ceiling, so further REROLL_LIMIT tuning cannot close the remaining gap; a structurally different lever is required. See experiments/hay_single/00{1..12}/result.md and queue.md."
+  "note": "Champion (012): 03:57.198, rank #169, ~68.7 hay/tick, ~1.72x off the leader. 011 proved the reroll-only asymptote (REROLL_LIMIT->infinity, full coverage) is exactly ~1,200 ticks/harvest (~68.27 hay/tick) -- we are already at it. 013 checked whether the underlying (type,position) draw has exploitable structure that would break the ceiling's IID-uniform assumption: 300 raw draws confirm genuine IID uniformity (type freq within 0.4% of 1/3, no autocorrelation, no type-position correlation). The leader's implied pace needs ~119 hay/tick -- this is a proven, not estimated, ceiling for the companion-servicing paradigm. Multi-tile closed three ways (001/005/006), Carrot/wood resolved (003, corrected 006/007), swap()/Fertilizer considered and don't help (013). Paused per user instruction to pivot to Hay, carrying the reroll-before-walk and free-wood lessons. See experiments/hay_single/00{1..13}/result.md and queue.md."
 }

@@ -1,69 +1,34 @@
 import Common
 
-# exp-hay_single-012 -- reroll-limit-5
+# exp-hay_single-013 -- reroll-sequence-pattern
 #
-# 010's champion (walk on every companion miss, after up to REROLL_LIMIT
-# cheap rerolls -- see 010's comment for the full rationale). 011 fit an
-# exact probability model to real data (R=400 reroll, W=1,600 walk, p=1/3
-# hit chance) and it reproduces 008's real 55.8 hay/tick at K=0 almost
-# exactly. The model predicts diminishing but real further gains raising
-# REROLL_LIMIT past 2: K=2 -> 62.13, K=5 -> 66.33, K=7 -> 67.39 hay/tick.
-# This tests K=5, the point past which 011 found returns thin out sharply.
+# 011 proved the reroll-only asymptote (REROLL_LIMIT -> infinity, full
+# coverage) is exactly 1,200 ticks/harvest (~68.27 hay/tick) -- and 012
+# already measures ~68.7 real, meaning REROLL_LIMIT tuning is at its
+# ceiling. That ceiling assumes each (type, position) draw is IID uniform.
+# If it isn't -- if replanting draws from a *predictable* sequence rather
+# than a fresh independent roll -- the 1/3 structural cap doesn't actually
+# hold and there is real headroom left. This is cheap to check directly
+# rather than assumed: log a long raw sequence of companion draws with no
+# servicing at all (pure plant -> read -> destroy -> repeat) and look for
+# structure (repeats, alternation, position clustering) that the reactive
+# design isn't exploiting.
+#
+# Not a driver: this never satisfies anything and never reaches the target.
+# Expect "Run Failed"; the duration is not a score.
 
-TARGET = 100000000
-REROLL_LIMIT = 5
 instructions = Common.get_planting_instructions(Entities.Grass)
-ax, ay = get_pos_x(), get_pos_y()
 instructions()
 
-# What this drone believes it has planted, keyed by companion position --
-# see Common.polyculture_mapped. Only this drone ever touches the farm, so
-# the memory is authoritative, not just a hint.
-planted = {}
-
-while num_items(Items.Hay) < TARGET:
-	# Water while there is water to use, not until an unreachable level --
-	# see Hay's saves/hay/main.py for why the equivalent unbounded condition
-	# spins on failed use_item calls.
-	while num_items(Items.Water) > 0 and get_water() < 0.999:
-		use_item(Items.Water)
-
-	h = can_harvest()
-	while not h and num_items(Items.Hay) < TARGET:
-		h = can_harvest()
-	if num_items(Items.Hay) >= TARGET:
-		break
-	harvest()
-
-	if num_items(Items.Hay) >= TARGET:
-		break
-
-	instructions()
+SAMPLES = 300
+for i in range(SAMPLES):
 	companion = get_companion()
-	rerolls = 0
-	while companion != None:
+	if companion != None:
 		ctype, (cx, cy) = companion
-		key = (cx, cy)
-		if key in planted and planted[key] == ctype:
-			break
-		if rerolls < REROLL_LIMIT:
-			# Cheap: destroy the unripe grass we just planted and try again,
-			# hoping the fresh (type, position) draw already matches stock.
-			harvest()
-			instructions()
-			companion = get_companion()
-			rerolls = rerolls + 1
-		else:
-			# Fall back to a real walk -- this is also how new stock gets
-			# established for future rerolls to find.
-			if Common.affordable(ctype):
-				Common.move_to_wrapped(cx, cy)
-				if get_entity_type() != ctype:
-					harvest()
-					Common.plant_companion(ctype)
-				planted[key] = ctype
-				Common.move_to_wrapped(ax, ay)
-			break
+		quick_print("DRAW", i, ctype, cx, cy)
+	else:
+		quick_print("DRAW", i, "None")
+	harvest()
+	instructions()
 
-quick_print("DONE", "HAY", num_items(Items.Hay), "WOOD", num_items(Items.Wood),
-	"TICK_FINAL", get_tick_count(), "TIME_FINAL", get_time())
+quick_print("DONE", "TICK_FINAL", get_tick_count(), "TIME_FINAL", get_time())
