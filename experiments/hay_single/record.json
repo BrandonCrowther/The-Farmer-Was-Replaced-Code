@@ -12,5 +12,5 @@
   "best_branch": null,
   "status": "probed",
   "updated": "2026-08-16",
-  "note": "001 measured this category directly: tick rate ~6070/s (~15.2x unpowered), grass growth ~404 ticks mean at water ~1.0, companion distance <=3 wrapped, op costs confirmed at 200 ticks. Computed floor: leader's pace needs ~686 ticks/harvest average against a ~400-404 tick own-tile floor, so 1 hay tile is schedulability-sufficient (growth is not the bottleneck) but needs a >=~75% companion-skip rate -- higher than Hay's own champion (45-66%) -- to hit budget. See experiments/hay_single/001/result.md and queue.md."
+  "note": "001 computed a floor from arithmetic (~686 ticks/harvest budget, 1-tile schedulability, needs >=~75% companion-skip rate). 002 measured the real design: 81,920 satisfied yield confirmed, Carrot permanently unaffordable (1/3 of requests, no wood income), and the solo-drone skip rate settles near 25-30% (not >=75% -- Hay's 44-66% relied on neighbour drones pre-stocking each other's tiles, which a single drone has no access to). Measured steady-state ~1300 ticks/harvest, ~1.9-2x over budget, extrapolating to ~3x slower than the leader. See experiments/hay_single/002/result.md; 003 prices a dedicated wood income to unlock Carrot before concluding the category can't close the gap."
 }
