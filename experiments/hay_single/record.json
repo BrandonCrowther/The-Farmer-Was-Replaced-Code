@@ -10,7 +10,7 @@
   "global_rank": null,
   "leader_time": "02:17.995",
   "best_branch": null,
-  "status": "fork-search-closed",
+  "status": "multi-tile-closed",
   "updated": "2026-08-16",
-  "note": "001-004 measured/priced every lever this category's mechanics expose and none closes the gap to 02:17.995 (best-case design ~1.6-2x off, current measured ~3x off). 005 built the clustering design (distance 2) and found a real bug: companion requests can name another farm tile's own coordinates, and an unguarded satisfy overwrites/corrupts it for one self-healing cycle -- the tight spacing needed for coverage-sharing (<=3) is exactly what causes this collision. 006 retries at distance 4 (still 41.7% overlap, but outside every tile's own companion range) to remove the bug by construction. See experiments/hay_single/00{1,2,3,4,5}/result.md and queue.md."
+  "note": "001-006: multi-tile is closed for three independent reasons (no idle time to hide, self-collision at useful overlap distances (005), and a flat commute tax at safe distances that beats any sharing benefit (006, measured throughput lower than single-tile despite better hit rate)). 006 also corrected 003: wood is not permanently zero -- companion-tile churn eventually harvests a mature standing Bush/Tree for real wood, and Carrot becomes satisfiable once that accumulates (measured from ~cycle 22 in a 90-cycle run). 002's single-tile design is the right shape; 007 reruns it longer to see if the same wood-accumulation and Carrot-unlock happens there, which would set the real achievable steady-state pace. See experiments/hay_single/00{1..6}/result.md and queue.md."
 }
