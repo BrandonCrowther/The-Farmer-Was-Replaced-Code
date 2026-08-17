@@ -10,7 +10,7 @@
   "global_rank": 302,
   "leader_time": "02:17.995",
   "best_branch": "auto_experiment/hay_single/008",
-  "status": "scoring",
+  "status": "improvement-queued",
   "updated": "2026-08-16",
-  "note": "First-ever score for this category. Design: single tile, reactive skip-and-remember companion servicing, no dedicated wood investment -- wood accumulates for free from ordinary companion churn (harvesting a now-mature standing Bush/Tree on a type mismatch), unlocking Carrot around cycle ~15-25 of a run. Multi-tile is closed (001: no idle time to hide; 005: self-collision at useful overlap distances; 006: a commute tax at safe distances that beats any sharing benefit). Measured ~55.8 hay/tick average across the scored run's 25 internal repeats, ~2.1x off the leader. See experiments/hay_single/00{1..8}/result.md and queue.md for the full trail."
+  "note": "Champion (008): single tile, reactive skip-and-remember, walk on every miss. 04:49.565, rank #302, ~55.8 hay/tick. 009 probed a reroll-before-walk hybrid (miss's true hit rate is only 1/3 per 004, so up to 2 cheap rerolls (~400 ticks, no travel) before falling back to a walk beats walking every time) and measured ~98.75 hay/tick steady state, a ~77% throughput gain. 010 builds this into a real terminating driver and runs it for score -- if it lands near the ~02:47 projection, it becomes the new champion at ~1.2x off the leader instead of ~2.1x. See experiments/hay_single/00{1..9}/result.md and queue.md."
 }
