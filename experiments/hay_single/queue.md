@@ -6,62 +6,59 @@ Entry point: `main` · Runner: `leaderboard_run(Leaderboards.Hay_Single, "main",
 
 Branches: `auto_experiment/hay_single/NNN` · Results: `experiments/hay_single/NNN/result.md`
 
-## The floor — answered by 001, not guessed
+## The floor — 001's arithmetic, corrected by 002's measurement
 
-001 measured this category directly instead of reusing Hay's numbers (which
-were taken under a different drone-count/world-size water economy). Full
-arithmetic and caveats are in `experiments/hay_single/001/result.md`; the
-conclusion:
+001 computed a floor from arithmetic: ≈686 ticks/harvest budget, growth is not
+the bottleneck (schedulability floor = 1 tile), and a ≥~75% companion-skip
+rate would close the gap via a "monocrop-stock" pre-planted ring. 002 built
+and ran exactly that and found the ceiling is real but much lower than hoped:
 
-- **Tick rate ≈6,070 ticks/s** (~15.2x the unpowered 400/s) → leader's
-  02:17.995 buys **≈837,600 ticks**.
-- **Harvests needed at full multiplier** (81,920/harvest, 512 base x 160,
-  carried over from Hay and *not yet independently confirmed here* — 002 must
-  check it): `ceil(100,000,000 / 81,920) = 1,221`.
-- **Budget: ≈686 ticks/harvest, averaged over the whole run.**
-- **Growth (≈404 ticks mean) is *not* the bottleneck.** Own-tile handling
-  (harvest + replant, ~400-404 ticks) already exceeds growth time, so a single
-  tile is never idle-blocked. **The schedulability floor is 1 hay tile.** A
-  second tile cannot buy back idle time that doesn't exist — it can only add
-  cross-board movement, which is exactly what lost Hay's 027 (+47s) and 029
-  (+28s) multi-plot attempts. Do not reopen multi-tile without a *new* reason;
-  the reason it failed in Hay applies here at least as strongly (no neighbour
-  drones to pre-stock companion tiles for you, unlike Hay's 021 "contention is
-  cooperation" finding).
-- **The real constraint is the ~282-ticks-a-harvest companion-servicing
-  budget.** A real companion walk (move + till + plant) costs 800-1,600 ticks
-  — several times the slack. Hitting 686 average requires a **skip rate
-  ≥~75%**, higher than Hay's own champion ever reached (45-66%, reactive
-  reroll-until-hit). That rules out porting Hay's `polyculture_mapped` +
-  reroll approach as-is and points at Hay's never-tried **038
-  monocrop-stock** idea: pre-plant Grass/Bush/Tree once on the (few) positions
-  within wrapped-distance 3, so nearly every pass is a dictionary lookup
-  rather than a walk.
+- **81,920 satisfied-harvest yield: confirmed.**
+- **Carrot: 1/3 of requests, permanently unaffordable (needs 512 wood; nothing
+  in this design ever produces wood) — confirmed, 0/19 satisfied.**
+- **Solo-drone skip rate settles near 25-30%, not ≥75%.** Hay's 44-66% relied
+  on neighbour drones incidentally pre-stocking each other's tiles (021) —
+  hay_single has no neighbours. No static stock beats ~1/3 per position
+  because each of the ~24 reachable positions gets an independent fresh type
+  draw on every visit; more pre-planting cannot raise a per-visit match
+  probability that low-level.
+- **Measured steady-state: ≈1,300 ticks/harvest, ~1.9-2x over budget.**
+  Extrapolated finish ≈6:59, **~3x slower than the leader.** Full numbers in
+  `experiments/hay_single/002/result.md`.
 
-**So: one hay tile, ringed by a small pre-planted companion stock, is the
-design — not a search over plot counts.** 002 builds and instruments exactly
-that, and checks the ≥75% skip rate and the 81,920 yield assumption for real
-before trusting the projection above.
+**So the companion-servicing-efficiency lever is close to exhausted at ~3x
+short — tuning the skip rate further cannot close a gap that size.** The next
+question is not "how do we service companions faster" but "is there a lever
+outside companion-servicing at all," and if not, whether ~3x off the world
+#1 is where this category actually settles for a first working driver.
 
 ## Queued
 
-- [ ] 002 write-driver — build the single-tile + pre-stocked-companion design
-      002's own falsifiers, before writing more than the first variant:
-        * confirm a real satisfied harvest actually yields 81,920 here (001
-          never walked to a companion tile to check);
-        * instrument achieved skip rate and average ticks/harvest — if it
-          lands well under the ~75%/~686 targets, that's the number to report,
-          not a guess;
-        * if the farm still can't clear 100,000,000 in reasonable time even
-          at a high skip rate, say so and treat 038's idea as bounded rather
-          than silently re-deriving a new floor after the fact.
-- [ ] 003 (placeholder) — whatever 002 leaves open. Do not leave this queue
-      empty without checking for a fundamental-fork question first (see
-      docs/LOOP.md, "Empty queue").
+- [ ] 003 price-the-carrot-lever — the single largest number on the table:
+      1/3 of requests currently score 512 instead of 81,920. Price a
+      dedicated wood income (grow one off-tile Tree purely for wood,
+      amortized) against how much drone-time it costs versus how often it
+      then lets a Carrot request clear at full multiplier. A cheap
+      *arithmetic* pass first (ticks to grow+harvest one Tree for wood vs.
+      512 wood cost vs. 1/3-of-passes frequency) before spending a run —
+      002's harvest()-destroys-unripe finding was settled this way and it
+      held.
+      Falsifier: if the wood-tile's own amortized tick cost, spread over the
+      Carrot requests it unlocks, exceeds the ~163,840 hay/harvest gain
+      (81,920 - 512) it buys, the lever is a net loss and 004 should look
+      elsewhere (e.g. whether *any* single-drone hay_single driver design can
+      beat ~3x off the leader, or whether the achievement is simply farmed
+      for correctness — a working, terminating driver — rather than pace).
+- [ ] 004 (placeholder) — whatever 003 leaves open, or the fundamental-fork
+      question if 003 closes this line (docs/LOOP.md, "Empty queue").
 
 ## Done
 
 - [x] 001 mechanics-probe — growth ticks (404 mean), tick rate (~6,070/s),
       wrapped companion distance (confirmed ≤3), op costs (confirmed 200),
-      bare yield (confirmed 512). Computed the floor above.
+      bare yield (confirmed 512). Computed the arithmetic floor.
       `experiments/hay_single/001/result.md`
+- [x] 002 reactive-companion-probe — confirmed 81,920 and the Carrot dead end;
+      **overturned** 001's ≥75%-skip-rate design (solo ceiling is ~25-30%).
+      Measured ~3x off the leader's pace at steady state.
+      `experiments/hay_single/002/result.md`
