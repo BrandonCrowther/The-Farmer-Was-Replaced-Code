@@ -24,15 +24,35 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       function (228→229) — matching Operation-Costs.md's documented
       rule precisely, no discount or gap. `experiments/hay/062/result.md`
 
-- [ ] 063 (open) — the reroll-before-walk accept-policy family is
+- [x] 063 rng-seed-mechanism — **mechanism identified, not pursued.**
+      Decompiled `Core.dll` (Mono IL, static inspection only): every
+      `leaderboard_run()` hardcodes `seed = -1` at the call site
+      (confirmed in the compiled IL itself, not just the wiki), which
+      forces Mono's parameterless `System.Random()` — seeded from
+      `Environment.TickCount` (system uptime), not wall-clock date/time
+      as originally guessed. All other RNG streams (growth, maze,
+      companion draws, everything) cascade from that one root value via
+      `.Next()` calls in a fixed order. A theoretical exploit sketch
+      (offline seed search via `simulate()`, invert seed→TickCount, time
+      the `leaderboard_run()` trigger to land on a chosen tick) was
+      **not attempted** — it needs unverified sub-millisecond timing
+      through several jittery layers, and even a perfect hit would only
+      control one of a 2-hour session's 100+ averaged repeats (the
+      "average of all runs over 2 hours" scoring rule dilutes it to
+      ~1% or less of the final score). Closed on both practical grounds
+      and the standing concern about manipulating a shared public
+      leaderboard. Full writeup: `docs/RNG-Seed-Mechanism.md`.
+
+- [ ] 064 (open) — the reroll-before-walk accept-policy family is
       settled at 057's numbers (see standing summary below): eight
       distance/limit variants (051, 053-055, 058-061) all tied or lost.
-      062 closed two exploit-adjacent candidates (Hay tradeability,
-      module-call cost gap) without finding anything. Remaining
-      brainstorm directions, not yet probed: residual RNG predictability
-      under a specific trigger condition, or deliberately exploiting the
-      already-documented drone-concurrency race (050) rather than just
-      tolerating its <0.2%-of-harvests cost. Absent one of those panning
+      062 and 063 closed three exploit-adjacent candidates (Hay
+      tradeability, module-call cost gap, RNG-seed timing) without
+      finding a usable lever. One brainstorm direction remains unprobed:
+      deliberately exploiting the already-documented drone-concurrency
+      race (050) rather than just tolerating its <0.2%-of-harvests cost
+      — no concrete mechanism identified yet, just the raw observation
+      that concurrent drone writes aren't atomic. Absent that panning
       out, closing the gap to the #2-10 cluster needs a structurally
       different mechanism — reducing the fixed 400-tick own-handling
       cost itself, or a genuinely different macro-layout — not another
