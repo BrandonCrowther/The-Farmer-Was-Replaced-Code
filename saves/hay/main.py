@@ -5,10 +5,11 @@ import Common
 # has to notice the target and return, and the main drone has to outlive them all.
 TARGET = 2000000000
 
-# How many times to replant looking for a companion we can actually satisfy.
-# Each reroll costs a plant (200 ticks) and restarts the growth clock, so this is
-# not free; 019 puts P(carrot) at about a third, so most passes reroll zero times
-# and few reroll more than once.
+# How many times to replant looking for a companion this drone already has
+# stocked (see the reroll block in driver() below — exp-hay-038). Each reroll
+# costs a plant (200 ticks) and restarts the growth clock, so this is not
+# free; hay_single's 011 measured the exact tradeoff for the equivalent
+# single-drone mechanism and found diminishing returns past ~5.
 REROLL_LIMIT = 2
 
 entity = Entities.Grass
@@ -57,30 +58,34 @@ def driver(x, y):
 			h = can_harvest()
 		harvest()
 
-		# Reroll a Carrot companion — but only now, after the harvest.
+		# Reroll for a companion we already have standing — generalised from
+		# 020's Carrot-only reroll (exp-hay_single-009/010/011/012 measured
+		# this directly on the single-drone category, then proved it exactly:
+		# the reroll-only asymptote against remembered stock is a hard
+		# ceiling, not an estimate, at ~1,200 ticks/harvest for that category
+		# — see experiments/hay_single/011/result.md).
 		#
-		# 019 measured what 011 only inferred: a satisfied companion yields 81920
-		# hay against a bare 512, a **160x** multiplier. It also measured which
-		# companions actually get satisfied — Bush 5/5, Tree 7/7, Carrot 1/8.
-		# Carrot needs Soil and `till()` will not convert ground a plant stands
-		# on, so it fails whenever the tile holds anything unharvestable. Carrot
-		# is a third of requests, so roughly a third of passes take 512 instead of
-		# 81920.
+		# 020's version only avoided Carrot, on the theory that Carrot mostly
+		# fails (019's "1/8" figure). 031 later measured Carrot actually
+		# *succeeds* 99.6% of the time when attempted here — this drone has
+		# 31 neighbours constantly planting Bush/Tree/Carrot, so wood is
+		# abundant and `affordable()` rarely blocks it. So avoiding Carrot
+		# specifically no longer targets the real cost, which is the walk
+		# itself: `polyculture_mapped` still pays a ~800-tick round trip on
+		# every miss, of any type, that this drone hasn't already stocked.
 		#
-		# Replanting rerolls the preference, and grass is free. 006 tried this and
-		# lost — because it rerolled at the *top* of the pass, harvesting the
-		# mature grass while its companion was still unsatisfied and collecting
-		# 512 for it. It paid for the reroll by destroying the thing it was
-		# buying.
-		#
-		# Here the harvest has already happened at full multiplier and the tile is
-		# empty, so a reroll costs one plant (200 ticks) rather than a harvest plus
-		# a plant, and throws away nothing. Capped, because each reroll also resets
-		# the growth clock.
+		# The fix: reroll toward *any* companion this drone already has in
+		# `planted`, not away from one specific type. A hit skips the whole
+		# next pass's walk (a few ticks of dictionary lookup instead of an
+		# ~800-tick round trip); a reroll here costs one plant (200 ticks,
+		# same as 020's), and resets the growth clock exactly as before.
 		rerolls = 0
 		instructions()
 		companion = get_companion()
-		while rerolls < REROLL_LIMIT and companion != None and companion[0] == Entities.Carrot:
+		while rerolls < REROLL_LIMIT and companion != None:
+			ctype, pos = companion
+			if pos in planted and planted[pos] == ctype:
+				break
 			harvest()
 			instructions()
 			companion = get_companion()
