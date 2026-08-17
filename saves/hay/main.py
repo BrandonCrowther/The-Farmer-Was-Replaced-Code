@@ -1,25 +1,30 @@
 import Common
 
-# exp-hay-075 -- drop instructions() from the hot loop entirely.
-# 066/067 already proved Grass auto-regrows and harvest() alone -- no
-# ripeness check needed -- correctly destroys/regrows it every time,
-# 200 ticks, 0 yield, still Grass after. 073's champion still called
-# instructions() once after the real harvest AND once per reroll
-# attempt anyway -- ~3.1 calls/harvest at 7 ticks each, pure guard-
-# check overhead that never fires (entity_type is never anything but
-# Grass to guard against). Only the two INITIAL calls (first planting
-# of each tile, starting from empty ground) are load-bearing.
+# exp-hay-076 -- fix the setup/spawn phase's movement, not the hot loop.
+# User-flagged, both real: (1) the initial long walk from each drone's
+# spawn point to its own base tile used Common.move_to() -- the
+# UNWRAPPED version -- which always takes the direct path even when the
+# wrapped path is much shorter; with drones at 3..28 on a 32-wide farm,
+# some assignments are exactly this bad. (2) move_to() also carries a
+# leftover `protocol()` parameter (an indirect call, p_noop by default)
+# and a num_unlocked(Unlocks.Mazes) check, both evaluated on every move,
+# for a maze-avoidance feature this category never uses.
+# move_to_wrapped() has neither problem. Switched every Common.move_to()
+# call in driver() to Common.move_to_wrapped() -- a strict improvement
+# here since Hay never needs maze-aware movement.
 #
-# Single-drone smoke test (075): 873.02 ticks/harvest, down from 073's
-# 889.78 -- confirms the ~17-tick saving, landing within 17 ticks of
-# the #2-10 cluster's upper bound (856).
+# Setup-phase cost, not per-harvest -- doesn't show in the single-drone
+# smoke-test methodology (068-075), which starts measuring after setup
+# completes. Its effect is on real score directly: "repeat until 2h
+# simulated time, average the runs" means setup is paid again every
+# repeat, not amortized away by one very long run.
 #
-# Everything else unchanged from 073: two adjacent Hay tiles per drone
-# (base, base+East), round-robining so growth on one hides behind the
-# reroll-chase on the other; every position within distance 3 of
-# either tile pre-seeded once as permanent Bush; water threshold 0.75;
-# direct move() for the known single-hop; global ALL_CROPS exclusion
-# set so no drone's bush-wall setup can overwrite another's crop tile.
+# 073's spawn pattern (one drone sequentially spawns all 31 others,
+# ~6200 ticks of pure spawn latency before the last drone even starts)
+# is a separate, real inefficiency flagged in the same review --
+# deferred, not fixed here: a tree-spawn redesign needs its own
+# correctness validation (every position covered exactly once) that
+# doesn't fit safely in the time available for this pass.
 
 TARGET = 2000000000
 REROLL_LIMIT = 30
@@ -52,9 +57,9 @@ def driver(bx, by):
 	c1x, c1y = bx, by
 	c2x, c2y = bx + 1, by
 
-	Common.move_to(c1x, c1y)
+	Common.move_to_wrapped(c1x, c1y)
 	instructions()
-	Common.move_to(c2x, c2y)
+	Common.move_to_wrapped(c2x, c2y)
 	instructions()
 
 	planted = {}
@@ -67,13 +72,13 @@ def driver(bx, by):
 			d1 = wdist(c1x, c1y, px, py, size)
 			d2 = wdist(c2x, c2y, px, py, size)
 			if d1 <= 3 or d2 <= 3:
-				Common.move_to(px, py)
+				Common.move_to_wrapped(px, py)
 				if get_entity_type() != Entities.Bush:
 					if get_entity_type() != None:
 						harvest()
 					Common.plant_companion(Entities.Bush)
 				planted[(px, py)] = Entities.Bush
-	Common.move_to(c1x, c1y)
+	Common.move_to_wrapped(c1x, c1y)
 
 	current_is_c1 = True
 	while num_items(Items.Hay) < TARGET:
