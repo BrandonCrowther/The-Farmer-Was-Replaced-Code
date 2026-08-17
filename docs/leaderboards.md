@@ -24,7 +24,7 @@ Every category runs `leaderboard_run(Leaderboards.<name>, "main", <speedup>)` fr
 | Sunflowers | sunflowers | multi | 100_000 power | — | — | seeded |
 | Sunflowers_Single | sunflowers_single | single | 10_000 power | 20:53.149 | #300 | scored |
 | Wood | wood | multi | 10_000_000_000 wood | — | — | seeded |
-| Wood_Single | wood_single | single | 500_000_000 wood | — | — | empty |
+| Wood_Single | wood_single | single | 500_000_000 wood | 31:59.849 | #232 | scored |
 
 Status values: `baseline` — has a measured time · `seeded` — has code from the
 matching achievement, not yet scored · `empty` — no driver written yet.
