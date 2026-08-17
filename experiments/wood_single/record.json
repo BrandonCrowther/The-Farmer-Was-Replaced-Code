@@ -6,9 +6,10 @@
   "entry": "main",
   "speedup": 5000,
   "seeded_from": null,
-  "personal_best": null,
-  "global_rank": null,
-  "best_branch": null,
-  "status": "empty",
-  "updated": null
+  "personal_best": "31:59.849",
+  "global_rank": 232,
+  "best_branch": "auto_experiment/wood_single/002",
+  "status": "scored",
+  "updated": "2026-08-17",
+  "note": "Tree is a polyculture crop, free to plant. Base yield 2,560, full multiplier (160x) 409,600 -- 500,000,000/409,600 ~= 1,221 harvests, almost exactly carrots_single's count. A Tree planted adjacent to another growing Tree takes 2.44x longer (001, real, confirmed), but a Tree's companion is never Tree itself, so a single-tile design never triggers it. own_tile_ready() must plant Entities.Tree directly, not via get_planting_instructions (that table entry deliberately plants Grass for a different wood-farming pattern). 002 transplanted hay_single's champion paradigm directly and scored: 31:59.849, Global Rank #232, all 4 internal repeats clean. Leader scores 03:20.446 (9.6x faster) -- a large, currently-unexplained gap similar in kind to Hay's own leader-gap-unexplained finding; a multi-tile pipeline is the obvious next lever but needs real spacing to avoid the neighbor penalty, and may not close the whole gap. See experiments/wood_single/00{1,2}/result.md and queue.md."
 }
