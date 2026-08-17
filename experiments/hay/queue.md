@@ -74,19 +74,40 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       resolves cleanly (win/lose), never corrupts or duplicates.
       `experiments/hay/065/result.md`
 
-- [ ] 066 (open) — the reroll-before-walk accept-policy family is
-      settled at 057's numbers (see standing summary below): eight
-      distance/limit variants (051, 053-055, 058-061) all tied or lost.
-      062-065 closed the entire exploit-hunt (Hay tradeability,
-      module-call cost gap, RNG-seed timing/luck, harvest-race
-      duplication) without finding a usable lever. #1's implied budget
-      remains unexplained by anything found — consistent with it being a
-      residual/historical mechanic the Dec 2025 patch closed, not
-      something reachable from the current game version. Closing the gap
-      to the #2-10 cluster (the real target) needs a structurally
-      different mechanism — reducing the fixed 400-tick own-handling
-      cost itself, or a genuinely different macro-layout — not another
-      accept-policy tweak.
+- [x] 066 grass-auto-regrow — **CORRECTION: the "400-tick own-handling
+      floor" claimed throughout 046-065 is wrong. Real cost is ~207.**
+      User pushback, tested directly: `Grass.md` says "Grass grows
+      automatically on grassland" — `harvest()` never leaves the tile
+      empty, `get_companion()` rerolls fresh every cycle with no
+      `plant()` call, and the champion's `instructions()` call after
+      `harvest()` is a guarded `plant()` whose guard *always* skips
+      (entity_type never leaves Grass) — measured at **7 ticks, not
+      200**, in 6/6 cycles. True own-handling: harvest (200) +
+      instructions (7) ≈ **207**, not 400. This halves the reroll cost R
+      used in every servicing-cost estimate since 046: `S = R(1-p)/p`
+      drops from ≈800 to ≈414, and the zero-servicing floor (own-
+      handling + 415 growth) drops from ~815 to **~622**. The #2-10
+      cluster's ~750-856 tick/harvest band, previously read as barely
+      above our floor, now sits comfortably above the corrected one —
+      real room, not a wall. Does **not** overturn 051/053-055/058-061's
+      specific results (real measured game runs, unaffected by a wrong
+      model), but does overturn the *narrative* built on them ("057 is
+      at the true optimum, further tuning can't help") — that reasoning
+      used the wrong number throughout. `experiments/hay/066/result.md`
+
+- [ ] 067 (open) — re-evaluate the reroll-before-walk accept-policy
+      family under the corrected ~207-tick reroll cost (066), not the
+      ~400 assumed by 046-065. The corrected zero-servicing floor
+      (~622) sits well under the #2-10 cluster's implied band
+      (~750-856), meaning there is real headroom the old model said
+      didn't exist. Candidates worth a fresh look given the true cost:
+      REROLL_LIMIT retuning (058/059 bracketed 5 as optimal, but against
+      the wrong cost — worth re-bracketing), and the distance-threshold
+      accept variants (053-055) that were rejected partly on the
+      now-wrong assumption that rerolling was expensive relative to a
+      cheap walk. 062-065's exploit-hunt closure stands independent of
+      this correction. #1's implied budget still remains unexplained by
+      anything found so far, independent of this correction too.
 
 **#1 (`const arch *`, 00:58.549) is very likely not honestly
 achievable under current mechanics** — web research (2026-08-17, user's
