@@ -1,32 +1,22 @@
-# exp-carrots_single-005 -- finish-and-score
+import Common
+
+# exp-carrots_single-006 -- reroll-before-walk probe (single tile)
 #
-# carrots_single's first real driver. Design settled by 001-004
-# (experiments/carrots_single/queue.md has the full trail): 3 Carrot
-# tiles round-robin at pairwise wrapped distance 4 (self-collision
-# structurally impossible, since companion range is <=3), free-Grass
-# companion skip (untouched grassland already has standing Grass -- 002),
-# full walk-service for Bush/Tree with a revert back to Grass afterward so
-# the free rate doesn't erode. This category is growth-bound (~71% idle on
-# a single tile, 003), and 3 tiles nearly eliminate that idle time,
-# measuring 2.44x the single-tile throughput (004). Projects ~11.5
-# minutes to the real 100,000,000 target.
+# 003's single-tile design walked out to service every non-Grass
+# companion draw (X ~ 3,333 ticks per 003's own backed-out number). This
+# transplants hay_single's winning paradigm instead (008-013): the
+# companion preference is fixed at plant time, so a cheap reroll (harvest
+# + replant, ~400 ticks) redraws it, and we only fall back to a real walk
+# after REROLL_LIMIT misses. hay_single's memory trick also applies
+# unchanged: once a remote position is walked-and-serviced, it is *not*
+# reverted -- it's left standing and remembered, so a future draw of the
+# same (type, position) pair is a free hit too, same as Grass always is.
+#
+# Not chasing the target -- terminates after a bounded number of cycles.
+# Expect "Run Failed"; the duration is not a score.
 
-TARGET = 100000000
-TILES = [(0, 0), (0, 4), (2, 2)]
-TILE_SET = set(TILES)
-
-def move_wrapped(x, y):
-	N = get_world_size()
-	while get_pos_x() != x:
-		if (x - get_pos_x()) % N <= N // 2:
-			move(East)
-		else:
-			move(West)
-	while get_pos_y() != y:
-		if (y - get_pos_y()) % N <= N // 2:
-			move(North)
-		else:
-			move(South)
+HOME = (get_pos_x(), get_pos_y())
+REROLL_LIMIT = 5
 
 def own_tile_ready():
 	if get_ground_type() != Grounds.Soil:
@@ -34,49 +24,79 @@ def own_tile_ready():
 	if get_entity_type() != Entities.Carrot:
 		plant(Entities.Carrot)
 
-def water_here():
+def water_home():
 	while num_items(Items.Water) > 0 and get_water() < 0.999:
 		use_item(Items.Water)
 
-for t in TILES:
-	move_wrapped(t[0], t[1])
-	own_tile_ready()
-	water_here()
+own_tile_ready()
+water_home()
 
-i = 0
-while num_items(Items.Carrot) < TARGET:
-	tx, ty = TILES[i % len(TILES)]
-	i = i + 1
-	move_wrapped(tx, ty)
-	water_here()
+# What this drone believes it has planted, keyed by companion position --
+# same authoritative-memory pattern as hay_single's main.py, since only
+# this drone ever touches the farm.
+planted = {}
 
+CYCLES = 40
+harvests = 0
+hits_grass = 0
+hits_reroll = 0
+hits_walk = 0
+t_start = get_tick_count()
+for i in range(CYCLES):
+	t_plant = get_tick_count()
 	companion = get_companion()
-	serviced_pos = None
-	if companion != None:
+	rerolls = 0
+	walked = False
+	while companion != None:
 		ctype, pos = companion
-		if ctype != Entities.Grass and pos not in TILE_SET:
-			move_wrapped(pos[0], pos[1])
-			if get_ground_type() != Grounds.Grassland:
-				till()
-			if get_entity_type() != ctype:
-				harvest()
-				plant(ctype)
-			serviced_pos = pos
-			move_wrapped(tx, ty)
-
+		key = pos
+		# BUG FIX (r1 -> r2): "Grass is free" only holds for a position
+		# this drone has never touched. Once a walk-service permanently
+		# converts a remote position away from Grass (no revert, unlike
+		# 003 -- see header), a later Grass-companion draw landing on that
+		# same position is NOT actually satisfied. Must check the memory
+		# dict either way, not just short-circuit on ctype == Grass.
+		if key in planted:
+			if planted[key] == ctype:
+				hits_reroll = hits_reroll + 1
+				break
+		elif ctype == Entities.Grass:
+			hits_grass = hits_grass + 1
+			break
+		if rerolls < REROLL_LIMIT:
+			harvest()
+			plant(Entities.Carrot)
+			companion = get_companion()
+			rerolls = rerolls + 1
+		else:
+			if Common.affordable(ctype):
+				Common.move_to_wrapped(pos[0], pos[1])
+				if get_entity_type() != ctype:
+					harvest()
+					Common.plant_companion(ctype)
+				planted[key] = ctype
+				Common.move_to_wrapped(HOME[0], HOME[1])
+				hits_walk = hits_walk + 1
+				walked = True
+			break
+	t_serviced = get_tick_count()
 	h = can_harvest()
-	while not h and num_items(Items.Carrot) < TARGET:
+	while not h:
 		h = can_harvest()
-	if num_items(Items.Carrot) >= TARGET:
-		break
+	t_ripe = get_tick_count()
+	before = num_items(Items.Carrot)
 	harvest()
-
-	if serviced_pos != None:
-		move_wrapped(serviced_pos[0], serviced_pos[1])
-		harvest()
-		plant(Entities.Grass)
-		move_wrapped(tx, ty)
+	gained = num_items(Items.Carrot) - before
+	harvests = harvests + 1
 	own_tile_ready()
+	water_home()
+	t_end = get_tick_count()
+	if i < 10 or i % 5 == 0:
+		quick_print("CYCLE", i, "COMPANION", companion, "GAINED", gained, "REROLLS", rerolls,
+			"WALKED", walked, "SVC_TICKS", t_serviced - t_plant, "IDLE_TICKS", t_ripe - t_serviced,
+			"TOTAL_TICKS", t_end - t_plant)
 
-quick_print("DONE", "CARROT", num_items(Items.Carrot), "TICK_FINAL", get_tick_count(),
-	"TIME_FINAL", get_time())
+t_total = get_tick_count() - t_start
+quick_print("SUMMARY", "CYCLES", CYCLES, "HARVESTS", harvests, "HITS_GRASS", hits_grass,
+	"HITS_REROLL", hits_reroll, "HITS_WALK", hits_walk, "TICKS", t_total,
+	"TICKS_PER_HARVEST", t_total / harvests, "CARROT", num_items(Items.Carrot))
