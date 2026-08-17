@@ -7,24 +7,46 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
-- [x] 045 unlock-level-check — **rejected, cleanly.** `Unlocks.Grass`
-      ("increases the yield of grass" — real, never checked before
-      tonight) is already at max level 10, same as Polyculture (5/5) and
-      Watering (9/9). No unrealized yield lever here; already baked into
-      the measured 512/81,920 figures. Closes the last genuinely
-      unexamined assumption underlying tonight's arithmetic.
-      `experiments/hay/045/result.md`.
+- [ ] 058 higher-reroll-limit — 057 confirmed the memory-maturity
+      theory (a real, positive result over the full run, opposite of
+      049's short-probe regression). Now that memory-matched reroll is
+      confirmed to actually help, try `REROLL_LIMIT` higher than 5 —
+      the mature per-draw hit rate (~1/3, matching the physical
+      baseline skip rate) compounds favorably with more attempts
+      (`1-(2/3)^(k+1)`), and each attempt is cheap (400 ticks) relative
+      to a real walk.
+- [ ] 059 fresh leaderboard-gap re-derivation — with 056's clean
+      growth-floor measurement (415 ticks at water≈1, not the
+      607-724 estimated from Plant-growth.md's raw seconds), the
+      zero-servicing single-tile floor is ≈815 ticks/harvest — inside
+      the #3-10 cluster's implied band (≈750-856), not below it. The
+      remaining gap to the cluster is realistic to close by cutting
+      servicing cost further (058's direction); the gap to #1 alone
+      (≈409-466, *below* even the zero-servicing floor) implies
+      something the 32-drone-even-split model still doesn't capture —
+      chase the cluster, not #1 (user's call, 2026-08-17).
 
-**Standing summary after 038-045: every mechanism this project can
-directly inspect has been checked and confirmed as expected** — the
-companion draw is IID (040), tick rate is constant regardless of drone
-count (043), the measured idle window is real but too small to fund a
-second tile (041, 044), and every yield-affecting unlock is maxed (045).
-The leader's ~3x edge (00:58.549 vs our ~02:52) remains unexplained by
-anything found this way. Two threads remain, neither yet tried: (a) verify
-or replace 039's same-drone-count assumption behind its ~441-tick
-leader estimate, or (b) retest layout/spacing (021/022, both pre-dating
-tonight's corrected understanding) fresh.
+**Standing summary after 038-057, continued past the "leader-gap-
+unexplained" checkpoint at the user's explicit request** (a persistent
+3x gap on a bounded, fully-discoverable mechanic set implies a missed
+mechanism, not an unknowable one). Real findings from this pass:
+water is genuinely fine (0.8-1.0, not "10x short" as the old
+championcode comment claimed — 046/047), tick rate and every unlock
+level (including `Speed` and `Fertilizer`, never checked before) are
+confirmed maxed/constant (043, 048, 052), a real concurrent-drone race
+causes ~9-47 "Cannot plant Carrot on Grassland" failures per run (real
+but small, <0.2% of harvests), tighter drone packing and distance-
+aware reroll (alone or combined) all measured *worse* (051, 053, 054,
+055 — thrashing/reroll-cost effects dominate), and — the one real
+positive result — memory-matched reroll-before-walk, retested with the
+correct full-run time horizon after a short bounded probe
+under-measured it (049 vs 057), is a genuine **-3.1% wall time, #130→
+#111** win. `experiments/hay/046` through `057/result.md` have the
+full trail. Growth floor is now clean-measured (056): 415 ticks at
+water≈1 (not ~608-724 as derived from the wiki's raw seconds table),
+putting the *cluster* target within reach of a servicing-cost-focused
+push (058), while the #1 gap remains genuinely unresolved by anything
+found so far and is being set aside per the user's guidance.
 
 - [x] 044 multi-tile-scheduled — **rejected, with a precise reason.**
       Tested the actual scheduled-second-tile design 041's idle-time
@@ -207,6 +229,67 @@ Done. What follows is genuinely open.
   variant that gives up the multiplier can win (011 at 67x apparent, 016 +11.5 s).
 
 ## Done
+
+- [x] 057 memory-matched-reroll-real-run — **adopted, new champion.**
+      Full memory-matched reroll (any type, `REROLL_LIMIT=5`, water
+      threshold 0.999), run for real over the full ~871-cycle/drone
+      horizon (not a bounded probe): **02:42.421, Global Rank #111**
+      (was 02:47.682, #130/131). Confirms 049's short-probe regression
+      was a time-horizon artifact — memory has to mature and a 150-cycle
+      sample can't see that. `experiments/hay/057/result.md`
+- [x] 056 clean-growth-floor — isolated, single-tile, water
+      deliberately maintained at 0.999: **415 ticks** growth at
+      water≈1 (952 unwatered) — smaller than the ~608-724 estimated
+      from Plant-growth.md's raw seconds, meaningfully changing the
+      floor math. `experiments/hay/056/result.md`
+- [x] 055 tight-packing-plus-distance-reroll — **rejected.** Combining
+      051's spacing-4 layout with 054's distance>=2 reroll trigger:
+      2,605.73 ticks/harvest, worse than either alone, skip rate also
+      fell. Closes the combined family. `experiments/hay/055/result.md`
+- [x] 054 distance-reroll-wider-trigger — **rejected.** (Carrot OR
+      distance>=2) trigger, `REROLL_LIMIT=5`: 2,087.08 ticks/harvest,
+      worse than 053's narrower trigger. `experiments/hay/054/result.md`
+- [x] 053 distance-aware-reroll — **rejected.** Reroll on (Carrot OR
+      distance==3), `REROLL_LIMIT=2`: 1,482.65 ticks/harvest vs 1,390
+      baseline — a small regression. `experiments/hay/053/result.md`
+- [x] 052 unlock-sweep-full — **confirmed maxed, closes this line for
+      real.** `Unlocks.Speed` (5, never checked before — could plausibly
+      have affected the ticks-per-real-second conversion) and
+      `Unlocks.Fertilizer` (4) both confirmed genuinely maxed via a
+      live `unlock()` attempt (returned `False`, level unchanged), not
+      just an empty `get_cost()`. Direct `TICKS_PER_SEC` measurement
+      (trivial loop): 6,074.97 — matches every prior measurement
+      exactly. `experiments/hay/052/result.md`
+- [x] 051 tighter-packing — **rejected, real and in the wrong
+      direction.** Spacing 4 (vs champion's 5), still self-collision-
+      safe: skip rate *fell* (32% vs 36.7%), ticks/harvest rose to
+      2,347.27 — overlap increases thrashing (neighbors overwriting
+      each other's conflicting needs), not cooperation.
+      `experiments/hay/051/result.md`
+- [x] 050 shared-memory-check — **confirmed drones are fully isolated.**
+      A top-level dict written by one spawned drone is invisible to
+      another (and to the main drone) — no shared mutable state is
+      possible between drones, only the physical game world connects
+      them. Rules out any "shared companion memory" design.
+      `experiments/hay/050/result.md`
+- [x] 049 reroll-before-walk-retimed — **looked like a rejection in a
+      150-cycle probe** (1,471.41 vs 1,390 baseline) but see 057: this
+      was a time-horizon artifact, not a real rejection.
+      `experiments/hay/049/result.md`
+- [x] 048 megafarm-check — **confirmed maxed.** `Unlocks.Megafarm`
+      level 5, `unlock()` attempt returns `False`, `max_drones()` stays
+      32. No drone-count lever. `experiments/hay/048/result.md`
+- [x] 047 walk-servicing-breakdown — **found and fixed a self-inflicted
+      diagnostic bug** (r1 measured from the drone's un-moved starting
+      position, not the champion's real (3,3) home, producing bogus
+      huge unwrapped distances — a false alarm about `Common.move_to`
+      not wrapping). r2, corrected: real servicing costs are all
+      reasonable (225-641 ticks for the move legs, matching distance
+      1-3 exactly), no blowup. `experiments/hay/047/result.md`
+- [x] 046 full-diagnostic-reprobe — real per-cycle breakdown under 32-
+      drone contention: real water 0.8-1.0 (the champion's "10x short"
+      comment is wrong), walk-rate 63%/skip-rate 37% in this sample.
+      `experiments/hay/046/result.md`
 
 - [x] 030 instrument-two-plots — **found the missing ticks.** 29% of visits reach
       an unripe plot and pay a 200-tick move for nothing; with movement in the
