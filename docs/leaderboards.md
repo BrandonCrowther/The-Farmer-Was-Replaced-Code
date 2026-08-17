@@ -21,7 +21,7 @@ Every category runs `leaderboard_run(Leaderboards.<name>, "main", <speedup>)` fr
 | Maze_Single | maze_single | single | 616_448 gold | — | — | empty |
 | Pumpkins | pumpkins | multi | 200_000_000 pumpkins | — | — | seeded |
 | Pumpkins_Single | pumpkins_single | single | 10_000_000 pumpkins | — | — | empty |
-| Sunflowers | sunflowers | multi | 100_000 power | — | — | seeded |
+| Sunflowers | sunflowers | multi | 100_000 power | 04:03.434 | #126 | scored |
 | Sunflowers_Single | sunflowers_single | single | 10_000 power | 20:53.149 | #300 | scored |
 | Wood | wood | multi | 10_000_000_000 wood | — | — | seeded |
 | Wood_Single | wood_single | single | 500_000_000 wood | 31:59.849 | #232 | scored |
