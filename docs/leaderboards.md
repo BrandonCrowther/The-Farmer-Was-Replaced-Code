@@ -23,7 +23,7 @@ Every category runs `leaderboard_run(Leaderboards.<name>, "main", <speedup>)` fr
 | Pumpkins_Single | pumpkins_single | single | 10_000_000 pumpkins | — | — | empty |
 | Sunflowers | sunflowers | multi | 100_000 power | 04:03.434 | #126 | scored |
 | Sunflowers_Single | sunflowers_single | single | 10_000 power | 20:53.149 | #300 | scored |
-| Wood | wood | multi | 10_000_000_000 wood | — | — | seeded |
+| Wood | wood | multi | 10_000_000_000 wood | 06:07.889 | #111 | scored |
 | Wood_Single | wood_single | single | 500_000_000 wood | 31:59.849 | #232 | scored |
 
 Status values: `baseline` — has a measured time · `seeded` — has code from the
