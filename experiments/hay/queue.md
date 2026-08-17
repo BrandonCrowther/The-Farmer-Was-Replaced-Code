@@ -8,25 +8,27 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 ## Queued
 
 - [x] 039 drone-tick-profile — measured the main drone's real steady-state
-      cost: **≈1,300 ticks/harvest**, close to hay_single's proven ~1,200
-      ceiling despite Hay's 44-66% skip rates (021) — those rates are
-      *physical-match-on-arrival* after a walk, not *skip-the-walk*, since
-      `polyculture_mapped` gates the whole trip on this drone's own memory
-      regardless of what a neighbour left standing. Cross-checked against
-      the real leader time (00:58.549, confirmed on-screen, never
-      previously recorded here): implies the leader's design runs at
-      **≈441 ticks/harvest — only ~41 above the bare floor**, consistent
-      with near-100% instant-hit servicing, not our ~33% asymptote.
-      `experiments/hay/039/result.md`.
-- [ ] 040 draw-pattern-check — 013 verified the (type, position) draw is
-      IID-uniform, but only for hay_single's solo context. Check the same
-      thing directly here: sample many raw draws for one drone with 31
-      neighbours active, look for correlation with nearby board state or
-      any deviation from uniform. If it's still IID, the leader's ~41-tick
-      figure needs an explanation that isn't "beat the draw" — recheck the
-      arithmetic and the same-drone-count assumption before concluding
-      anything mechanic-level. If it isn't IID here, that's the real lever
-      neither 011 nor 013 could have found from the solo category alone.
+      cost: **≈1,300 ticks/harvest**. Cross-checked against the real
+      leader time (00:58.549, confirmed on-screen, never previously
+      recorded here): implies **≈441 ticks/harvest for the leader**, only
+      ~41 above the bare own-tile floor. `experiments/hay/039/result.md`.
+- [x] 040 draw-pattern-check — **rejected the "multi-drone breaks the
+      draw" hypothesis, decisively.** 12,600 pooled samples (300 x 42
+      internal repeats) on the main drone with all 31 neighbours active:
+      type freq within 0.7% of 1/3, 24 positions, no autocorrelation —
+      cleaner than 013's own solo confirmation. The draw is IID-uniform
+      regardless of drone count. **039's ~441-tick leader estimate is not
+      explained by "beating the draw"** — its same-drone-count /
+      same-harvest-share assumption is the more likely weak point, or the
+      leader's edge is something structurally different from anything
+      tested tonight. `experiments/hay/040/result.md`.
+- [ ] 041 (open) — re-examine 039's harvest-count assumption (does the
+      leader necessarily use 32 drones with an even ~763-harvest share
+      each?), or look for a genuinely different mechanism (yield beyond
+      81,920/harvest, a layout that changes per-drone harvest count, or
+      something not yet considered) before spending more cycles on
+      companion-servicing tuning — that line is now closed twice over
+      (038's rejection, 040's IID confirmation).
 - [x] 038 reroll-before-walk-general — **rejected**, 02:52.510 vs a fresh
       02:52.338 baseline (+0.172s, ≈2.5 noise-floor sd, small and
       negative). Ported hay_single's decisive reroll-before-walk win
@@ -49,6 +51,18 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       is what rerolls the preference, confirmed independently by Carrot sitting at
       4.1% against (1/3)³ = 3.7%. **A reroll costs a 200-tick plant, never a
       1-tick query.** `experiments/hay/036/result.md`
+
+**Reopened 2026-08-16, high priority.** 039's independent estimate tonight
+(leader ≈441 ticks/harvest) converges strikingly with this item's own old
+"2.2 tiles per drone at 466 ticks" hypothesis — two separate lines of
+reasoning landing near the same number. hay_single proved four separate
+ways that multi-tile can't help a *solo* drone (no idle time to hide, no
+sharing benefit past 1/3, any commute is pure loss) — but Hay's neighbour
+cooperation (021, and 040's context) is a mechanism hay_single structurally
+doesn't have, and it might change the calculus for a drone tending 2+ tiles
+here specifically. Run this probe for real before assuming the hay_single
+conclusion transfers. (Note: the "038" below is stale numbering from before
+tonight's exp-038/039/040 — use whatever `new_experiment.sh` assigns next.)
 
 - [ ] 037 growth-schedulability — **the gate on every multi-plot design, and it
       answers the standing question about the theoretical ceiling directly.**
