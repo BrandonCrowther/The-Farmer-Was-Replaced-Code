@@ -1,69 +1,96 @@
 import Common
 
-# exp-hay_single-012 -- reroll-limit-5
+# exp-hay_single-016 -- two-tile interleaving, ported from Hay(multi)'s
+# exp-073 champion. 012's paused "proven ceiling" (011's R=400 reroll
+# model) rested on the same stale assumption Hay(multi) corrected in
+# exp-066: Grass auto-regrows ("Grass grows automatically on
+# grassland", Grass.md) -- an entity property, not specific to Hay's
+# world size or drone count. Directly confirmed in this leaderboard's
+# own 8x8/single-drone context (exp-016): instructions() after harvest
+# costs 7 ticks, not 200, in 6/6 cycles. Real reroll cost is ~207, not
+# 400 -- the whole 001-015 asymptote needs re-deriving, and since this
+# category is single-drone, the two-tile trick (hide the growth wait
+# behind a sibling tile's reroll-chase) needs no macro-layout work at
+# all -- just two adjacent tiles, both reachable by the one drone.
 #
-# 010's champion (walk on every companion miss, after up to REROLL_LIMIT
-# cheap rerolls -- see 010's comment for the full rationale). 011 fit an
-# exact probability model to real data (R=400 reroll, W=1,600 walk, p=1/3
-# hit chance) and it reproduces 008's real 55.8 hay/tick at K=0 almost
-# exactly. The model predicts diminishing but real further gains raising
-# REROLL_LIMIT past 2: K=2 -> 62.13, K=5 -> 66.33, K=7 -> 67.39 hay/tick.
-# This tests K=5, the point past which 011 found returns thin out sharply.
+# Same design as Hay-multi's 073: two tiles at distance 1, every
+# position within distance 3 of either pre-seeded once as permanent
+# Bush (accept a companion draw the instant it's a memory-matched
+# Bush; anything else is cheap to reroll, never worth walking to),
+# water threshold 0.75 (growth isn't the bottleneck once hidden), and
+# a direct move() for the known single-hop between tiles.
 
 TARGET = 100000000
-REROLL_LIMIT = 5
-instructions = Common.get_planting_instructions(Entities.Grass)
-ax, ay = get_pos_x(), get_pos_y()
+REROLL_LIMIT = 30
+WATER_THRESHOLD = 0.75
+entity = Entities.Grass
+instructions = Common.get_planting_instructions(entity)
+
+size = get_world_size()
+c1x, c1y = get_pos_x(), get_pos_y()
+c2x, c2y = (c1x + 1) % size, c1y
+
+def wdist(ax, ay, bx, by):
+	dx = min((bx - ax) % size, (ax - bx) % size)
+	dy = min((by - ay) % size, (ay - by) % size)
+	return dx + dy
+
+Common.move_to(c1x, c1y)
+instructions()
+Common.move_to(c2x, c2y)
 instructions()
 
-# What this drone believes it has planted, keyed by companion position --
-# see Common.polyculture_mapped. Only this drone ever touches the farm, so
-# the memory is authoritative, not just a hint.
 planted = {}
+for dx in range(-3, 5):
+	for dy in range(-3, 4):
+		px = (c1x + dx) % size
+		py = (c1y + dy) % size
+		if (px, py) == (c1x, c1y) or (px, py) == (c2x, c2y):
+			continue
+		d1 = wdist(c1x, c1y, px, py)
+		d2 = wdist(c2x, c2y, px, py)
+		if d1 <= 3 or d2 <= 3:
+			Common.move_to(px, py)
+			if get_entity_type() != Entities.Bush:
+				if get_entity_type() != None:
+					harvest()
+				Common.plant_companion(Entities.Bush)
+			planted[(px, py)] = Entities.Bush
+Common.move_to(c1x, c1y)
 
+current_is_c1 = True
 while num_items(Items.Hay) < TARGET:
-	# Water while there is water to use, not until an unreachable level --
-	# see Hay's saves/hay/main.py for why the equivalent unbounded condition
-	# spins on failed use_item calls.
-	while num_items(Items.Water) > 0 and get_water() < 0.999:
+	while num_items(Items.Water) > 0 and get_water() < WATER_THRESHOLD:
 		use_item(Items.Water)
-
 	h = can_harvest()
 	while not h and num_items(Items.Hay) < TARGET:
+		while num_items(Items.Water) > 0 and get_water() < WATER_THRESHOLD:
+			use_item(Items.Water)
 		h = can_harvest()
 	if num_items(Items.Hay) >= TARGET:
 		break
 	harvest()
 
-	if num_items(Items.Hay) >= TARGET:
-		break
-
+	rerolls = 0
 	instructions()
 	companion = get_companion()
-	rerolls = 0
-	while companion != None:
+	while rerolls < REROLL_LIMIT and companion != None:
 		ctype, (cx, cy) = companion
 		key = (cx, cy)
 		if key in planted and planted[key] == ctype:
 			break
-		if rerolls < REROLL_LIMIT:
-			# Cheap: destroy the unripe grass we just planted and try again,
-			# hoping the fresh (type, position) draw already matches stock.
-			harvest()
-			instructions()
-			companion = get_companion()
-			rerolls = rerolls + 1
-		else:
-			# Fall back to a real walk -- this is also how new stock gets
-			# established for future rerolls to find.
-			if Common.affordable(ctype):
-				Common.move_to_wrapped(cx, cy)
-				if get_entity_type() != ctype:
-					harvest()
-					Common.plant_companion(ctype)
-				planted[key] = ctype
-				Common.move_to_wrapped(ax, ay)
-			break
+		harvest()
+		instructions()
+		companion = get_companion()
+		rerolls = rerolls + 1
+
+	if num_items(Items.Hay) >= TARGET:
+		break
+	if current_is_c1:
+		move(East)
+	else:
+		move(West)
+	current_is_c1 = not current_is_c1
 
 quick_print("DONE", "HAY", num_items(Items.Hay), "WOOD", num_items(Items.Wood),
 	"TICK_FINAL", get_tick_count(), "TIME_FINAL", get_time())
