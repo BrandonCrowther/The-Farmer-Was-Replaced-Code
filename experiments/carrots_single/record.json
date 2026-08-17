@@ -6,10 +6,10 @@
   "entry": "main",
   "speedup": 5000,
   "seeded_from": null,
-  "personal_best": "11:54.303",
-  "global_rank": 118,
-  "best_branch": "auto_experiment/carrots_single/005",
+  "personal_best": "07:49.969",
+  "global_rank": 85,
+  "best_branch": "auto_experiment/carrots_single/008",
   "status": "scored",
   "updated": "2026-08-17",
-  "note": "001/002 measured this category directly: 1,000,000,000 starting Hay/Wood (no bootstrapping problem), growth ~7,196 ticks mean, and untouched grassland already has standing Grass from tick ~2 -- any Grass-type companion request (1/3 of draws) is free. 003 built the reactive single-tile driver (100% multiplier rate after fixing two bugs) and measured ~71% idle time -- growth-bound. 004 tested a 3-tile round-robin design (pairwise wrapped distance 4, self-collision impossible by construction) and got a large real win: 3,430.43 ticks/harvest vs 003's 8,362 -- 2.44x throughput, close to the model's ~3,222 prediction. 005 built the real terminating driver from this design and ran it for a real score: 11:54.303, Global Rank #118, 100% multiplier rate over the full ~1,221-cycle run, ~3.5% above 004's sampled projection. See experiments/carrots_single/00{1,2,3,4,5}/result.md and queue.md."
+  "note": "001/002 measured this category directly: 1,000,000,000 starting Hay/Wood (no bootstrapping problem), growth ~7,196 ticks mean, and untouched grassland already has standing Grass from tick ~2 -- any Grass-type companion request (1/3 of draws) is free. 003 built the reactive single-tile driver (100% multiplier rate after fixing two bugs) and measured ~71% idle time -- growth-bound. 004 tested a 3-tile round-robin design (pairwise wrapped distance 4, self-collision impossible by construction): 3,430.43 ticks/harvest vs 003's 8,362 -- 2.44x throughput. 005 scored the 3-tile design for real: 11:54.303, #118. 006 transplanted hay_single's reroll-before-walk paradigm (companion preference fixed at plant time, cheap reroll beats a walk-and-service round trip) to a single tile, after fixing a bug (Grass-free assumption must be gated on the no-revert memory dict): handling dropped from ~2,422 to ~1,571 ticks/visit, invisible on one tile (still growth-bound). 007 combined it with 5-tile pipelining (the cheaper handling raises the idle-elimination crossing point to N~4.58), after fixing a second bug (reroll must resolve immediately at plant time, not a lap later, or a miss throws away a full growth cycle): 2,370.29 ticks/harvest, 1.45x over 004. 008 scored this design for real: 07:49.969, Global Rank #85, up from #118 -- three real experiments (006/007/008) took a 34% chunk out of the first score. See experiments/carrots_single/00{1..8}/result.md and queue.md."
 }
