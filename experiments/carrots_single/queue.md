@@ -38,18 +38,15 @@ Branches: `auto_experiment/carrots_single/NNN` · Results: `experiments/carrots_
       Projects ≈9.80 carrots/tick, ≈28.0 minutes for the full target.
       Handling cost (~2,422 ticks) vs growth (~7,196) implies **~3 tiles
       could nearly perfectly pipeline**. `experiments/carrots_single/003/result.md`.
-- [ ] 004 multi-tile-pipeline — build and test a 3-tile round-robin design
-      (own-tile handling + companion service, ~2,422 ticks/tile, against
-      ~7,196-tick growth — 3 tiles revisit each roughly every ~7,266
-      ticks, near-matching growth). Same-tile guard needed if tiles sit
-      within companion range (≤3) of each other, per hay_single's 005/013
-      and Hay's 044 lessons — space tiles or guard, don't assume. Measure
-      real ticks/harvest and compare to 003's ≈8,362 single-tile baseline.
-      Falsifier: if commute between 3 tiles costs more than the idle time
-      it recovers (the Hay 044 failure mode), single-tile stands as the
-      design and 005 builds the real driver from 003 instead.
-- [ ] 005 (after 004) — real terminating driver from whichever design
-      wins, run to score. First recorded time for this category.
+- [x] 004 multi-tile-pipeline — **adopted, a large win.** 3 tiles at
+      (0,0)/(0,4)/(2,2), pairwise wrapped distance 4 (self-collision
+      impossible by construction, `HITS_GUARD` 0/60 confirmed). Real
+      **3,430.43 ticks/harvest** vs 003's 8,362 — **2.44x throughput**,
+      close to the model's ≈3,222 prediction. Projects ≈11.5 minutes for
+      the full target (down from ≈28.0). `experiments/carrots_single/004/result.md`.
+- [ ] 005 finish-and-score — real terminating driver from 004's 3-tile
+      design, run to an actual score. First recorded time for this
+      category.
 
 ## Done
 
@@ -57,6 +54,8 @@ Branches: `auto_experiment/carrots_single/NNN` · Results: `experiments/carrots_
       (~7,196 mean), companion distances (≤3, wrapped, confirmed),
       indirect evidence of free Grass satisfaction (3/3).
       `experiments/carrots_single/001/result.md`
+- [x] 004 multi-tile-pipeline — adopted, 2.44x throughput.
+      `experiments/carrots_single/004/result.md`
 - [x] 002 natural-grass-growth-check — **direct confirmation**: untouched
       grassland has standing Grass from tick ~2, not something that grows
       in. `experiments/carrots_single/002/result.md`
