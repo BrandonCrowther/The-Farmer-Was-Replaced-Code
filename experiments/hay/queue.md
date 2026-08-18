@@ -262,27 +262,35 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       setup-phase-only fix on top of an already-tuned hot loop.
       `experiments/hay/076/result.md`
 
-- [ ] 077 (open) — summoning and spacing drones, per the user's steer:
-      (a) **spawn-tree parallelization** — 073's one drone sequentially
-      spawns all 31 others (~6200 ticks of pure spawn latency); a tree
-      pattern (each spawned drone also spawns some of the remainder)
-      could cut this to ~log2(32)≈5 sequential rounds, but needs its own
-      correctness validation — every position covered exactly once, no
-      gaps, no double-spawn; (b) **shared bush-wall planting/territory
-      partitioning** — every drone still walks and checks all ~30 of its
-      reachable companion positions even when a neighbor already planted
-      a shared one — the redundant *plant* is skipped (the
-      `get_entity_type() != Bush` guard), not the redundant *walk-to-
-      check*; partitioning tile ownership across neighbors would cut
-      this further, but risks a silent gap if the partition is wrong.
-      Neither is safe to rush. Both are setup-phase levers, additive on
-      top of the hot loop (076's fix showed setup-phase gains are real
-      but small — champion's hot loop alone measures 873.02
-      ticks/harvest, only 17.02 above the cluster's upper bound, 856).
-      After these: scour the rest of the champion's code for remaining
-      stray-tick overhead of the 075/076 kind before inventing new
-      macro-structure. #1's implied budget remains unexplained by
-      anything found in 062-065.
+- [x] 077 spawn-tree-parallelization — **ADOPTED, new champion. 01:56.890,
+      #59 (was 01:57.195, #60) — -0.305s, +1 rank.** "Summoning" half of
+      the two-part 077 idea. 073's one drone sequentially spawned all 31
+      others (measured live: `spawn_drone()` costs a flat 200 ticks
+      isolated, matching Operation-Costs.md's generic function-cost row;
+      the real 31-call loop cost 6745 ticks total, close to 076's ~6200
+      estimate). Replaced with a binary spawn tree — each drone keeps one
+      position for itself and spawns ≤2 children with the rest, so depth
+      is `ceil(log2(32))=5` instead of 31 sequential calls on one drone.
+      Validated live first (32/32 unique positions matching the expected
+      grid, no dupes/gaps, max child latency 443 ticks vs 6745 old)
+      before the real run. Smaller than 076 (-0.864s) because this
+      removes one shared one-time critical-path constant, not a
+      per-drone cost ×32. `experiments/hay/077/result.md`
+
+- [ ] 078 (open) — "spacing" half of the same review: **shared bush-wall
+      planting / territory partitioning**. Every drone still walks and
+      checks all ~30 of its reachable companion positions even when a
+      neighbor already planted a shared one — the redundant *plant* is
+      skipped (the `get_entity_type() != Bush` guard), not the redundant
+      *walk-to-check*; partitioning tile ownership across neighbors would
+      cut this further, but risks a silent gap if the partition is
+      wrong — not safe to rush. Also a setup-phase lever, additive on top
+      of the hot loop (076/077 together show setup-phase gains are real
+      but small — champion's hot loop alone measures 873.02 ticks/harvest,
+      only 17.02 above the cluster's upper bound, 856). After this: scour
+      the rest of the champion's code for remaining stray-tick overhead
+      of the 075/076/077 kind before inventing new macro-structure. #1's
+      implied budget remains unexplained by anything found in 062-065.
 
 **#1 (`const arch *`, 00:58.549) is very likely not honestly
 achievable under current mechanics** — web research (2026-08-17, user's
