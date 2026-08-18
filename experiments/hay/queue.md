@@ -7,6 +7,32 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
+- [x] 088 staggered-base-grid — **ADOPTED, new champion. 01:54.162,
+      #52 (was 085's 01:54.587, #52) — -0.425s, 6.2x the noise floor.**
+      087 closed the shared-territory-planting family, but the user
+      pushed back on stopping the placement/packing line entirely,
+      pointing directly at the on-screen layout: horizontal spacing
+      has to eat 1 tile for the domino (`c2=bx+1`), but vertical
+      spacing was paying the same margin with no domino to justify it
+      — real, unexploited slack. Exhaustive offline search (every
+      offset 0-31x0-31, every stagger 0-31, y-spacing 2-5) found
+      offset `(18,25)`, x-spacing 5 (unchanged, the true
+      domino-constrained floor), y-spacing 3 (down from 5), +2
+      horizontal stagger on alternate rows — cuts total fleet walk-in
+      distance 544→384 tiles (-29.4%) and worst-single-drone 28→21
+      (-25%). Every pairwise base-to-base distance (the only thing the
+      polyculture dilution-safety boundary depends on) is unaffected
+      by an offset shift, and the tightened spacing was re-verified
+      exhaustively (32 unique positions, 64 unique crop tiles, full
+      32×31-pair safety check) to hold the global minimum cross-base
+      crop distance at exactly 4 — this session's own measured safe
+      boundary. Live-validated before the real run: 32/32 positions
+      matched the offline model exactly, uniform 30-visit windows, no
+      warnings. A pure packing/placement fix — every drone still
+      plants 100% of its own crops, no sharing, no cross-drone
+      coordination risk, unrelated to the closed 078/086/087 family.
+      `experiments/hay/088/result.md`.
+
 - [x] 062 exploit-candidate-probe — **both candidates closed, no
       champion change.** User pushback: since boards were reset, #1's
       post-patch time should be replicable if it rests on a residual
