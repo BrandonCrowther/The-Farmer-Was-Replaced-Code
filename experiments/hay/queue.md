@@ -388,38 +388,65 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       claiming an unearned multiplier (the polyculture-bug shape).
       `experiments/hay/083/result.md`
 
-## Closing state, 2026-08-18 (076-083, overnight session)
+- [x] 084 reroll-check-reorder-and-tuple-reuse — **ADOPTED, new
+      champion. 01:54.669, #53 (was 01:55.590, #56) — -0.921s, +3
+      ranks — the largest single stray-tick fix since 079 itself.**
+      Prompted by the user asking to re-derive the reroll floor from
+      scratch rather than take 083's closure as final — re-reading the
+      accept-check's own three lines with fresh eyes (not a new area
+      of the code, the *same* lines 079 already touched) found two
+      more instances of 079's exact class: `key = (cx, cy)` rebuilt a
+      tuple identical to one already inside `companion` (bind `pos`
+      directly instead); and `key in planted and ctype ==
+      Entities.Bush` had the AND ordered against the actual
+      probability distribution (`ctype==Bush` is False 2/3 of the
+      time, 069) instead of with it, so it almost never short-
+      circuited — same trick as 082's water-check reorder. Smoke test
+      was inconclusive (865.09 vs 082's 873.02, inside window noise)
+      but the real run cleared the floor decisively.
+      `experiments/hay/084/result.md`
 
-Champion: **01:55.590, #56** (was 01:58.059/#63 at session start —
--2.469s, +7 ranks across 076/077/079/081/082; 078/080/083 rejected/tied/
-closed with no champion change but real information gained). Six real
-adopted wins in one night, each smaller than the last (076: -0.864s,
-077: -0.305s, 079: -0.798s, 081: -0.313s, 082: -0.189s) — the
-diminishing-returns shape the user predicted going in ("Hay's progress
-will be small going forward as we approach a theoretical peak
-efficiency").
+## Closing state, 2026-08-18 (076-084, overnight session)
 
-**What's been exhausted, and why:** every safe, code-provable stray-tick
-fix findable by close reading of `driver()` and its bush-wall setup —
-guard checks that never vary, missed short-circuits, doubled getters,
-redundant target checks, unfavorable AND-operand ordering. 083 also
-closed the three most plausible *macro*-level ideas still sitting in
-this design's neighborhood (more tiles, mixed companion pre-seeding,
-dropping the position check) analytically, without needing a real run
-for any of them.
+Champion: **01:54.669, #53** (was 01:58.059/#63 at session start —
+-3.390s, +10 ranks across 076/077/079/081/082/084; 078/080/083
+rejected/tied/closed with no champion change but real information
+gained). Seven real adopted wins in one night. Progress did NOT
+monotonically shrink the way it first looked — 084 (-0.921s) came
+*after* 083's own "closing scour" and was bigger than 081 or 082
+individually, found by re-deriving the reroll floor from scratch
+rather than trusting the earlier closure. **The lesson: "closed" means
+"nothing found in this pass," not "nothing left" — re-reading the same
+few hot-loop lines with fresh eyes is still worth doing before
+concluding the well is dry.** Now only **6.004s** above the cluster's
+slow end (01:48.665) — genuinely close.
 
-**What would actually move the needle from here:** nothing left inside
-the two-tile-interleaving + full-Bush-pre-seed + reroll-based-servicing
-paradigm itself — 069's 1/3 reroll floor is a proven mathematical
-minimum for this approach, not a tuning target. Closing more of the gap
-to the #2-10 cluster (01:27-01:48, still ~+8-28s away) would need a
-genuinely different macro-design — e.g. a servicing strategy that
-doesn't pay a per-visit reroll/harvest/move cost at all, or some
-mechanism not yet identified. No such idea has enough evidence behind
-it yet to attempt blind; per `docs/LOOP.md`'s empty-queue rule, this is
-recorded as the fork rather than forced. #1's implied budget remains
-unexplained by anything found in 062-065 and is out of scope (likely a
-pre-patch residual exploit, see record.json's note).
+**What's been checked, and how thoroughly:** every safe, code-provable
+stray-tick fix findable by close reading of `driver()` and its
+bush-wall setup — guard checks that never vary, missed short-circuits,
+doubled getters, redundant target checks, unfavorable AND-operand
+ordering, unnecessary tuple rebuilds. 083 also closed the three most
+plausible *macro*-level ideas still sitting in this design's
+neighborhood (more tiles, mixed companion pre-seeding, dropping the
+position check) analytically, without needing a real run for any of
+them. Given 084 found real material after a declared closure, **the
+next tick should re-scour the water-check block and the bush-wall
+setup loop once more** with the same fresh-eyes discipline before
+trusting a second closure.
+
+**What would actually move the needle beyond stray-tick scouring:**
+nothing left inside the two-tile-interleaving + full-Bush-pre-seed +
+reroll-based-servicing paradigm's *macro shape* — 069's 1/3 reroll
+floor is a proven mathematical minimum for this approach, not a tuning
+target. Closing the remaining ~6s gap to the cluster needs either more
+stray-tick material (plausible, given 084) or a genuinely different
+macro-design — e.g. a servicing strategy that doesn't pay a per-visit
+reroll/harvest/move cost at all, or some mechanism not yet identified.
+No macro-design idea has enough evidence behind it yet to attempt
+blind; per `docs/LOOP.md`'s empty-queue rule, this is recorded as the
+fork rather than forced. #1's implied budget remains unexplained by
+anything found in 062-065 and is out of scope (likely a pre-patch
+residual exploit, see record.json's note).
 
 **#1 (`const arch *`, 00:58.549) is very likely not honestly
 achievable under current mechanics** — web research (2026-08-17, user's
