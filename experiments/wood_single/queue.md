@@ -28,19 +28,41 @@ deliberately plants Grass instead, for a different wood-farming pattern
 
 ## Queued
 
-- [ ] 003 multi-tile-pipeline — single-tile design is growth-bound in
-      principle (Tree's isolated growth 34,718 ticks is large), but the
-      real average (9,551 ticks/harvest) is already handling-dominated
-      once the reroll paradigm converges — recompute the real
-      growth-vs-handling ratio before assuming multi-tile helps. Any
-      design must space Tree tiles wide enough to avoid the 2.44x
-      neighbor-growth-penalty, not just the companion-range
-      self-collision margin.
-- [ ] leader-gap — leader scores 9.6x faster (03:20.446 vs 002's
-      31:59.849). Investigate before assuming multi-tile alone closes
-      it — Hay's equivalent gap (exp 038-045) was never fully explained
-      despite exhausting every mechanism-level hypothesis; flag the
-      same risk here rather than re-litigating from scratch.
+- [x] 003 measure-tree-harvest-and-reroll-mechanics — **probe-only,
+      no champion change.** While porting Hay's tonight fixes to
+      `hay_single` (a real -7.9s win), found `wood_single`'s champion
+      (002) never got Hay's later 069/070 upgrade (full upfront
+      position pre-seeding) — its `planted` memory only grows
+      reactively, the "natural accumulation" shape 068 already proved
+      worse for Hay. Measured Tree's own mechanics via `simulate()`
+      (genuine sandbox, not the contaminated shared live world — see
+      result.md for why the live world gave inconsistent reads):
+      `harvest()` on an unripe Tree yields 0 wood and **destroys it**,
+      reverting to Grassland's natural Grass (no Grass-style
+      auto-regrow exception for Tree) — the current champion's reroll
+      idiom still works (it recovers via `own_tile_ready()`), but pays
+      the *old*, ~400-tick-per-attempt cost Hay itself moved away from
+      for Grass specifically, not a mistake to fix here. A naive
+      ticks/harvest model using 001's 34,718-tick isolated growth
+      figure predicts ~37,000, a ~3.9x gap against the real measured
+      9,551 — most likely because 001's figure is an unwatered (water
+      ≈0) measurement, the same mistake Hay's own 019 made before 037
+      corrected it 6.7x. `experiments/wood_single/003/result.md`
+- [ ] 004 (open) — resolve 003's open question first: re-measure
+      Tree's real growth time at real water levels via `simulate()`
+      (controlled, not the live world) before designing anything. Then:
+      does full upfront pre-seeding alone (single Tree tile, no second
+      tile) already close most of the gap, the way it did for Hay
+      before 070's two-tile layer was even needed? Only if there's
+      still real idle/growth-wait *after* that does a multi-tile layout
+      become worth the extra risk — and any such layout must space
+      Tree tiles to avoid the 2.44x cardinal-neighbor growth penalty
+      (diagonal offset or wider spacing, not Hay's exact adjacent-tile
+      choice). Leader gap is 9.6x (03:20.446 vs current 31:59.849) —
+      investigate before assuming any single lever closes all of it;
+      Hay's own leader-gap-unexplained history (038-045) is the
+      standing caution against over-attributing a large gap to one
+      mechanism.
 
 ## Done
 
