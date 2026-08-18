@@ -318,17 +318,51 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       correctness (32/32 unique positions, unchanged) before the real
       run confirmed a clear win. `experiments/hay/079/result.md`
 
-- [ ] 080 (open) — champion's hot loop measures 873.02 ticks/harvest
+- [x] 080 precompute-near-offsets — **TIED, not adopted.** Moved the
+      bush-wall setup's per-drone `wdist()`-based window scan (56 cells,
+      up to 2 calls each) to a module-level `NEAR_OFFSETS` precompute,
+      the same pattern `ALL_BASES`/`ALL_CROPS` already use — motivated
+      by 077's own validation showing spawned children don't re-pay for
+      `ALL_BASES`/`ALL_CROPS`'s build cost, implying module-level state
+      is shared, not recomputed per drone. Proven byte-identical to the
+      old scan offline (Python, 6 base positions incl. seam-crossing
+      corners) and live-validated (32/32 drones, 30 tiles each, clean).
+      Real runs: r1 01:56.077/#58 (-0.015s), r2 01:56.149/#58 (+0.057s)
+      — both under the 0.069s noise floor, opposite directions, the
+      textbook noise pattern. Not adopted (exp-060's precedent: a tie
+      doesn't merge even when the reasoning behind it is sound) — but
+      not wrong either; either 077's "shared module state" reading was
+      too strong, or the real saving is genuine but too small a share of
+      the ~2h-averaged score to clear this floor. Suggests the
+      *setup*-phase's remaining stray-tick budget specifically may be
+      near exhausted, separate from the hot loop's (where 079's fix
+      *did* clear the floor). `experiments/hay/080/result.md`
+
+- [ ] 081 (open) — champion's hot loop measures 873.02 ticks/harvest
       pre-079 (only 17.02 above the cluster's upper bound, 856);
       `reroll` is ~52% of that and already at 069's structural p=1/3
       floor, so the remaining lever is overhead *outside* the reroll
       chase itself — move/harvest/water calls, guard conditions, loop
-      structure. 079 found three more instances of the same class
-      (redundant dict lookup, missed short-circuit, doubled getter) —
-      worth another close read of `driver()`'s water-gating block and
-      `Common.py`'s `plant_companion()`/`polyculture_mapped()` for the
-      same pattern before assuming the well is dry. #1's implied budget
-      remains unexplained by anything found in 062-065.
+      structure. 079 found three instances of that class in `driver()`
+      (redundant dict lookup, missed short-circuit, doubled getter),
+      079's win real; 080 found a fourth (setup-phase relocation) that
+      was correct but too small to measure. Two directions left: (a)
+      `driver()`'s hot loop has THREE separate `num_items(Items.Hay) <
+      TARGET`/`>= TARGET` checks per iteration (the outer `while`'s own
+      condition plus two `if...break` guards) — collapsing to fewer
+      would save real per-iteration ticks (recurring, ~871 harvests ×
+      32 drones, unlike 080's one-time setup cost) but trades against
+      straggler-drone tail latency right at the very end of the run when
+      the shared target actually IS hit — genuinely needs live
+      measurement of that tail cost before touching, not a code-reading
+      proof the way 079's fixes were, so don't rush it; (b) `Common.py`'s
+      `plant_companion()`/`polyculture_mapped()` aren't even called by
+      Hay's current `driver()` (fully inlined since some earlier
+      redesign) — dead end for Hay specifically, skip. If neither pans
+      out, this may be close to the real floor for stray-tick scouring
+      at Hay's current design; the next lever would have to be
+      macro-structure again. #1's implied budget remains unexplained by
+      anything found in 062-065.
 
 **#1 (`const arch *`, 00:58.549) is very likely not honestly
 achievable under current mechanics** — web research (2026-08-17, user's
