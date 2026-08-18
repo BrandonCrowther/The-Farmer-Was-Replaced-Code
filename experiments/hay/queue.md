@@ -406,47 +406,69 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       but the real run cleared the floor decisively.
       `experiments/hay/084/result.md`
 
-## Closing state, 2026-08-18 (076-084, overnight session)
+- [x] 085 setup-tuple-reuse — **ADOPTED, new champion. 01:54.587, #52
+      (was 01:54.669, #53) — -0.082s, +1 rank.** Applied 084's exact
+      lesson one loop up: the bush-wall setup built `(px, py)` as a
+      fresh tuple twice (the `ALL_CROPS` check, then the `planted`
+      write) — built once, reused. Setup-phase only, so expected likely
+      unmeasurable per 080's precedent (a ~30x larger setup change that
+      tied) — tried anyway, free and safe, per the user's "micro
+      optimizations still count" instruction. Real runs disagreed with
+      the floor but agreed with each other: r1 -0.039s (under the
+      0.069s floor alone), r2 -0.082s (clears it) — both negative,
+      unlike a genuine tie (080's r1/r2 disagreed in *sign*). Adopted
+      on the strength of consistent direction across the required
+      re-run. A routine "Fatal error in GC" crash hit between r1 and
+      r2 — recovered via `relaunch` + redeploy per `docs/LOOP.md`, no
+      data lost. `experiments/hay/085/result.md`
 
-Champion: **01:54.669, #53** (was 01:58.059/#63 at session start —
--3.390s, +10 ranks across 076/077/079/081/082/084; 078/080/083
+## Closing state, 2026-08-18 (076-085, overnight session)
+
+Champion: **01:54.587, #52** (was 01:58.059/#63 at session start —
+-3.472s, +11 ranks across 076/077/079/081/082/084/085; 078/080/083
 rejected/tied/closed with no champion change but real information
-gained). Seven real adopted wins in one night. Progress did NOT
+gained). Eight real adopted wins in one night. Progress did NOT
 monotonically shrink the way it first looked — 084 (-0.921s) came
 *after* 083's own "closing scour" and was bigger than 081 or 082
 individually, found by re-deriving the reroll floor from scratch
-rather than trusting the earlier closure. **The lesson: "closed" means
-"nothing found in this pass," not "nothing left" — re-reading the same
-few hot-loop lines with fresh eyes is still worth doing before
-concluding the well is dry.** Now only **6.004s** above the cluster's
-slow end (01:48.665) — genuinely close.
+rather than trusting the earlier closure; 085 then found one more
+instance of 084's own pattern one loop up, small but real (needed two
+same-direction runs to trust, given the floor). **The lesson: "closed"
+means "nothing found in this pass," not "nothing left" — re-reading the
+same few hot-loop lines with fresh eyes is still worth doing before
+concluding the well is dry, and the yield can genuinely still surprise
+(084 was the biggest win of the whole scour, not the smallest).** Now
+only **5.922s** above the cluster's slow end (01:48.665) — genuinely
+close.
 
 **What's been checked, and how thoroughly:** every safe, code-provable
 stray-tick fix findable by close reading of `driver()` and its
 bush-wall setup — guard checks that never vary, missed short-circuits,
 doubled getters, redundant target checks, unfavorable AND-operand
-ordering, unnecessary tuple rebuilds. 083 also closed the three most
-plausible *macro*-level ideas still sitting in this design's
-neighborhood (more tiles, mixed companion pre-seeding, dropping the
-position check) analytically, without needing a real run for any of
-them. Given 084 found real material after a declared closure, **the
-next tick should re-scour the water-check block and the bush-wall
-setup loop once more** with the same fresh-eyes discipline before
-trusting a second closure.
+ordering, unnecessary tuple rebuilds (now checked in both the hot loop
+and setup). 083 also closed the three most plausible *macro*-level
+ideas still sitting in this design's neighborhood (more tiles, mixed
+companion pre-seeding, dropping the position check) analytically,
+without needing a real run for any of them. Two consecutive re-scours
+(084, 085) both found something — **the next tick should scour once
+more** (the water-check block hasn't been re-read since 082 wrote it;
+the setup loop's `move_to_wrapped`/`plant_companion`/`instructions`
+call sites haven't been re-read since 076) before trusting a third
+closure.
 
 **What would actually move the needle beyond stray-tick scouring:**
 nothing left inside the two-tile-interleaving + full-Bush-pre-seed +
 reroll-based-servicing paradigm's *macro shape* — 069's 1/3 reroll
 floor is a proven mathematical minimum for this approach, not a tuning
 target. Closing the remaining ~6s gap to the cluster needs either more
-stray-tick material (plausible, given 084) or a genuinely different
-macro-design — e.g. a servicing strategy that doesn't pay a per-visit
-reroll/harvest/move cost at all, or some mechanism not yet identified.
-No macro-design idea has enough evidence behind it yet to attempt
-blind; per `docs/LOOP.md`'s empty-queue rule, this is recorded as the
-fork rather than forced. #1's implied budget remains unexplained by
-anything found in 062-065 and is out of scope (likely a pre-patch
-residual exploit, see record.json's note).
+stray-tick material (increasingly plausible, given 084/085) or a
+genuinely different macro-design — e.g. a servicing strategy that
+doesn't pay a per-visit reroll/harvest/move cost at all, or some
+mechanism not yet identified. No macro-design idea has enough evidence
+behind it yet to attempt blind; per `docs/LOOP.md`'s empty-queue rule,
+this is recorded as the fork rather than forced. #1's implied budget
+remains unexplained by anything found in 062-065 and is out of scope
+(likely a pre-patch residual exploit, see record.json's note).
 
 **#1 (`const arch *`, 00:58.549) is very likely not honestly
 achievable under current mechanics** — web research (2026-08-17, user's
