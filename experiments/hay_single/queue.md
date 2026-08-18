@@ -1,8 +1,9 @@
 # Hay_Single — experiment queue
 
 Target: **100_000_000 hay** on an 8x8 farm with a single drone
-Leader: **02:17.995** (confirmed on the in-game leaderboard, rank #1)
-Champion: **03:08.281, global rank #89** (exp-016)
+Leader: **02:19.351** (confirmed on the in-game leaderboard, rank #1 —
+shifted slightly since 016, ranks move as others submit)
+Champion: **03:00.347, global rank #74** (exp-017)
 Entry point: `main` · Runner: `leaderboard_run(Leaderboards.Hay_Single, "main", 5000)`
 
 Branches: `auto_experiment/hay_single/NNN` · Results: `experiments/hay_single/NNN/result.md`
@@ -137,3 +138,29 @@ scored design, 1.72x off the world #1, not abandoned mid-failure.
       exp-073 two-tile design verbatim. 03:08.281, #89 (was 03:57.198,
       #169) — -48.917s (-20.6%), +80 ranks. See the CORRECTION section
       above. `experiments/hay_single/016/result.md`
+- [x] 017 port-hay-multi-stray-tick-fixes — **ADOPTED, new champion.
+      03:00.347, #74 (was 03:08.281, #89) — -7.934s (-4.3%), +15
+      ranks.** 016 only ported Hay(multi)'s exp-073 *macro* design, not
+      the micro-optimizations built on top of it in that category's own
+      076-083 arc the same night. Ported the five applicable ones
+      verbatim (single-drone, so 077/078/080's spawn-tree/territory
+      material doesn't apply): dropped two redundant `instructions()`
+      calls in the reroll chase (this file was actually worse than
+      Hay-multi's own pre-075 baseline — called it twice per reroll
+      cycle, not once), `move_to`→`move_to_wrapped`, the reroll chase's
+      dict-lookup→constant-comparison fix, the bush-wall setup's
+      `wdist` short-circuit + cached `get_entity_type()`, dropped the
+      `move()`-guarding redundant target check, reordered the
+      water-check `and`. The single biggest win of the whole overnight
+      session, likely because this file started worse (double
+      `instructions()`) and single-drone means no 32-way dilution of
+      the savings. `experiments/hay_single/017/result.md`
+
+## Open
+
+- [ ] 018 (open) — 017's result flags checking whether other `_single`
+      categories on the same reroll-servicing lineage (anything that
+      ported Hay-multi's two-tile design, or shares its companion-
+      servicing shape) have the same kind of unclaimed gap — a
+      cross-category port pattern, not a fresh design, same low-risk
+      shape as 017 itself.
