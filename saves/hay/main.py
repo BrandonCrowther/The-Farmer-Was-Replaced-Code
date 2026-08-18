@@ -19,12 +19,34 @@ import Common
 # simulated time, average the runs" means setup is paid again every
 # repeat, not amortized away by one very long run.
 #
-# 073's spawn pattern (one drone sequentially spawns all 31 others,
-# ~6200 ticks of pure spawn latency before the last drone even starts)
-# is a separate, real inefficiency flagged in the same review --
-# deferred, not fixed here: a tree-spawn redesign needs its own
-# correctness validation (every position covered exactly once) that
-# doesn't fit safely in the time available for this pass.
+# 073's spawn pattern (one drone sequentially spawning all 31 others)
+# was the same class of issue -- fixed separately in exp-077 (see
+# spawn_group() below).
+#
+# exp-hay-079 -- a code scour for the same class of stray-tick overhead
+# 075/076/077 already found, this time inside driver() itself:
+# (1) reroll chase: `planted[key] == ctype` did a SECOND tuple-keyed
+#     dict lookup (~2 ticks) to re-derive a value that has exactly one
+#     write site in this whole file (line ~80, always Entities.Bush) --
+#     there is no second value it can ever hold, so the lookup was
+#     re-deriving a compile-time constant at runtime. Compare `ctype`
+#     to the constant directly instead; this runs on every reroll
+#     attempt (avg ~2/harvest per 069's p=1/3 model), so it is the one
+#     change here that actually touches the ~871-harvest/drone hot loop
+#     rather than the one-time setup phase.
+# (2) bush-wall setup: `d2 = wdist(...)` was computed unconditionally
+#     even though `d1 <= 3 or d2 <= 3` only needs d2 when d1 already
+#     misses (or short-circuits) -- wdist() costs ~11 ticks/call (2
+#     subtractions + 2 mods + a min() per axis, +1 to sum), paid on
+#     every one of the ~54 candidate positions per drone regardless of
+#     whether d1 alone already qualified.
+# (3) bush-wall setup: `get_entity_type()` (a 1-tick getter) was called
+#     twice per position instead of cached in a local.
+# All three are provable from reading the code alone (single write
+# site for `planted`'s value; `or`'s short-circuit is a documented
+# language rule; a cached getter read is definitionally identical to
+# two reads of state nothing between them mutates) -- no new game
+# mechanic assumed, unlike 078's rejected territory-partitioning idea.
 
 TARGET = 2000000000
 REROLL_LIMIT = 30
@@ -69,12 +91,23 @@ def driver(bx, by):
 			py = (c1y + dy) % size
 			if (px, py) in ALL_CROPS:
 				continue
-			d1 = wdist(c1x, c1y, px, py, size)
-			d2 = wdist(c2x, c2y, px, py, size)
-			if d1 <= 3 or d2 <= 3:
+			# exp-hay-079 -- d2 is only needed when d1 already misses (d1<=3
+			# is or'd with d2<=3, and or short-circuits) -- but the old code
+			# built the args in application order so both wdist() calls
+			# (11 ticks each: 2 subs + 2 mods + a min() per axis, +1 to sum)
+			# ran on every position regardless. Compute d1 first and skip
+			# d2 entirely once it already qualifies.
+			near = wdist(c1x, c1y, px, py, size) <= 3
+			if not near:
+				near = wdist(c2x, c2y, px, py, size) <= 3
+			if near:
 				Common.move_to_wrapped(px, py)
-				if get_entity_type() != Entities.Bush:
-					if get_entity_type() != None:
+				# exp-hay-079 -- get_entity_type() is a getter (1 tick);
+				# the old code called it twice (once per if) instead of
+				# caching the one read it needs.
+				et = get_entity_type()
+				if et != Entities.Bush:
+					if et != None:
 						harvest()
 					Common.plant_companion(Entities.Bush)
 				planted[(px, py)] = Entities.Bush
@@ -98,7 +131,14 @@ def driver(bx, by):
 		while rerolls < REROLL_LIMIT and companion != None:
 			ctype, (cx, cy) = companion
 			key = (cx, cy)
-			if key in planted and planted[key] == ctype:
+			# exp-hay-079 -- `planted` has exactly one call site that ever
+			# writes to it (the bush-wall setup above) and it always
+			# writes Entities.Bush -- there is no second value the dict
+			# can ever hold. So "planted[key] == ctype" was a second
+			# tuple-keyed dict lookup (~2 ticks) to re-derive a constant;
+			# comparing ctype to the constant directly costs 1 tick and
+			# needs no second lookup at all.
+			if key in planted and ctype == Entities.Bush:
 				break
 			harvest()
 			companion = get_companion()
