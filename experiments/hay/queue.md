@@ -338,31 +338,40 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       near exhausted, separate from the hot loop's (where 079's fix
       *did* clear the floor). `experiments/hay/080/result.md`
 
-- [ ] 081 (open) — champion's hot loop measures 873.02 ticks/harvest
-      pre-079 (only 17.02 above the cluster's upper bound, 856);
-      `reroll` is ~52% of that and already at 069's structural p=1/3
-      floor, so the remaining lever is overhead *outside* the reroll
-      chase itself — move/harvest/water calls, guard conditions, loop
-      structure. 079 found three instances of that class in `driver()`
-      (redundant dict lookup, missed short-circuit, doubled getter),
-      079's win real; 080 found a fourth (setup-phase relocation) that
-      was correct but too small to measure. Two directions left: (a)
-      `driver()`'s hot loop has THREE separate `num_items(Items.Hay) <
-      TARGET`/`>= TARGET` checks per iteration (the outer `while`'s own
-      condition plus two `if...break` guards) — collapsing to fewer
-      would save real per-iteration ticks (recurring, ~871 harvests ×
-      32 drones, unlike 080's one-time setup cost) but trades against
-      straggler-drone tail latency right at the very end of the run when
-      the shared target actually IS hit — genuinely needs live
-      measurement of that tail cost before touching, not a code-reading
-      proof the way 079's fixes were, so don't rush it; (b) `Common.py`'s
-      `plant_companion()`/`polyculture_mapped()` aren't even called by
-      Hay's current `driver()` (fully inlined since some earlier
-      redesign) — dead end for Hay specifically, skip. If neither pans
-      out, this may be close to the real floor for stray-tick scouring
-      at Hay's current design; the next lever would have to be
-      macro-structure again. #1's implied budget remains unexplained by
-      anything found in 062-065.
+- [x] 081 drop-redundant-target-check — **ADOPTED, new champion.
+      01:55.779, #57 (was 01:56.092, #58) — -0.313s, +1 rank.** Of the
+      hot loop's three `num_items(Items.Hay)</>=TARGET` checks per
+      iteration, removed the one guarding only the cheap final `move()`
+      call, keeping the one guarding the much more expensive
+      harvest+reroll chase — the asymmetric, lower-risk half of the
+      idea flagged in 080's entry. ~2600 ticks/drone recurring over
+      ~871 harvests, real hot-loop cost unlike 080's one-time setup
+      relocation. Not a pure equivalence proof like 079/080 — validated
+      live instead (couldn't use the real 2B target: persistent save
+      inventory is already ~53.8B, so the loop would never even enter):
+      single-drone and 32-drone runs at inventory+3M/+30M targets both
+      completed cleanly with small bounded overshoot (45,376 and 94,848
+      respectively, both under two satisfied-harvest yields), no hang.
+      Real run cleared the noise floor, closer in size to 079's win than
+      080's tie. `experiments/hay/081/result.md`
+
+- [ ] 082 (open) — `Common.py`'s `plant_companion()`/`polyculture_mapped()`
+      aren't even called by Hay's current `driver()` (fully inlined
+      since some earlier redesign) — dead end for Hay specifically,
+      skip. 079/081 both found real wins in the hot loop; 080 found a
+      real-but-unmeasurable one in setup. Worth one more close pass over
+      `driver()` for anything of the same shape (guard checks that never
+      vary, computation repeated where it could be cached or shared,
+      missed short-circuits) before concluding the stray-tick well is
+      dry — champion's hot loop was 873.02 ticks/harvest pre-079/081,
+      `reroll` (~52%) already at 069's structural p=1/3 floor, so
+      whatever's left is in the ~48% *outside* the reroll chase: the
+      water-gating block, the harvest/wait polling structure. If a close
+      pass turns up nothing new, that's a legitimate place to stop this
+      line and either ask about a fundamental fork (per `docs/LOOP.md`'s
+      empty-queue rule) or hold at the current champion for the night.
+      #1's implied budget remains unexplained by anything found in
+      062-065.
 
 **#1 (`const arch *`, 00:58.549) is very likely not honestly
 achievable under current mechanics** — web research (2026-08-17, user's
