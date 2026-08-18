@@ -277,20 +277,40 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       removes one shared one-time critical-path constant, not a
       per-drone cost ×32. `experiments/hay/077/result.md`
 
-- [ ] 078 (open) — "spacing" half of the same review: **shared bush-wall
-      planting / territory partitioning**. Every drone still walks and
-      checks all ~30 of its reachable companion positions even when a
-      neighbor already planted a shared one — the redundant *plant* is
-      skipped (the `get_entity_type() != Bush` guard), not the redundant
-      *walk-to-check*; partitioning tile ownership across neighbors would
-      cut this further, but risks a silent gap if the partition is
-      wrong — not safe to rush. Also a setup-phase lever, additive on top
-      of the hot loop (076/077 together show setup-phase gains are real
-      but small — champion's hot loop alone measures 873.02 ticks/harvest,
-      only 17.02 above the cluster's upper bound, 856). After this: scour
-      the rest of the champion's code for remaining stray-tick overhead
-      of the 075/076/077 kind before inventing new macro-structure. #1's
-      implied budget remains unexplained by anything found in 062-065.
+- [x] 078 shared-bush-wall-territory-partitioning — **REJECTED,
+      analytical closure, no live run.** "Spacing" half of the 077
+      review. A genuine walk-skipping partition needs a non-owning drone
+      to trust a shared tile is already planted without visiting it —
+      the API has no remote tile read (`get_entity_type()` only reads
+      the current position), so the only way to skip the walk is to
+      trust an ownership rule blind. That's a real correctness bug, not
+      a perf trade: 077's own spawn tree made drone setup order provably
+      unordered (043's tick-rate-parallelism finding + 050's confirmed
+      no-shared-state + no cross-drone sync primitive beyond `wait_for`
+      on a direct child), so a drone could draw a companion request for
+      a neighbor-owned tile before the neighbor has planted it, silently
+      `break` out of its reroll-chase believing it's satisfied, and lose
+      the multiplier on that harvest with zero warning — the same shape
+      as the polyculture bug `docs/LOOP.md` already warns about. Even
+      race-free, the trade looks like a loser anyway: 069 already
+      measured that *reducing* proactive tile coverage (its 20/24
+      partial pre-seed) barely beat no coverage, because uncovered
+      positions' real walk cost ate the savings — full coverage won.
+      Closed without spending a real run to re-derive a conclusion
+      three separate already-measured results already implied.
+      `experiments/hay/078/result.md`
+
+- [ ] 079 (open) — scour the champion's code for remaining stray-tick
+      overhead of the 075/076/077 kind (guard checks that never fire,
+      wrapper functions carrying unused-feature overhead, redundant
+      calls) before inventing new macro-structure — the user's next
+      named step after summoning/spacing. Champion's hot loop measures
+      873.02 ticks/harvest, only 17.02 above the cluster's upper bound
+      (856); `reroll` is ~52% of that and already at 069's structural
+      p=1/3 floor, so the remaining lever is overhead *outside* the
+      reroll chase itself — move/harvest/water calls, guard conditions,
+      loop structure. #1's implied budget remains unexplained by
+      anything found in 062-065.
 
 **#1 (`const arch *`, 00:58.549) is very likely not honestly
 achievable under current mechanics** — web research (2026-08-17, user's
