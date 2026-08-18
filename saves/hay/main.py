@@ -144,8 +144,21 @@ def driver(bx, by):
 			companion = get_companion()
 			rerolls = rerolls + 1
 
-		if num_items(Items.Hay) >= TARGET:
-			break
+		# exp-hay-081 -- this was the THIRD num_items(Items.Hay)>=TARGET
+		# check per iteration (outer `while`'s own condition, the one
+		# above guarding harvest()/the reroll chase, and this one), each
+		# 3 ticks (if-entry + getter + compare) every single iteration
+		# regardless of whether target is anywhere close -- ~2600
+		# ticks/drone recurring over 871 harvests. Removed this one,
+		# which only guarded the cheap move() call: worst case, a
+		# straggler drone that misses the shared target being hit by
+		# someone else during its own reroll chase pays one extra
+		# 200-tick move before the outer while's own check catches it
+		# next iteration -- bounded, one-time, and only possible at all
+		# in the last iteration of the whole run. Kept the check above
+		# (before harvest()/the reroll chase): that one guards much more
+		# expensive work (a full harvest + up to REROLL_LIMIT more), a
+		# worse thing to risk overshooting.
 		if current_is_c1:
 			move(East)
 		else:
