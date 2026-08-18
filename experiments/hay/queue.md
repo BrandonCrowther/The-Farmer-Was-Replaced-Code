@@ -7,6 +7,61 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
+- [ ] 092 water-contention-at-launch — user's second observation from
+      watching the champion at 0.1x speed: "a lot of unfulfilled water
+      requests at launch." Confirmed real (2121 `Tried to use
+      Items.Water` warnings in 091's real run, up from 090's
+      1434/1393) and visually confirmed live (a captured screenshot
+      during a user-run 0.1x observation session showed the warning
+      firing at ~10.7s into a fresh run, with a nearby 100%-grown Bush
+      sitting at water level 0). Open question: does the shared water-
+      tank pool (`num_items(Items.Water)`, 1 tank/10s + upgrades,
+      already maxed per 052) become genuinely contended when up to 32
+      drones all try to catch up their ground water simultaneously at
+      hot-loop launch (089's own burst-catch-up finding, ~1,390 excess
+      ticks/drone at `WATER_THRESHOLD=0.75`) -- and if so, does the
+      race between `num_items(Items.Water) > 0` (check) and
+      `use_item(Items.Water)` (act) actually cost any drone real idle/
+      wait time, or is the ~1-tick failed-call cost (per the documented
+      `use_item()` cost model) the whole story? 089's own probe showed
+      `wait` staying flat at 4 ticks even during the burst window, but
+      that probe used a reduced/short-window target -- needs a probe
+      that captures the real full-launch water dynamics across all 32
+      drones before concluding either way. Not yet investigated.
+
+- [x] 091 scan-order-tsp — **ADOPTED, new champion. 01:53.053, #49
+      (was 090's 01:54.045, #52) — -0.992s, 14.4x the noise floor,
+      biggest single win of the whole 076-091 arc, +3 global ranks.**
+      Directly traced to the user watching the champion at 0.1x speed
+      and reporting setup taking close to 5 seconds before harvesting
+      starts. Every setup-phase fix in this arc (076-090) had
+      optimized walk-in or base packing — none had ever touched the
+      *scan* itself (the 30-tile candidate-window walk, measured
+      earlier this session at 23,846-27,126 ticks/drone, by far the
+      largest setup component), which was always walked in a fixed
+      raster order, an accident of loop nesting never chosen for
+      minimal walking distance. TSP-style offline search (greedy
+      nearest-neighbor + 2-opt + or-opt, 30 seeds) found a visiting
+      order cutting pure-movement cost from 62 to 36 tiles (-42%),
+      sanity-checked against a minimum-spanning-tree lower bound.
+      Live-calibrated against the real deployed champion *before*
+      committing to the reorder: measured `move_ticks` = 12,482,
+      identical across all 32 drones, matching the offline model
+      (12,400) almost exactly. Hardcoded as a static `SCAN_ORDER`
+      literal (same "never compute it live" pattern as
+      `ALL_BASES`/`OWNED_OFFSETS`), which also let the now-redundant
+      `near()`/`ALL_CROPS` runtime checks be deleted entirely.
+      Live-validated (32/32 drones report 30 visits, correctly back at
+      `c1`, no warnings) before the real run. Also surfaced (but did
+      not investigate, queued separately as 092): a probe-methodology
+      artifact where `plant_ticks` varied 4,200-12,020 per drone
+      correlated with leftover entities on the shared persistent save
+      — confirmed as an `import main`-trick-only artifact, since
+      `leaderboard_run()`/`simulate()` both start from fixed, sandboxed
+      conditions and never touch the messy persistent save; does not
+      affect any real scored result in this project's history.
+      `experiments/hay/091/result.md`.
+
 - [x] 090 full-stagger-search — **ADOPTED, new champion. 01:54.045,
       #52 (was 088's 01:54.162, #52) — -0.117s, confirmed by a
       consistent-direction re-run (r1 -0.091s, r2 -0.117s), both
