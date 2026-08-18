@@ -355,23 +355,36 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       Real run cleared the noise floor, closer in size to 079's win than
       080's tie. `experiments/hay/081/result.md`
 
-- [ ] 082 (open) — `Common.py`'s `plant_companion()`/`polyculture_mapped()`
+- [x] 082 water-check-reorder — **ADOPTED, new champion. 01:55.590,
+      #56 (was 01:55.779, #57) — -0.189s, +1 rank.** The water top-off
+      guard, `num_items(Items.Water) > 0 and get_water() <
+      WATER_THRESHOLD`, paid both getters every iteration because the
+      almost-always-True operand (water is genuinely fine, 046/047) was
+      checked first, never triggering `and`'s short-circuit; the
+      almost-always-False operand (072: only 16/871 cycles actually
+      need a top-up) was checked second. Swapped order — pure boolean
+      commutativity, same truth value, same safety, but the common
+      no-op path now skips `num_items()` entirely. Same proof class as
+      079/081 (short-circuit is a documented, already-confirmed
+      language rule), validated live for a sanity check regardless.
+      `experiments/hay/082/result.md`
+
+- [ ] 083 (open) — `Common.py`'s `plant_companion()`/`polyculture_mapped()`
       aren't even called by Hay's current `driver()` (fully inlined
       since some earlier redesign) — dead end for Hay specifically,
-      skip. 079/081 both found real wins in the hot loop; 080 found a
-      real-but-unmeasurable one in setup. Worth one more close pass over
-      `driver()` for anything of the same shape (guard checks that never
-      vary, computation repeated where it could be cached or shared,
-      missed short-circuits) before concluding the stray-tick well is
-      dry — champion's hot loop was 873.02 ticks/harvest pre-079/081,
-      `reroll` (~52%) already at 069's structural p=1/3 floor, so
-      whatever's left is in the ~48% *outside* the reroll chase: the
-      water-gating block, the harvest/wait polling structure. If a close
-      pass turns up nothing new, that's a legitimate place to stop this
-      line and either ask about a fundamental fork (per `docs/LOOP.md`'s
-      empty-queue rule) or hold at the current champion for the night.
-      #1's implied budget remains unexplained by anything found in
-      062-065.
+      skip. 079/081/082 all found real wins in the hot loop; 080 found
+      a real-but-unmeasurable one in setup. Each pass has found a
+      smaller win than the last (079: -0.798s, 081: -0.313s, 082:
+      -0.189s) — the guard-check-overhead class is visibly thinning.
+      Worth one more close read of `driver()` before concluding it's
+      dry: the reroll loop's own `while rerolls < REROLL_LIMIT and
+      companion != None:` condition, and whether `harvest()`'s repeated
+      calls inside the reroll chase have any remaining slack. If a
+      close pass turns up nothing new, that's a legitimate place to
+      stop this line and either ask about a fundamental fork (per
+      `docs/LOOP.md`'s empty-queue rule) or hold at the current champion
+      for the night. #1's implied budget remains unexplained by
+      anything found in 062-065.
 
 **#1 (`const arch *`, 00:58.549) is very likely not honestly
 achievable under current mechanics** — web research (2026-08-17, user's

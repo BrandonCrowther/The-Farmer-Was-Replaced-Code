@@ -15,7 +15,7 @@ Every category runs `leaderboard_run(Leaderboards.<name>, "main", <speedup>)` fr
 | Carrots_Single | carrots_single | single | 100_000_000 carrots | 07:49.969 | #85 | scored |
 | Dinosaur | dinosaur | multi | 33_488_928 bones | — | — | seeded |
 | Fastest_Reset | fastest_reset | multi | unlock Unlocks.Leaderboard | 15:11:42.399 | #833 | baseline |
-| Hay | hay | multi | 2_000_000_000 hay | 01:55.779 | #57 | drop-redundant-target-check-adopted-081-small-gains-approaching-ceiling |
+| Hay | hay | multi | 2_000_000_000 hay | 01:55.590 | #56 | water-check-reorder-adopted-082-small-gains-approaching-ceiling |
 | Hay_Single | hay_single | single | 100_000_000 hay | 03:08.281 | #89 | two-tile-champion-adopted-03:08.281-rank-89 |
 | Maze | maze | multi | 9_863_168 gold | — | — | seeded |
 | Maze_Single | maze_single | single | 616_448 gold | — | — | empty |
