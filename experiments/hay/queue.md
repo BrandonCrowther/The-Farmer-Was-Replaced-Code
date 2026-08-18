@@ -7,27 +7,32 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
-- [ ] 092 water-contention-at-launch — user's second observation from
-      watching the champion at 0.1x speed: "a lot of unfulfilled water
-      requests at launch." Confirmed real (2121 `Tried to use
-      Items.Water` warnings in 091's real run, up from 090's
-      1434/1393) and visually confirmed live (a captured screenshot
-      during a user-run 0.1x observation session showed the warning
-      firing at ~10.7s into a fresh run, with a nearby 100%-grown Bush
-      sitting at water level 0). Open question: does the shared water-
-      tank pool (`num_items(Items.Water)`, 1 tank/10s + upgrades,
-      already maxed per 052) become genuinely contended when up to 32
-      drones all try to catch up their ground water simultaneously at
-      hot-loop launch (089's own burst-catch-up finding, ~1,390 excess
-      ticks/drone at `WATER_THRESHOLD=0.75`) -- and if so, does the
-      race between `num_items(Items.Water) > 0` (check) and
-      `use_item(Items.Water)` (act) actually cost any drone real idle/
-      wait time, or is the ~1-tick failed-call cost (per the documented
-      `use_item()` cost model) the whole story? 089's own probe showed
-      `wait` staying flat at 4 ticks even during the burst window, but
-      that probe used a reduced/short-window target -- needs a probe
-      that captures the real full-launch water dynamics across all 32
-      drones before concluding either way. Not yet investigated.
+- [x] 092 water-contention-at-launch — **confirmed real, but small and
+      transient — closed, no code change.** User's second observation
+      from watching the champion at 0.1x speed: "a lot of unfulfilled
+      water requests at launch." First probe attempt (the `import
+      main` trick against the persistent save) showed zero contention
+      because the save has accumulated an ~11.3-million-tank water
+      stockpile — the same class of contamination 091 already found
+      for entity state (`nonvirgin` tiles), now for item counts.
+      Corrected by running the same probe through `simulate("probe",
+      Unlocks, {}, {}, seed, speedup)` with clean, sandboxed starting
+      conditions (matching this project's own established pattern,
+      063/064/wood_single) — pool started at a realistic ~129 tanks.
+      Real dynamic found: a **one-time transient concentrated in a
+      single early iteration** (iteration 3 of 26 sampled), not a
+      recurring drain — 258 excess wait-ticks across 607 drone-
+      iteration samples (0.3% affected), pool dips toward 0 then
+      recovers steadily as passive regen catches up. Even taking the
+      real run's `WARN=2121` count at face value (worst case, every
+      failure costing the documented 1-tick failed-call price), that's
+      only ~2,121 ticks total fleet-wide — small next to this
+      session's real wins (091 alone was -0.992s). Not worth building
+      a fix for: 089 already established that touching water-
+      management timing is a net-loss risk (a lower threshold that
+      would reduce launch contention costs *more* via a persistent
+      steady-state penalty), and this cost is already confirmed small
+      and bounded to a narrow window. `experiments/hay/092/result.md`.
 
 - [x] 091 scan-order-tsp — **ADOPTED, new champion. 01:53.053, #49
       (was 090's 01:54.045, #52) — -0.992s, 14.4x the noise floor,
