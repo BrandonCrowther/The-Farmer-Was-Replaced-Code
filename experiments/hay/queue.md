@@ -406,6 +406,28 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       but the real run cleared the floor decisively.
       `experiments/hay/084/result.md`
 
+- [x] 086 shared-territory-two-phase-spawn — **REJECTED, +0.966s
+      regression.** User-proposed: partition the bush-wall so each of
+      the 32 drones only plants its own ~2/3-3/4 share (a hand-rolled,
+      offline-verified `OWNED_OFFSETS` literal table — zero runtime
+      computation, per the user's explicit correction against building
+      it live), with a genuine two-phase spawn-tree barrier (setup tree
+      fully joins before a fresh hot-loop tree starts) closing the
+      exact race 078 rejected the same underlying idea over. Offline
+      verification and live validation (target=200,000) both passed
+      clean — 32/32 unique setup/hotloop markers, barrier holds exactly
+      as designed, zero correctness issue found. Lost anyway: the real
+      walk-count reduction (960→756 candidate visits, 21.3%) was real
+      but small and local, while the second, independent spawn tree
+      Phase 2 needs plausibly pays a farm-diameter-scaled "walk back
+      out to my own base" cost 085's single-tree design never pays
+      twice — validation trace shows 2x+ variance in per-drone
+      hot-loop-start ticks (3294-7880), consistent with that story
+      though not isolated to confirm it precisely. Confirms 078's race
+      concern was real and *can* be engineered around safely, but not
+      that shared planting is worth its structural cost in this
+      design's shape. `experiments/hay/086/result.md`
+
 - [x] 085 setup-tuple-reuse — **ADOPTED, new champion. 01:54.587, #52
       (was 01:54.669, #53) — -0.082s, +1 rank.** Applied 084's exact
       lesson one loop up: the bush-wall setup built `(px, py)` as a
@@ -421,6 +443,20 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       re-run. A routine "Fatal error in GC" crash hit between r1 and
       r2 — recovered via `relaunch` + redeploy per `docs/LOOP.md`, no
       data lost. `experiments/hay/085/result.md`
+
+- [ ] 087 (open) same-tree territory partition — 086's shared-planting
+      idea lost specifically because a *second* spawn tree's fan-out
+      cost more than the walk savings it captured. A version that
+      threads `OWNED_OFFSETS` ownership through the *existing* single
+      spawn tree instead — each drone does its own owned-planting
+      inline, in the same walk/tree it already pays for, no second
+      fan-out — might avoid that specific regression. Needs a real
+      ordering guarantee within one tree (a drone must not reach its
+      hot loop before every *other* drone whose territory it depends
+      on has finished planting, not just its own descendants, which a
+      single depth-first tree does not give for free) — this is real
+      design work, not yet attempted, and no evidence yet it would
+      beat 085 even if built correctly. See `experiments/hay/086/`.
 
 ## Closing state, 2026-08-18 (076-085, overnight session)
 

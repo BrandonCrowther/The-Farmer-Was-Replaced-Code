@@ -21,19 +21,19 @@ import Common
 #
 # 073's spawn pattern (one drone sequentially spawning all 31 others)
 # was the same class of issue -- fixed separately in exp-077 (see
-# spawn_group() below).
+# the spawn-tree helpers below).
 #
 # exp-hay-079 -- a code scour for the same class of stray-tick overhead
 # 075/076/077 already found, this time inside driver() itself:
 # (1) reroll chase: `planted[key] == ctype` did a SECOND tuple-keyed
 #     dict lookup (~2 ticks) to re-derive a value that has exactly one
-#     write site in this whole file (line ~80, always Entities.Bush) --
-#     there is no second value it can ever hold, so the lookup was
-#     re-deriving a compile-time constant at runtime. Compare `ctype`
-#     to the constant directly instead; this runs on every reroll
-#     attempt (avg ~2/harvest per 069's p=1/3 model), so it is the one
-#     change here that actually touches the ~871-harvest/drone hot loop
-#     rather than the one-time setup phase.
+#     write site in this whole file, always Entities.Bush -- there is
+#     no second value it can ever hold, so the lookup was re-deriving a
+#     compile-time constant at runtime. Compare `ctype` to the constant
+#     directly instead; this runs on every reroll attempt (avg ~2/
+#     harvest per 069's p=1/3 model), so it is the one change here that
+#     actually touches the ~871-harvest/drone hot loop rather than the
+#     one-time setup phase.
 # (2) bush-wall setup: `d2 = wdist(...)` was computed unconditionally
 #     even though `d1 <= 3 or d2 <= 3` only needs d2 when d1 already
 #     misses (or short-circuits) -- wdist() costs ~11 ticks/call (2
@@ -42,11 +42,83 @@ import Common
 #     whether d1 alone already qualified.
 # (3) bush-wall setup: `get_entity_type()` (a 1-tick getter) was called
 #     twice per position instead of cached in a local.
-# All three are provable from reading the code alone (single write
-# site for `planted`'s value; `or`'s short-circuit is a documented
-# language rule; a cached getter read is definitionally identical to
-# two reads of state nothing between them mutates) -- no new game
-# mechanic assumed, unlike 078's rejected territory-partitioning idea.
+#
+# exp-hay-081 -- removed a third, redundant num_items(Items.Hay)>=TARGET
+# check per hot-loop iteration that only guarded the cheap move() call.
+#
+# exp-hay-082 -- reordered the water-check `and` so its usually-False
+# operand (get_water() < WATER_THRESHOLD) is checked first, letting the
+# `and` short-circuit past num_items() on the ~98% of iterations that
+# don't need a top-up.
+#
+# exp-hay-084 -- reroll chase: bind `ctype, pos = companion` directly
+# instead of destructuring cx,cy and rebuilding an identical tuple; and
+# check `ctype == Entities.Bush` before `pos in planted` so `and` skips
+# the dict lookup on the 2/3 of attempts that aren't even a Bush.
+#
+# exp-hay-085 -- setup phase: build `pos = (px, py)` once and reuse it
+# for both the ALL_CROPS check and the planted-dict write, instead of
+# two fresh tuple literals.
+#
+# exp-hay-086 -- shared bush-wall territory partitioning.
+#
+# User-raised: every drone independently walks and companion-plants its
+# *entire* ~54-position candidate window, even though 079/080's own
+# analysis (and a direct offline replication of this file's near-check
+# logic, see the session's scratch notes) shows 204 of the 960 total
+# per-drone candidate visits across the whole farm are pairwise
+# redundant -- two adjacent drones each walking to and planting the
+# same shared tile. 078 tried a version of this idea and was rejected:
+# it had no execution-order guarantee, so a drone's hot loop could ask
+# for a companion on a tile a neighbor hadn't planted yet and silently
+# lose the multiplier -- a race, not a partition.
+#
+# Fix here is a genuine partition plus a genuine barrier, not a trust
+# shortcut:
+#   1. Ownership is decided once, offline (not at runtime -- see below),
+#      by a directional, wraparound-aware tie-break: for any position
+#      reachable by exactly two bases, the base to its East owns it (or
+#      North, for a same-x pair), using `(ax - bx) % size <= size // 2`
+#      to stay well-defined across the world's wraparound seam too. No
+#      position in this farm's layout is ever reachable by 3+ bases
+#      (confirmed by direct enumeration), so this tie-break fully
+#      resolves every position to exactly one owner. OWNED_OFFSETS below
+#      is that resolution, as (dx, dy) offsets relative to each base's
+#      own (bx, by), in ALL_BASES order.
+#   2. A drone plants ONLY its own OWNED_OFFSETS positions during setup
+#      -- roughly 3/4 of what it walked before, the other ~1/4 now
+#      planted once by whichever neighbor owns it instead of twice.
+#   3. Two full, sequential spawn trees enforce the barrier a runtime
+#      trust shortcut can't provide: `setup_group` spawns and joins
+#      ALL 32 drones doing ONLY their owned planting (root's own
+#      `wait_for` loop, by construction, cannot return until every
+#      single one of them -- including any owner of any position ANY
+#      drone will later read -- has finished planting). Only after that
+#      full join does a SECOND, fresh spawn tree (`hotloop_group`) start
+#      anyone's hot loop. Every drone's hot loop still builds its own
+#      *full* candidate-window `planted` dict exactly as before (084/
+#      085's logic, unchanged) -- it just never re-walks to verify,
+#      because the barrier already guarantees every position in that
+#      window is Bush by the time any hot loop can possibly run.
+#
+# Why OWNED_OFFSETS is a hardcoded literal and not computed at runtime:
+# an early version of this experiment built the ownership map with a
+# nested loop + dict, live, and measured (probe, see scratch notes)
+# 68,447 ticks for the naive version and an analytically-estimated
+# still-substantial cost even for a stripped-down dict-only rebuild --
+# a one-time, unavoidable cost eating directly into the walk savings
+# this experiment exists to capture, on EVERY repeat the score averages
+# over. But the ownership result is a fixed property of this farm's
+# fixed layout (32 fixed bases, fixed HOLES, fixed spacing) -- it never
+# changes between runs, so there is no reason to ever pay to compute it
+# live at all. Per Operation-Costs.md, list/dict LITERALS cost only
+# "N + cost of each item" (cheap); it's *building* one via a loop of
+# .append() calls that's expensive. OWNED_OFFSETS is generated once
+# offline (script in the session's scratch notes) and verified there:
+# every offset is a real candidate of its own base (subset check),
+# zero positions double-owned across all 32 bases, and the full union
+# covers exactly 756 unique positions -- an exact match to this farm's
+# real total bush-wall coverage, confirming nothing is dropped.
 
 TARGET = 2000000000
 REROLL_LIMIT = 30
@@ -69,12 +141,54 @@ for base in ALL_BASES:
 	ALL_CROPS[(bx, by)] = True
 	ALL_CROPS[(bx + 1, by)] = True
 
+# Hand-derived and verified offline -- see the exp-086 header comment
+# above for the tie-break rule and the verification checks. Index N
+# here corresponds to ALL_BASES[N] (same construction order, checked
+# by hand against this file's own ALL_BASES loop).
+OWNED_OFFSETS = [
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(1,-3),(1,-2),(1,-1),(1,1),(2,-2),(2,-1),(2,1),(2,2)],  # base 0 (3, 3)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(1,-3),(1,-2),(1,-1),(1,1),(2,-2),(2,-1),(2,0),(2,1),(2,2),(3,-1),(3,0),(3,1),(4,0)],  # base 1 (3, 8)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(1,-3),(1,-2),(1,-1),(1,1),(2,-2),(2,-1),(2,1),(2,2)],  # base 2 (3, 13)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(1,-3),(1,-2),(1,-1),(1,1),(2,-2),(2,-1),(2,1),(2,2)],  # base 3 (3, 18)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(1,-3),(1,-2),(1,-1),(1,1),(2,-2),(2,-1),(2,0),(2,1),(2,2),(3,-1),(3,0),(3,1),(4,0)],  # base 4 (3, 23)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(0,2),(0,3),(1,-3),(1,-2),(1,-1),(1,1),(1,2),(1,3),(2,-2),(2,-1),(2,1),(2,2)],  # base 5 (3, 28)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(0,2),(0,3),(1,-3),(1,-2),(1,-1),(1,1),(1,2),(1,3),(2,-2),(2,-1),(2,1),(2,2)],  # base 6 (8, 3)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(1,-3),(1,-2),(1,-1),(1,1),(2,-2),(2,-1),(2,1),(2,2)],  # base 7 (8, 13)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(0,2),(0,3),(1,-3),(1,-2),(1,-1),(1,1),(1,2),(1,3),(2,-2),(2,-1),(2,1),(2,2)],  # base 8 (8, 18)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(0,2),(0,3),(1,-3),(1,-2),(1,-1),(1,1),(1,2),(1,3),(2,-2),(2,-1),(2,1),(2,2)],  # base 9 (8, 28)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(1,-3),(1,-2),(1,-1),(1,1),(2,-2),(2,-1),(2,1),(2,2)],  # base 10 (13, 3)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(1,-3),(1,-2),(1,-1),(1,1),(2,-2),(2,-1),(2,1),(2,2)],  # base 11 (13, 8)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(1,-3),(1,-2),(1,-1),(1,1),(2,-2),(2,-1),(2,1),(2,2)],  # base 12 (13, 13)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(1,-3),(1,-2),(1,-1),(1,1),(2,-2),(2,-1),(2,1),(2,2)],  # base 13 (13, 18)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(1,-3),(1,-2),(1,-1),(1,1),(2,-2),(2,-1),(2,1),(2,2)],  # base 14 (13, 23)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(0,2),(0,3),(1,-3),(1,-2),(1,-1),(1,1),(1,2),(1,3),(2,-2),(2,-1),(2,1),(2,2)],  # base 15 (13, 28)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(1,-3),(1,-2),(1,-1),(1,1),(2,-2),(2,-1),(2,1),(2,2)],  # base 16 (18, 3)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(1,-3),(1,-2),(1,-1),(1,1),(2,-2),(2,-1),(2,0),(2,1),(2,2),(3,-1),(3,0),(3,1),(4,0)],  # base 17 (18, 8)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(1,-3),(1,-2),(1,-1),(1,1),(2,-2),(2,-1),(2,1),(2,2)],  # base 18 (18, 13)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(1,-3),(1,-2),(1,-1),(1,1),(2,-2),(2,-1),(2,1),(2,2)],  # base 19 (18, 18)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(1,-3),(1,-2),(1,-1),(1,1),(2,-2),(2,-1),(2,0),(2,1),(2,2),(3,-1),(3,0),(3,1),(4,0)],  # base 20 (18, 23)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(0,2),(0,3),(1,-3),(1,-2),(1,-1),(1,1),(1,2),(1,3),(2,-2),(2,-1),(2,1),(2,2)],  # base 21 (18, 28)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(0,2),(0,3),(1,-3),(1,-2),(1,-1),(1,1),(1,2),(1,3),(2,-2),(2,-1),(2,1),(2,2)],  # base 22 (23, 3)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(1,-3),(1,-2),(1,-1),(1,1),(2,-2),(2,-1),(2,1),(2,2)],  # base 23 (23, 13)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(0,2),(0,3),(1,-3),(1,-2),(1,-1),(1,1),(1,2),(1,3),(2,-2),(2,-1),(2,1),(2,2)],  # base 24 (23, 18)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(0,2),(0,3),(1,-3),(1,-2),(1,-1),(1,1),(1,2),(1,3),(2,-2),(2,-1),(2,1),(2,2)],  # base 25 (23, 28)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(1,-3),(1,-2),(1,-1),(1,1),(2,-2),(2,-1),(2,0),(2,1),(2,2),(3,-1),(3,0),(3,1)],  # base 26 (28, 3)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(1,-3),(1,-2),(1,-1),(1,1),(2,-2),(2,-1),(2,0),(2,1),(2,2),(3,-1),(3,0),(3,1)],  # base 27 (28, 8)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(1,-3),(1,-2),(1,-1),(1,1),(2,-2),(2,-1),(2,0),(2,1),(2,2),(3,-1),(3,0),(3,1)],  # base 28 (28, 13)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(1,-3),(1,-2),(1,-1),(1,1),(2,-2),(2,-1),(2,0),(2,1),(2,2),(3,-1),(3,0),(3,1)],  # base 29 (28, 18)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(1,-3),(1,-2),(1,-1),(1,1),(2,-2),(2,-1),(2,0),(2,1),(2,2),(3,-1),(3,0),(3,1)],  # base 30 (28, 23)
+	[(-3,0),(-2,-1),(-2,0),(-2,1),(-1,-2),(-1,-1),(-1,0),(-1,1),(-1,2),(0,-3),(0,-2),(0,-1),(0,1),(0,2),(0,3),(1,-3),(1,-2),(1,-1),(1,1),(1,2),(1,3),(2,-2),(2,-1),(2,0),(2,1),(2,2),(3,-1),(3,0),(3,1)],  # base 31 (28, 28)
+]
+
 def wdist(ax, ay, bx, by, size):
 	dx = min((bx - ax) % size, (ax - bx) % size)
 	dy = min((by - ay) % size, (ay - by) % size)
 	return dx + dy
 
-def driver(bx, by):
+# Phase 1 (setup-only): plant ONLY this base's owned positions, plus
+# its own two Grass tiles. Never touches the hot loop or `planted`.
+def setup_only(idx):
+	bx, by = ALL_BASES[idx]
 	size = get_world_size()
 	c1x, c1y = bx, by
 	c2x, c2y = bx + 1, by
@@ -84,59 +198,51 @@ def driver(bx, by):
 	Common.move_to_wrapped(c2x, c2y)
 	instructions()
 
+	for offset in OWNED_OFFSETS[idx]:
+		odx, ody = offset
+		px = (bx + odx) % size
+		py = (by + ody) % size
+		Common.move_to_wrapped(px, py)
+		et = get_entity_type()
+		if et != Entities.Bush:
+			if et != None:
+				harvest()
+			Common.plant_companion(Entities.Bush)
+
+# Phase 2 (hot loop): identical to 085's driver(), except the setup
+# walk/plant loop is gone -- `planted` is still built from this base's
+# FULL candidate window (own positions plus shared ones a neighbor may
+# own), exactly as before, but every one of those positions is
+# guaranteed already Bush by construction (Phase 1 fully joined before
+# any Phase 2 drone could start), so no per-position walk or
+# get_entity_type()/plant_companion() call is needed here at all.
+def driver(idx):
+	bx, by = ALL_BASES[idx]
+	size = get_world_size()
+	c1x, c1y = bx, by
+	c2x, c2y = bx + 1, by
+
 	planted = {}
 	for dx in range(-3, 5):
 		for dy in range(-3, 4):
 			px = (c1x + dx) % size
 			py = (c1y + dy) % size
-			# exp-hay-085 -- `(px, py)` was built as a fresh tuple literal
-			# twice: once for the ALL_CROPS membership check, again for the
-			# planted-dict write below -- the same "rebuilding an already-
-			# possible tuple" pattern 084 found in the hot loop's reroll
-			# check, just here in setup. Build it once and reuse it.
 			pos = (px, py)
 			if pos in ALL_CROPS:
 				continue
-			# exp-hay-079 -- d2 is only needed when d1 already misses (d1<=3
-			# is or'd with d2<=3, and or short-circuits) -- but the old code
-			# built the args in application order so both wdist() calls
-			# (11 ticks each: 2 subs + 2 mods + a min() per axis, +1 to sum)
-			# ran on every position regardless. Compute d1 first and skip
-			# d2 entirely once it already qualifies.
 			near = wdist(c1x, c1y, px, py, size) <= 3
 			if not near:
 				near = wdist(c2x, c2y, px, py, size) <= 3
 			if near:
-				Common.move_to_wrapped(px, py)
-				# exp-hay-079 -- get_entity_type() is a getter (1 tick);
-				# the old code called it twice (once per if) instead of
-				# caching the one read it needs.
-				et = get_entity_type()
-				if et != Entities.Bush:
-					if et != None:
-						harvest()
-					Common.plant_companion(Entities.Bush)
 				planted[pos] = Entities.Bush
 	Common.move_to_wrapped(c1x, c1y)
 
 	current_is_c1 = True
 	while num_items(Items.Hay) < TARGET:
-		# exp-hay-082 -- `num_items(Items.Water) > 0` is checked first in
-		# the original ordering, but water is genuinely fine here (046/047:
-		# real water sits 0.8-1.0), so that operand is almost always True
-		# and `and` never short-circuits on it -- both getters pay every
-		# iteration. get_water() < WATER_THRESHOLD is the operand that's
-		# usually False (072 measured only 16/871 cycles actually needing
-		# a top-up), so putting IT first lets `and` short-circuit and skip
-		# num_items() entirely on the ~98% of iterations that don't need
-		# water -- same two getters, same safety guarantee (num_items is
-		# still checked before any use_item() call happens), just
-		# reordered for the case that's actually common.
 		while get_water() < WATER_THRESHOLD and num_items(Items.Water) > 0:
 			use_item(Items.Water)
 		h = can_harvest()
 		while not h and num_items(Items.Hay) < TARGET:
-			# exp-hay-082 -- same reorder as above, for the same reason.
 			while get_water() < WATER_THRESHOLD and num_items(Items.Water) > 0:
 				use_item(Items.Water)
 			h = can_harvest()
@@ -147,30 +253,6 @@ def driver(bx, by):
 		rerolls = 0
 		companion = get_companion()
 		while rerolls < REROLL_LIMIT and companion != None:
-			# exp-hay-079 -- `planted` has exactly one call site that ever
-			# writes to it (the bush-wall setup above) and it always
-			# writes Entities.Bush -- there is no second value the dict
-			# can ever hold. So "planted[key] == ctype" was a second
-			# tuple-keyed dict lookup (~2 ticks) to re-derive a constant;
-			# comparing ctype to the constant directly costs 1 tick and
-			# needs no second lookup at all.
-			#
-			# exp-hay-084 -- two more in the same spot, missed in 079:
-			# (1) `cx, cy = companion[1]` was unpacked only to be
-			# immediately repacked into `key = (cx, cy)` -- an identical
-			# tuple to the one already sitting inside `companion`, and
-			# cx/cy are never used for anything else. Bind the position
-			# directly (`ctype, pos = companion`) instead of destructuring
-			# and rebuilding it -- free unpack either way, but this skips
-			# the 1-tick tuple-literal rebuild entirely.
-			# (2) the `and` was ordered so its almost-always-True operand
-			# (`key in planted` -- coverage is nearly total) went first,
-			# so `and` almost never short-circuited: both operands paid
-			# on nearly every attempt. `ctype == Entities.Bush` is False
-			# 2/3 of the time (uniform 1/3 draw, 069) -- checking it first
-			# lets `and` skip the tuple-keyed dict lookup (~2 ticks) on
-			# 2/3 of attempts, the same reorder-for-short-circuit trick
-			# 082 used for the water check.
 			ctype, pos = companion
 			if ctype == Entities.Bush and pos in planted:
 				break
@@ -178,80 +260,95 @@ def driver(bx, by):
 			companion = get_companion()
 			rerolls = rerolls + 1
 
-		# exp-hay-081 -- this was the THIRD num_items(Items.Hay)>=TARGET
-		# check per iteration (outer `while`'s own condition, the one
-		# above guarding harvest()/the reroll chase, and this one), each
-		# 3 ticks (if-entry + getter + compare) every single iteration
-		# regardless of whether target is anywhere close -- ~2600
-		# ticks/drone recurring over 871 harvests. Removed this one,
-		# which only guarded the cheap move() call: worst case, a
-		# straggler drone that misses the shared target being hit by
-		# someone else during its own reroll chase pays one extra
-		# 200-tick move before the outer while's own check catches it
-		# next iteration -- bounded, one-time, and only possible at all
-		# in the last iteration of the whole run. Kept the check above
-		# (before harvest()/the reroll chase): that one guards much more
-		# expensive work (a full harvest + up to REROLL_LIMIT more), a
-		# worse thing to risk overshooting.
 		if current_is_c1:
 			move(East)
 		else:
 			move(West)
 		current_is_c1 = not current_is_c1
 
-# exp-hay-077 -- spawn-tree parallelization. 076 fixed the setup-phase
-# WALK; this fixes the setup-phase SPAWN. The old loop had one drone
-# call spawn_drone() 31 times in a row before it ever started farming
-# (measured live, probe: 200 ticks/call flat, 6745 ticks total for the
-# real 31-call loop with its overhead -- exp-hay-077/result.md). Every
-# one of those ticks is paid again every ~2h-simulated repeat the score
-# averages over, same "setup isn't amortized" point 076 made.
-#
-# Fix: a binary spawn tree. spawn_group(positions) is handed a list of
-# base tiles; it keeps positions[0] as ITS OWN tile, splits the rest in
-# half, and spawns at most two new drones -- one per half -- each of
-# which repeats the same pattern before it starts farming. Depth is
-# ceil(log2(32)) = 5, so no drone waits on more than 2 sequential
-# spawn_drone() calls per level of the tree it sits at (<=10 calls, ~5
-# levels x 2 children), instead of up to 31 sequential calls in the old
-# design -- and every level's drones spawn their own children truly
-# concurrently with each other (043 confirmed tick rate is identical
-# regardless of drone count, i.e. drones really do run in parallel, not
-# time-sliced against each other).
-def spawn_group(positions):
-	my_pos = positions[0]
-	rest = positions[1:]
+# Binary spawn tree over a list of ALL_BASES indices (not positions --
+# 086 threads the index itself through, since both setup_only() and
+# driver() need it to look up OWNED_OFFSETS/ALL_BASES). Same shape as
+# 077's spawn_group(), used twice: once for the setup-only tree, once
+# for the fresh hot-loop tree.
+def setup_group(indices):
+	my_idx = indices[0]
+	rest = indices[1:]
 	n = len(rest)
 	mid = n // 2
 	spawned = []
 	if mid > 0:
-		d = spawn_drone(spawn_group, rest[:mid])
+		d = spawn_drone(setup_group, rest[:mid])
 		if d:
 			spawned.append(d)
 	if n - mid > 0:
-		d = spawn_drone(spawn_group, rest[mid:])
+		d = spawn_drone(setup_group, rest[mid:])
 		if d:
 			spawned.append(d)
-	bx, by = my_pos
-	driver(bx, by)
+	setup_only(my_idx)
+	for d in spawned:
+		wait_for(d)
+
+def hotloop_group(indices):
+	my_idx = indices[0]
+	rest = indices[1:]
+	n = len(rest)
+	mid = n // 2
+	spawned = []
+	if mid > 0:
+		d = spawn_drone(hotloop_group, rest[:mid])
+		if d:
+			spawned.append(d)
+	if n - mid > 0:
+		d = spawn_drone(hotloop_group, rest[mid:])
+		if d:
+			spawned.append(d)
+	driver(my_idx)
 	for d in spawned:
 		wait_for(d)
 
 clear()
 quick_print("FARM", "world", get_world_size(), "max_drones", max_drones())
-rest = ALL_BASES[1:]
+
+ALL_INDICES = []
+for i in range(len(ALL_BASES)):
+	ALL_INDICES.append(i)
+
+rest = ALL_INDICES[1:]
 n = len(rest)
 mid = n // 2
-drones = []
+
+# Phase 1: setup only. Root's own wait_for loop cannot return until
+# EVERY drone in the tree (root included) has finished its own owned
+# planting -- the barrier that makes Phase 2's trust-without-walking
+# safe.
+setup_drones = []
 if mid > 0:
-	d = spawn_drone(spawn_group, rest[:mid])
+	d = spawn_drone(setup_group, rest[:mid])
 	if d:
-		drones.append(d)
+		setup_drones.append(d)
 if n - mid > 0:
-	d = spawn_drone(spawn_group, rest[mid:])
+	d = spawn_drone(setup_group, rest[mid:])
 	if d:
-		drones.append(d)
-quick_print("SPAWNED_ROOT_CHILDREN", len(drones))
-driver(3, 3)
-for d in drones:
+		setup_drones.append(d)
+setup_only(0)
+for d in setup_drones:
+	wait_for(d)
+quick_print("PHASE1_DONE", "tick", get_tick_count())
+
+# Phase 2: a completely fresh spawn tree for the hot loop. Every one of
+# these drones' own driver() call moves to its own c1 first, same as
+# before -- unaffected by wherever this fresh spawn chain happens to
+# place it.
+hotloop_drones = []
+if mid > 0:
+	d = spawn_drone(hotloop_group, rest[:mid])
+	if d:
+		hotloop_drones.append(d)
+if n - mid > 0:
+	d = spawn_drone(hotloop_group, rest[mid:])
+	if d:
+		hotloop_drones.append(d)
+driver(0)
+for d in hotloop_drones:
 	wait_for(d)
