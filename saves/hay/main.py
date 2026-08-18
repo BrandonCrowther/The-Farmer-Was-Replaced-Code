@@ -115,11 +115,23 @@ def driver(bx, by):
 
 	current_is_c1 = True
 	while num_items(Items.Hay) < TARGET:
-		while num_items(Items.Water) > 0 and get_water() < WATER_THRESHOLD:
+		# exp-hay-082 -- `num_items(Items.Water) > 0` is checked first in
+		# the original ordering, but water is genuinely fine here (046/047:
+		# real water sits 0.8-1.0), so that operand is almost always True
+		# and `and` never short-circuits on it -- both getters pay every
+		# iteration. get_water() < WATER_THRESHOLD is the operand that's
+		# usually False (072 measured only 16/871 cycles actually needing
+		# a top-up), so putting IT first lets `and` short-circuit and skip
+		# num_items() entirely on the ~98% of iterations that don't need
+		# water -- same two getters, same safety guarantee (num_items is
+		# still checked before any use_item() call happens), just
+		# reordered for the case that's actually common.
+		while get_water() < WATER_THRESHOLD and num_items(Items.Water) > 0:
 			use_item(Items.Water)
 		h = can_harvest()
 		while not h and num_items(Items.Hay) < TARGET:
-			while num_items(Items.Water) > 0 and get_water() < WATER_THRESHOLD:
+			# exp-hay-082 -- same reorder as above, for the same reason.
+			while get_water() < WATER_THRESHOLD and num_items(Items.Water) > 0:
 				use_item(Items.Water)
 			h = can_harvest()
 		if num_items(Items.Hay) >= TARGET:
