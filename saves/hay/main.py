@@ -74,6 +74,30 @@ def wdist(ax, ay, bx, by, size):
 	dy = min((by - ay) % size, (ay - by) % size)
 	return dx + dy
 
+# exp-hay-080 -- the (dx,dy) window the bush-wall setup below checks is
+# identical for every drone (c1 is always this drone's own base, c2 is
+# always base+(1,0)) -- only the absolute position differs, and the
+# window itself is a pure function of dx,dy alone. 079 stopped the setup
+# loop from computing d2 when d1 already qualified; this goes further and
+# stops it from re-deriving which offsets qualify at all, on every one of
+# the 32 drones, when the answer is the same fixed 30-ish-cell set every
+# time. Computed once here instead: module-level state set up before any
+# drone spawns is already visible for free (variable lookup, 0 ticks) to
+# every spawned drone -- ALL_BASES/ALL_CROPS above already rely on
+# exactly this, and 077's own validation measured spawned children NOT
+# paying for ALL_BASES/ALL_CROPS's build cost a second time (root's setup
+# tick count was ~1619; the deepest child's was <=443) -- direct evidence
+# module-level work here is genuinely shared, not silently repeated once
+# per drone.
+NEAR_OFFSETS = []
+for dx in range(-3, 5):
+	for dy in range(-3, 4):
+		near = wdist(0, 0, dx, dy, 999) <= 3
+		if not near:
+			near = wdist(1, 0, dx, dy, 999) <= 3
+		if near:
+			NEAR_OFFSETS.append((dx, dy))
+
 def driver(bx, by):
 	size = get_world_size()
 	c1x, c1y = bx, by
@@ -85,32 +109,23 @@ def driver(bx, by):
 	instructions()
 
 	planted = {}
-	for dx in range(-3, 5):
-		for dy in range(-3, 4):
-			px = (c1x + dx) % size
-			py = (c1y + dy) % size
-			if (px, py) in ALL_CROPS:
-				continue
-			# exp-hay-079 -- d2 is only needed when d1 already misses (d1<=3
-			# is or'd with d2<=3, and or short-circuits) -- but the old code
-			# built the args in application order so both wdist() calls
-			# (11 ticks each: 2 subs + 2 mods + a min() per axis, +1 to sum)
-			# ran on every position regardless. Compute d1 first and skip
-			# d2 entirely once it already qualifies.
-			near = wdist(c1x, c1y, px, py, size) <= 3
-			if not near:
-				near = wdist(c2x, c2y, px, py, size) <= 3
-			if near:
-				Common.move_to_wrapped(px, py)
-				# exp-hay-079 -- get_entity_type() is a getter (1 tick);
-				# the old code called it twice (once per if) instead of
-				# caching the one read it needs.
-				et = get_entity_type()
-				if et != Entities.Bush:
-					if et != None:
-						harvest()
-					Common.plant_companion(Entities.Bush)
-				planted[(px, py)] = Entities.Bush
+	# exp-hay-080 -- NEAR_OFFSETS is already exactly the qualifying set
+	# (see its comment above) -- no more per-drone wdist()/near check.
+	for dx, dy in NEAR_OFFSETS:
+		px = (c1x + dx) % size
+		py = (c1y + dy) % size
+		if (px, py) in ALL_CROPS:
+			continue
+		Common.move_to_wrapped(px, py)
+		# exp-hay-079 -- get_entity_type() is a getter (1 tick);
+		# the old code called it twice (once per if) instead of
+		# caching the one read it needs.
+		et = get_entity_type()
+		if et != Entities.Bush:
+			if et != None:
+				harvest()
+			Common.plant_companion(Entities.Bush)
+		planted[(px, py)] = Entities.Bush
 	Common.move_to_wrapped(c1x, c1y)
 
 	current_is_c1 = True
