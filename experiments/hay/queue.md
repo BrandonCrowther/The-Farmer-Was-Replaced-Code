@@ -7,6 +7,33 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
+- [x] 089 hot-loop-mechanism-probes — **both candidates closed, no
+      code change, no scored cycle spent.** User asked to think
+      through further speedups after 088. (1) Reroll-chase: confirmed
+      sound via real instrumentation — `reroll_ticks` scales *exactly*
+      linearly with `reroll_count` (11 + 208×count, zero variance).
+      The initial concern (each `harvest()` call costs less than
+      exp-066's isolated growth wait, so most rerolls should be
+      destroying immature plants for nothing) was based on a wrong
+      model: landing a match `break`s with no extra harvest — every
+      reroll `harvest()` exists purely to force a fresh companion roll
+      via destroy+auto-regrow, and the correctly-preferenced immature
+      plant is left to mature and gets its real harvest on a *later*
+      visit. Not a bug. (2) Water threshold: `WATER_THRESHOLD=0.75`
+      pays a real one-time ~1,390-tick/drone burst catch-up (setup
+      never checks water, and it decays continuously per
+      `Watering.md`), then costs zero for the rest of the run. Tested
+      lowering it: `0.0` clearly breaks (idle time explodes, still
+      rising by iteration 4). `0.3` looked like a clear win on a
+      5-iteration probe (smaller transient) — extending to 40
+      iterations/drone completely reversed that: it never returns to
+      baseline, settling into a persistent ~35-50 ticks/iteration idle
+      cost that totals ~25x worse than 0.75 over a full run. **0.75 is
+      confirmed correctly tuned, not just "no slack" (083's framing)**
+      — moving it is a real, measured loss. Method note: a short probe
+      window actively misled here; extend before trusting a
+      short-window "win." `experiments/hay/089/result.md`.
+
 - [x] 088 staggered-base-grid — **ADOPTED, new champion. 01:54.162,
       #52 (was 085's 01:54.587, #52) — -0.425s, 6.2x the noise floor.**
       087 closed the shared-territory-planting family, but the user
