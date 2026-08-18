@@ -444,19 +444,29 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       r2 — recovered via `relaunch` + redeploy per `docs/LOOP.md`, no
       data lost. `experiments/hay/085/result.md`
 
-- [ ] 087 (open) same-tree territory partition — 086's shared-planting
-      idea lost specifically because a *second* spawn tree's fan-out
-      cost more than the walk savings it captured. A version that
-      threads `OWNED_OFFSETS` ownership through the *existing* single
-      spawn tree instead — each drone does its own owned-planting
-      inline, in the same walk/tree it already pays for, no second
-      fan-out — might avoid that specific regression. Needs a real
-      ordering guarantee within one tree (a drone must not reach its
-      hot loop before every *other* drone whose territory it depends
-      on has finished planting, not just its own descendants, which a
-      single depth-first tree does not give for free) — this is real
-      design work, not yet attempted, and no evidence yet it would
-      beat 085 even if built correctly. See `experiments/hay/086/`.
+- [x] 087 same-tree territory partition — **REJECTED, analytical
+      closure with live-probe numbers, no scored cycle spent.** Every
+      buildable same-tree coordination mechanism (shared flag: dead on
+      arrival per 050; adjacency-following tree redesign: +490 ticks
+      of live-probed spawn latency alone; same idea on today's
+      unchanged tree: 44/204 free tiles but ~139,000 ticks of
+      subtree-ripple cost against ~37,000 saved, a ~4x net loss;
+      dedicated signal-drone + `has_finished()` poll: needs a spare
+      drone slot the existing 32-of-32 `max_drones()` budget has no
+      room for without going fully phased, i.e. 086's shape again) is
+      closed. **This closes the whole 078/086/087 shared-territory-
+      planting family** — not "same size class," a structural dead
+      end, now backed by measured constants (~850 ticks/candidate-
+      visit, ~200-210 ticks/spawn, the 32-drone hard cap, real
+      subtree-size data). Also directly closes the same-session
+      proposal to compact the plot into tighter 2D blocks to increase
+      shareable boundary — that's a geometry change and doesn't touch
+      the mechanism problem, which is what actually blocks every
+      variant regardless of layout. `experiments/hay/087/result.md`.
+      **Next line of attack for Hay needs to change shape entirely**,
+      per `docs/LOOP.md`'s "three same-family rejections" rule (078,
+      086, 087 all reject this one family) — not another sharing
+      topology.
 
 ## Closing state, 2026-08-18 (076-085, overnight session)
 
