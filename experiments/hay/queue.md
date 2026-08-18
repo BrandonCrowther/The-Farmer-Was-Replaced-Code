@@ -369,22 +369,57 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       language rule), validated live for a sanity check regardless.
       `experiments/hay/082/result.md`
 
-- [ ] 083 (open) — `Common.py`'s `plant_companion()`/`polyculture_mapped()`
-      aren't even called by Hay's current `driver()` (fully inlined
-      since some earlier redesign) — dead end for Hay specifically,
-      skip. 079/081/082 all found real wins in the hot loop; 080 found
-      a real-but-unmeasurable one in setup. Each pass has found a
-      smaller win than the last (079: -0.798s, 081: -0.313s, 082:
-      -0.189s) — the guard-check-overhead class is visibly thinning.
-      Worth one more close read of `driver()` before concluding it's
-      dry: the reroll loop's own `while rerolls < REROLL_LIMIT and
-      companion != None:` condition, and whether `harvest()`'s repeated
-      calls inside the reroll chase have any remaining slack. If a
-      close pass turns up nothing new, that's a legitimate place to
-      stop this line and either ask about a fundamental fork (per
-      `docs/LOOP.md`'s empty-queue rule) or hold at the current champion
-      for the night. #1's implied budget remains unexplained by
-      anything found in 062-065.
+- [x] 083 water-threshold-retune — **CLOSED, no code change.** One live
+      probe plus three analytical checks, none found anything safe and
+      worth a real run: (1) `WATER_THRESHOLD` — measured `WATER_CALLS
+      16/900`, `WAIT_TICKS 0`, but `MIN_WATER 0` — the tile's own water
+      already touches its floor at the current 0.75, no slack to lower
+      it without risking real idle wait; (2) 3+ tiles per drone —
+      re-derived against current numbers, still closed (070's reasoning
+      holds: servicing cost, not growth-wait, is the bottleneck, and a
+      3rd tile doesn't touch that); (3) beating the 1/3 reroll floor by
+      pre-seeding a mix of companion types instead of all-Bush — ruled
+      out algebraically (`P(drawn type == a fixed-in-advance preset) =
+      1/3` for any single-type-per-position assignment, so all-Bush is
+      already optimal among this whole strategy class); (4) dropping
+      the `key in planted` check now that `NEAR_OFFSETS` covers the
+      full draw window — unsafe, `ALL_CROPS` exclusions mean coverage
+      isn't actually total, and skipping the check risks silently
+      claiming an unearned multiplier (the polyculture-bug shape).
+      `experiments/hay/083/result.md`
+
+## Closing state, 2026-08-18 (076-083, overnight session)
+
+Champion: **01:55.590, #56** (was 01:58.059/#63 at session start —
+-2.469s, +7 ranks across 076/077/079/081/082; 078/080/083 rejected/tied/
+closed with no champion change but real information gained). Six real
+adopted wins in one night, each smaller than the last (076: -0.864s,
+077: -0.305s, 079: -0.798s, 081: -0.313s, 082: -0.189s) — the
+diminishing-returns shape the user predicted going in ("Hay's progress
+will be small going forward as we approach a theoretical peak
+efficiency").
+
+**What's been exhausted, and why:** every safe, code-provable stray-tick
+fix findable by close reading of `driver()` and its bush-wall setup —
+guard checks that never vary, missed short-circuits, doubled getters,
+redundant target checks, unfavorable AND-operand ordering. 083 also
+closed the three most plausible *macro*-level ideas still sitting in
+this design's neighborhood (more tiles, mixed companion pre-seeding,
+dropping the position check) analytically, without needing a real run
+for any of them.
+
+**What would actually move the needle from here:** nothing left inside
+the two-tile-interleaving + full-Bush-pre-seed + reroll-based-servicing
+paradigm itself — 069's 1/3 reroll floor is a proven mathematical
+minimum for this approach, not a tuning target. Closing more of the gap
+to the #2-10 cluster (01:27-01:48, still ~+8-28s away) would need a
+genuinely different macro-design — e.g. a servicing strategy that
+doesn't pay a per-visit reroll/harvest/move cost at all, or some
+mechanism not yet identified. No such idea has enough evidence behind
+it yet to attempt blind; per `docs/LOOP.md`'s empty-queue rule, this is
+recorded as the fork rather than forced. #1's implied budget remains
+unexplained by anything found in 062-065 and is out of scope (likely a
+pre-patch residual exploit, see record.json's note).
 
 **#1 (`const arch *`, 00:58.549) is very likely not honestly
 achievable under current mechanics** — web research (2026-08-17, user's
