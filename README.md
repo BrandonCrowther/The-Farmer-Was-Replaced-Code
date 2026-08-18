@@ -1,5 +1,9 @@
 # The Farmer Was Replaced Code
 
+This repository is an LLM harness to automate progressing on the leaderboards of [The Farmer Was Replaced](https://store.steampowered.com/app/2060160/The_Farmer_Was_Replaced/). Readme will be updated later with an explanation of how it was done.
+
+Original code to achieve 100% completion of achievements is available [here](https://github.com/BrandonCrowther/The-Farmer-Was-Replaced-Code/tree/my-own-code).
+
 Code for The Farmer Was Replaced, plus the automation that iterates on it. The
 `main` branch is the frozen 100%-achievements save; **`autofarmer` is the working
 branch** and the champion set: the current best code for each of the 16
