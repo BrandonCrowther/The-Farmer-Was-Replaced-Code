@@ -89,7 +89,13 @@ def driver(bx, by):
 		for dy in range(-3, 4):
 			px = (c1x + dx) % size
 			py = (c1y + dy) % size
-			if (px, py) in ALL_CROPS:
+			# exp-hay-085 -- `(px, py)` was built as a fresh tuple literal
+			# twice: once for the ALL_CROPS membership check, again for the
+			# planted-dict write below -- the same "rebuilding an already-
+			# possible tuple" pattern 084 found in the hot loop's reroll
+			# check, just here in setup. Build it once and reuse it.
+			pos = (px, py)
+			if pos in ALL_CROPS:
 				continue
 			# exp-hay-079 -- d2 is only needed when d1 already misses (d1<=3
 			# is or'd with d2<=3, and or short-circuits) -- but the old code
@@ -110,7 +116,7 @@ def driver(bx, by):
 					if et != None:
 						harvest()
 					Common.plant_companion(Entities.Bush)
-				planted[(px, py)] = Entities.Bush
+				planted[pos] = Entities.Bush
 	Common.move_to_wrapped(c1x, c1y)
 
 	current_is_c1 = True
