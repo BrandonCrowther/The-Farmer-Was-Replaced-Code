@@ -19,15 +19,10 @@ repeat, not amortized away by one long run.
 everywhere in `driver()` (both the initial spawn-to-base walk and the
 bush-wall setup loop).
 
-**Status: INCOMPLETE — not validated, not adopted.** The code change
-itself is written and committed on this branch. A live validation pass
-(reduced target, collision check) was in progress when a game crash hit,
-and the recovery (relaunch, reload) ran into a stuck-window/false-
-positive-state-detection problem that consumed the rest of the
-available time budget for this session. **No collision check completed,
-no real leaderboard run attempted.** The live game was restored to the
-last known-good adopted champion (075, 01:58.059/#63) rather than risk
-leaving it in an uncertain state.
+**Status: RESOLVED — adopted, new champion.** Picked up next session:
+validated (64/64 arrival checks clean, see `result.md`), then run for
+real: **01:57.195, #60** (was 075's 01:58.059/#63). See `result.md` for
+the full writeup.
 
 **Also flagged in the same review, not attempted at all:**
 1. **Spawn-tree parallelization** — 073's spawn pattern has one drone
