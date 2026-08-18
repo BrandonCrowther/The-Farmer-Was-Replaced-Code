@@ -34,18 +34,18 @@ The category is whatever the invocation names. Everything below says `<cat>`.
 8. **Merge if it won, journal either way.**
 
    *Won* — beat the baseline by more than the floor: merge the branch into
-   `autofarmer`, `python3 tools/render_leaderboards.py`, commit, push
-   `autofarmer` and the branch.
+   `main`, `python3 tools/render_leaderboards.py`, commit, push
+   `main` and the branch.
 
    *Lost or inconclusive* — the code stays on its branch, but the **journal
-   still has to reach `autofarmer`**, or the next tick reads a stale queue and
+   still has to reach `main`**, or the next tick reads a stale queue and
    redoes the experiment. Merging the branch would drag the rejected code along
    with it, so take only the journal paths:
 
    ```sh
    git checkout auto_experiment/<cat>/<NNN> -- experiments/<cat>/
    git diff --cached --stat -- saves/    # must be empty: journal only, no code
-   git commit && git push origin autofarmer auto_experiment/<cat>/<NNN>
+   git commit && git push origin main auto_experiment/<cat>/<NNN>
    ```
 
    A loss is data and gets written up exactly as carefully as a win — 003 is the
@@ -86,10 +86,13 @@ The category is whatever the invocation names. Everything below says `<cat>`.
 
 - **Never read or write `live/save.json` or `live/__builtins__.py`.** Telemetry
   comes from the screen and from `output.txt`.
-- **`main` is never touched.**
+- **`my-own-code` is never touched.** (`main` is the working/experiment branch
+  now — this used to say `main`, back when `main` held the frozen
+  100%-achievements save. That save now lives on its own small protected
+  branch, `my-own-code`; `main` took over `autofarmer`'s old role.)
 - **No `Co-Authored-By:` trailers.**
 - An experiment branch writes only `saves/<cat>/**` and `experiments/<cat>/**`.
-  Tooling and docs changes belong on `autofarmer`.
+  Tooling and docs changes belong on `main`.
 
 ## Extending `Common.py`
 

@@ -120,7 +120,7 @@ replace a swinging symlink with a real file and fork the save.
 
 ## Phase 3 — experiment workflow
 
-Per queue item, driven from `autofarmer`:
+Per queue item, driven from `main`:
 
 1. `tools/new_experiment.sh <category>` → worktree + `auto_experiment/<cat>/<NNN>`.
 2. Edit `saves/<cat>/`, then `tools/deploy.sh <cat> --from <worktree>`.
@@ -130,7 +130,7 @@ Per queue item, driven from `autofarmer`:
 4. `tools/tfwr.sh wait-result`, read the modal, `tools/tfwr.sh dismiss`.
 5. Write `result.md`, update `record.json`, commit, push the branch.
 6. Beat the PB? Re-run to confirm against the ~10 min noise floor, then merge into
-   `autofarmer` and re-render `docs/leaderboards.md`.
+   `main` and re-render `docs/leaderboards.md`.
 
 ### Still to decide
 

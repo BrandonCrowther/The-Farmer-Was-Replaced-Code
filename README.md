@@ -4,10 +4,12 @@ This repository is an LLM harness to automate progressing on the leaderboards of
 
 Original code to achieve 100% completion of achievements is available [here](https://github.com/BrandonCrowther/The-Farmer-Was-Replaced-Code/tree/my-own-code).
 
-Code for The Farmer Was Replaced, plus the automation that iterates on it. The
-`main` branch is the frozen 100%-achievements save; **`autofarmer` is the working
-branch** and the champion set: the current best code for each of the 16
-leaderboard categories.
+Code for The Farmer Was Replaced, plus the automation that iterates on it.
+**`main` is the working branch** and the champion set: the current best code for
+each of the 16 leaderboard categories. The frozen 100%-achievements save lives on
+its own small protected branch, `my-own-code`, kept separate so experiment
+history never touches it. (`autofarmer` was the working branch before this split
+and is retired — its history is now on `main`.)
 
 ## Layout
 
@@ -49,15 +51,15 @@ error tooltip.
 ## Branching
 
 ```
-main                                  frozen, protected, never touched
-└── autofarmer                        champion set: best code per category
-    └── auto_experiment/<cat>/<NNN>    one experiment, in its own worktree
+my-own-code                          frozen, protected, never touched
+main                                  champion set: best code per category
+└── auto_experiment/<cat>/<NNN>       one experiment, in its own worktree
 ```
 
 An experiment branch writes **only** `saves/<cat>/**` and `experiments/<cat>/**`.
-Because categories are disjoint, winners merge into `autofarmer` without
-conflicts. `docs/leaderboards.md` is generated from the per-category
-`record.json` files for the same reason — no shared file to fight over.
+Because categories are disjoint, winners merge into `main` without conflicts.
+`docs/leaderboards.md` is generated from the per-category `record.json` files
+for the same reason — no shared file to fight over.
 
 ```sh
 tools/new_experiment.sh hay          # next NNN, branch + worktree + scaffold

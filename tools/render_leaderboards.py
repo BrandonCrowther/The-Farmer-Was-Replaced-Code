@@ -3,7 +3,7 @@
 
 The table is generated, never hand-edited. That is what keeps 16 categories from
 fighting over one file: an experiment branch writes only its own record.json, and
-the table is re-rendered on autofarmer after a merge. The output is deterministic,
+the table is re-rendered on main after a merge. The output is deterministic,
 so re-running on an unchanged tree produces no diff.
 
     python3 tools/render_leaderboards.py [--check]

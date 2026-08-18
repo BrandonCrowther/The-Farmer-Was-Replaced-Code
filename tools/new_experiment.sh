@@ -3,14 +3,14 @@
 #
 #   tools/new_experiment.sh <category> [slug-words]
 #
-# Creates auto_experiment/<category>/<NNN> off autofarmer in its own worktree and
+# Creates auto_experiment/<category>/<NNN> off main in its own worktree and
 # scaffolds experiments/<category>/<NNN>/ from the template. NNN is per-category
 # and is derived from both existing branches and existing result directories, so
 # it stays correct even if a branch was deleted after merging.
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BASE="${TFWR_BASE_BRANCH:-autofarmer}"
+BASE="${TFWR_BASE_BRANCH:-main}"
 TREES="${TFWR_WORKTREES:-$HOME/dev/tfwr-worktrees}"
 
 die() { echo "new_experiment: $*" >&2; exit 1; }
