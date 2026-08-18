@@ -300,17 +300,35 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
       three separate already-measured results already implied.
       `experiments/hay/078/result.md`
 
-- [ ] 079 (open) — scour the champion's code for remaining stray-tick
-      overhead of the 075/076/077 kind (guard checks that never fire,
-      wrapper functions carrying unused-feature overhead, redundant
-      calls) before inventing new macro-structure — the user's next
-      named step after summoning/spacing. Champion's hot loop measures
-      873.02 ticks/harvest, only 17.02 above the cluster's upper bound
-      (856); `reroll` is ~52% of that and already at 069's structural
-      p=1/3 floor, so the remaining lever is overhead *outside* the
-      reroll chase itself — move/harvest/water calls, guard conditions,
-      loop structure. #1's implied budget remains unexplained by
-      anything found in 062-065.
+- [x] 079 stray-tick-scour — **ADOPTED, new champion. 01:56.092, #58
+      (was 01:56.890, #59) — -0.798s, +1 rank.** Three fixes, all
+      provable behavior-preserving by reading the code (no new game-
+      mechanic assumption, unlike 078's rejected idea): (1) reroll
+      chase's `planted[key] == ctype` was a second tuple-keyed dict
+      lookup re-deriving a value that has exactly one write site in the
+      file (always `Entities.Bush`) — replaced with a direct constant
+      comparison; the one change here that touches the hot loop.
+      (2) bush-wall setup computed both `wdist()` calls (~11 ticks each)
+      unconditionally even though `or` already short-circuits — skip
+      the second once the first already qualifies. (3) bush-wall setup
+      cached a doubled `get_entity_type()` call. Single-drone smoke test
+      (884.06 ticks/harvest, window range 849-910) was too noisy to
+      detect the ~1.3-tick/harvest predicted hot-loop effect and blind
+      to the setup-only fixes by construction, but validated live for
+      correctness (32/32 unique positions, unchanged) before the real
+      run confirmed a clear win. `experiments/hay/079/result.md`
+
+- [ ] 080 (open) — champion's hot loop measures 873.02 ticks/harvest
+      pre-079 (only 17.02 above the cluster's upper bound, 856);
+      `reroll` is ~52% of that and already at 069's structural p=1/3
+      floor, so the remaining lever is overhead *outside* the reroll
+      chase itself — move/harvest/water calls, guard conditions, loop
+      structure. 079 found three more instances of the same class
+      (redundant dict lookup, missed short-circuit, doubled getter) —
+      worth another close read of `driver()`'s water-gating block and
+      `Common.py`'s `plant_companion()`/`polyculture_mapped()` for the
+      same pattern before assuming the well is dry. #1's implied budget
+      remains unexplained by anything found in 062-065.
 
 **#1 (`const arch *`, 00:58.549) is very likely not honestly
 achievable under current mechanics** — web research (2026-08-17, user's
