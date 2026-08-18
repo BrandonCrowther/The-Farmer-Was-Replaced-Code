@@ -7,6 +7,28 @@ Branches: `auto_experiment/hay/NNN` · Results: `experiments/hay/NNN/result.md`
 
 ## Queued
 
+- [x] 090 full-stagger-search — **ADOPTED, new champion. 01:54.045,
+      #52 (was 088's 01:54.162, #52) — -0.117s, confirmed by a
+      consistent-direction re-run (r1 -0.091s, r2 -0.117s), both
+      individually clearing the 0.069s noise floor.** User asked to
+      explore both a non-horizontal domino shape and further macro-
+      layout capture. Domino shape: horizontal, vertical, and diagonal
+      `(1,1)` all tie on scan/window cost (30 tiles) — going diagonal
+      doesn't cost more to scan — but diagonal's own best-achievable
+      packing (384 total walk-in) doesn't beat horizontal/vertical's
+      true optimum, so it's not a win. Macro layout: 088's own
+      offset/stagger search turned out to be incomplete — it only ever
+      tried staggering the X coordinate per alternating row, never Y
+      per alternating column. A fair search (both axes available)
+      finds a genuinely better point in the *same* search space:
+      spacing `(3,4)`, Y-axis stagger `2`, offset `(23,22)` — 336 total
+      walk-in / 19 max vs 088's 384/21 (-12.5%/-9.5%), same horizontal
+      domino shape 088 already deployed, same safety margin (global
+      min cross-base crop distance exactly 4, unchanged). Live-
+      validated before the real run (32/32 positions matched the
+      offline model, uniform 30-visit windows, no warnings).
+      `experiments/hay/090/result.md`.
+
 - [x] 089 hot-loop-mechanism-probes — **both candidates closed, no
       code change, no scored cycle spent.** User asked to think
       through further speedups after 088. (1) Reroll-chase: confirmed
