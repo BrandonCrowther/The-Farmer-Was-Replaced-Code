@@ -141,8 +141,6 @@ def driver(bx, by):
 		rerolls = 0
 		companion = get_companion()
 		while rerolls < REROLL_LIMIT and companion != None:
-			ctype, (cx, cy) = companion
-			key = (cx, cy)
 			# exp-hay-079 -- `planted` has exactly one call site that ever
 			# writes to it (the bush-wall setup above) and it always
 			# writes Entities.Bush -- there is no second value the dict
@@ -150,7 +148,25 @@ def driver(bx, by):
 			# tuple-keyed dict lookup (~2 ticks) to re-derive a constant;
 			# comparing ctype to the constant directly costs 1 tick and
 			# needs no second lookup at all.
-			if key in planted and ctype == Entities.Bush:
+			#
+			# exp-hay-084 -- two more in the same spot, missed in 079:
+			# (1) `cx, cy = companion[1]` was unpacked only to be
+			# immediately repacked into `key = (cx, cy)` -- an identical
+			# tuple to the one already sitting inside `companion`, and
+			# cx/cy are never used for anything else. Bind the position
+			# directly (`ctype, pos = companion`) instead of destructuring
+			# and rebuilding it -- free unpack either way, but this skips
+			# the 1-tick tuple-literal rebuild entirely.
+			# (2) the `and` was ordered so its almost-always-True operand
+			# (`key in planted` -- coverage is nearly total) went first,
+			# so `and` almost never short-circuited: both operands paid
+			# on nearly every attempt. `ctype == Entities.Bush` is False
+			# 2/3 of the time (uniform 1/3 draw, 069) -- checking it first
+			# lets `and` skip the tuple-keyed dict lookup (~2 ticks) on
+			# 2/3 of attempts, the same reorder-for-short-circuit trick
+			# 082 used for the water check.
+			ctype, pos = companion
+			if ctype == Entities.Bush and pos in planted:
 				break
 			harvest()
 			companion = get_companion()
