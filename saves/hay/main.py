@@ -56,31 +56,28 @@ instructions = Common.get_planting_instructions(entity)
 
 HOLES = [(1, 1), (1, 4), (4, 1), (4, 4)]
 
-# exp-hay-088 -- offset + row-stagger base grid. Every drone spawns at
-# (0,0) (spawn_group() never moves before spawning children, so the
-# whole 32-drone fan-out happens from the root's post-clear() position)
-# and walks once, straight to its own base -- a real setup-phase cost,
-# same class as 076/077. The OLD grid (offset 3,3, spacing 5,5) centers
-# its 6x6 footprint at (15.5,15.5), almost exactly the farthest point
-# from (0,0) on this 32-wide wrapped world. Repositioning the grid
-# (offset), tightening vertical spacing (5->3, the true floor once a
-# per-row horizontal stagger lets diagonal neighbors share the
-# distance-4 dilution-safety budget across both axes -- x-spacing stays
-# 5, already at ITS floor, domino-constrained) cuts total fleet walk-in
-# distance 544->384 tiles (-29.4%) and worst-single-drone 28->21
-# (-25%), per this session's exhaustive offline search
-# (experiments/hay/088/hypothesis.md) -- every pairwise base-to-base
-# distance is unchanged by an offset shift, and the tightened spacing
-# was verified (32 unique positions, 64 unique crop tiles, full
-# 32x31-pair safety check) to hold the global minimum cross-base crop
-# distance at exactly 4, this session's own measured safe boundary
-# (distance 3 = unsafe, live-probed 10/400 dilution hits; distance 4 =
-# safe, 0/400).
-X_OFFSET = 18
-Y_OFFSET = 25
-X_SPACING = 5
-Y_SPACING = 3
-ROW_STAGGER = 2
+# exp-hay-088 -- offset + row-stagger base grid (see 088's own comment
+# history for the original reasoning: every drone spawns at (0,0), so
+# walk-in is wdist((0,0), base), and the old offset(3,3)/spacing(5,5)
+# grid centered its footprint on the farthest point from the origin).
+#
+# exp-hay-090 -- 088's own stagger search was incomplete: it only tried
+# staggering the X coordinate per alternating row. A fair search that
+# also tries staggering Y per alternating column finds the true
+# optimum for this domino shape is better than what 088 found --
+# 336 total walk-in / 19 max vs 088's 384/21 (-12.5%/-9.5%), same
+# horizontal-domino shape, zero new geometric risk. (A diagonal domino
+# shape was also checked and does not beat this: identical scan/window
+# cost to horizontal, but a worse achievable walk-in optimum -- see
+# experiments/hay/090/hypothesis.md.) Re-verified exhaustively: 32
+# unique positions, 64 unique crop tiles, global minimum cross-base
+# crop distance still exactly 4 (this session's measured safe floor,
+# same margin as 088, not tighter), uniform 30-position windows.
+X_OFFSET = 23
+Y_OFFSET = 22
+X_SPACING = 3
+Y_SPACING = 4
+COL_STAGGER = 2
 
 ALL_BASES = [(X_OFFSET, Y_OFFSET)]
 for i in range(6):
@@ -88,9 +85,9 @@ for i in range(6):
 		if i + j != 0:
 			if (i, j) not in HOLES:
 				bx = X_OFFSET + i * X_SPACING
-				if j % 2 == 1:
-					bx = bx + ROW_STAGGER
 				by = Y_OFFSET + j * Y_SPACING
+				if i % 2 == 1:
+					by = by + COL_STAGGER
 				ALL_BASES.append((bx % 32, by % 32))
 
 ALL_CROPS = {}
