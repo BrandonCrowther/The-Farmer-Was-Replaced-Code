@@ -90,16 +90,41 @@ for i in range(6):
 					by = by + COL_STAGGER
 				ALL_BASES.append((bx % 32, by % 32))
 
-ALL_CROPS = {}
-for base in ALL_BASES:
-	bx, by = base
-	ALL_CROPS[(bx, by)] = True
-	ALL_CROPS[(bx + 1, by)] = True
+# exp-hay-091 -- ALL_CROPS (every base's own two crop tiles) existed
+# only to filter the setup scan's raster-order window down to the 30
+# candidate positions. SCAN_ORDER now encodes that filtering offline,
+# so nothing reads ALL_CROPS anymore -- building it live was pure
+# wasted setup-phase work once the scan stopped needing it.
 
 def wdist(ax, ay, bx, by, size):
 	dx = min((bx - ax) % size, (ax - bx) % size)
 	dy = min((by - ay) % size, (ay - by) % size)
 	return dx + dy
+
+# exp-hay-091 -- the setup-phase candidate-window scan (30 tiles,
+# translation-invariant -- same relative shape for every base) was
+# always walked in raster order (dx outer, dy inner), computing near()
+# at runtime. Nobody had ever asked whether raster order minimizes the
+# total WALKING DISTANCE between consecutive tiles -- it doesn't.
+# Offline TSP-style search (greedy nearest-neighbor + 2-opt + or-opt,
+# 30 seeds, experiments/hay/091/hypothesis.md) found a visiting order
+# with total path cost 36 tiles (c1 -> ... -> c1) vs raster's 62 -- a
+# 42% cut in pure movement distance, sanity-checked against a
+# minimum-spanning-tree lower bound (30) to confirm it's close to
+# optimal, not a lucky first find. Live-calibrated against the real
+# champion before committing: measured move-only cost is a flat 12,482
+# ticks/drone across all 32 drones, matching the raster model (12,400)
+# almost exactly -- the reordered model's 7,200-tick prediction is
+# equally trustworthy. Hardcoded as a static, offline-verified list
+# (same "never compute it live" pattern as ALL_BASES/OWNED_OFFSETS) --
+# exactly the same 30-position SET as the raster scan (verified:
+# set(SCAN_ORDER) == the raster-order set, no position added or
+# dropped), so the near()/ALL_CROPS runtime checks are no longer
+# needed at all -- the list already encodes them.
+SCAN_ORDER = [(-1, 0), (-2, 0), (-3, 0), (-2, -1), (-1, -1), (-1, -2),
+	(0, -2), (0, -3), (1, -3), (1, -2), (2, -2), (2, -1), (2, 0), (2, 1),
+	(2, 2), (1, 2), (1, 3), (0, 3), (0, 2), (-1, 2), (-1, 1), (-2, 1),
+	(0, 1), (1, 1), (3, 1), (3, 0), (4, 0), (3, -1), (1, -1), (0, -1)]
 
 def driver(bx, by):
 	size = get_world_size()
@@ -112,38 +137,26 @@ def driver(bx, by):
 	instructions()
 
 	planted = {}
-	for dx in range(-3, 5):
-		for dy in range(-3, 4):
-			px = (c1x + dx) % size
-			py = (c1y + dy) % size
-			# exp-hay-085 -- `(px, py)` was built as a fresh tuple literal
-			# twice: once for the ALL_CROPS membership check, again for the
-			# planted-dict write below -- the same "rebuilding an already-
-			# possible tuple" pattern 084 found in the hot loop's reroll
-			# check, just here in setup. Build it once and reuse it.
-			pos = (px, py)
-			if pos in ALL_CROPS:
-				continue
-			# exp-hay-079 -- d2 is only needed when d1 already misses (d1<=3
-			# is or'd with d2<=3, and or short-circuits) -- but the old code
-			# built the args in application order so both wdist() calls
-			# (11 ticks each: 2 subs + 2 mods + a min() per axis, +1 to sum)
-			# ran on every position regardless. Compute d1 first and skip
-			# d2 entirely once it already qualifies.
-			near = wdist(c1x, c1y, px, py, size) <= 3
-			if not near:
-				near = wdist(c2x, c2y, px, py, size) <= 3
-			if near:
-				Common.move_to_wrapped(px, py)
-				# exp-hay-079 -- get_entity_type() is a getter (1 tick);
-				# the old code called it twice (once per if) instead of
-				# caching the one read it needs.
-				et = get_entity_type()
-				if et != Entities.Bush:
-					if et != None:
-						harvest()
-					Common.plant_companion(Entities.Bush)
-				planted[pos] = Entities.Bush
+	# exp-hay-091 -- iterate the precomputed distance-minimizing order
+	# directly. No near()/ALL_CROPS check needed -- SCAN_ORDER already
+	# is exactly the 30-position set those checks used to filter down
+	# to, in an order chosen to minimize total move_to_wrapped() cost
+	# between consecutive tiles.
+	for offset in SCAN_ORDER:
+		odx, ody = offset
+		px = (c1x + odx) % size
+		py = (c1y + ody) % size
+		pos = (px, py)
+		Common.move_to_wrapped(px, py)
+		# exp-hay-079 -- get_entity_type() is a getter (1 tick); the old
+		# code called it twice (once per if) instead of caching the one
+		# read it needs.
+		et = get_entity_type()
+		if et != Entities.Bush:
+			if et != None:
+				harvest()
+			Common.plant_companion(Entities.Bush)
+		planted[pos] = Entities.Bush
 	Common.move_to_wrapped(c1x, c1y)
 
 	current_is_c1 = True
