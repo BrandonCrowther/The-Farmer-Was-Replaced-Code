@@ -112,17 +112,59 @@ def driver(bx, by):
 			move(West)
 		current_is_c1 = not current_is_c1
 
+# exp-hay-077 -- spawn-tree parallelization. 076 fixed the setup-phase
+# WALK; this fixes the setup-phase SPAWN. The old loop had one drone
+# call spawn_drone() 31 times in a row before it ever started farming
+# (measured live, probe: 200 ticks/call flat, 6745 ticks total for the
+# real 31-call loop with its overhead -- exp-hay-077/result.md). Every
+# one of those ticks is paid again every ~2h-simulated repeat the score
+# averages over, same "setup isn't amortized" point 076 made.
+#
+# Fix: a binary spawn tree. spawn_group(positions) is handed a list of
+# base tiles; it keeps positions[0] as ITS OWN tile, splits the rest in
+# half, and spawns at most two new drones -- one per half -- each of
+# which repeats the same pattern before it starts farming. Depth is
+# ceil(log2(32)) = 5, so no drone waits on more than 2 sequential
+# spawn_drone() calls per level of the tree it sits at (<=10 calls, ~5
+# levels x 2 children), instead of up to 31 sequential calls in the old
+# design -- and every level's drones spawn their own children truly
+# concurrently with each other (043 confirmed tick rate is identical
+# regardless of drone count, i.e. drones really do run in parallel, not
+# time-sliced against each other).
+def spawn_group(positions):
+	my_pos = positions[0]
+	rest = positions[1:]
+	n = len(rest)
+	mid = n // 2
+	spawned = []
+	if mid > 0:
+		d = spawn_drone(spawn_group, rest[:mid])
+		if d:
+			spawned.append(d)
+	if n - mid > 0:
+		d = spawn_drone(spawn_group, rest[mid:])
+		if d:
+			spawned.append(d)
+	bx, by = my_pos
+	driver(bx, by)
+	for d in spawned:
+		wait_for(d)
+
 clear()
 quick_print("FARM", "world", get_world_size(), "max_drones", max_drones())
+rest = ALL_BASES[1:]
+n = len(rest)
+mid = n // 2
 drones = []
-for i in range(6):
-	for j in range(6):
-		if i + j != 0:
-			if (i, j) not in HOLES:
-				d = spawn_drone(driver, 3 + i * 5, 3 + j * 5)
-				if d:
-					drones.append(d)
-quick_print("SPAWNED", len(drones) + 1, "of", max_drones())
+if mid > 0:
+	d = spawn_drone(spawn_group, rest[:mid])
+	if d:
+		drones.append(d)
+if n - mid > 0:
+	d = spawn_drone(spawn_group, rest[mid:])
+	if d:
+		drones.append(d)
+quick_print("SPAWNED_ROOT_CHILDREN", len(drones))
 driver(3, 3)
 for d in drones:
 	wait_for(d)
